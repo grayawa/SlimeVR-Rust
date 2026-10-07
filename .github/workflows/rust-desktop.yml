@@ -80,6 +80,9 @@ jobs:
         with:
           name: slimevr-rust-tauri-${{ matrix.os }}
           path: |
+            LICENSE-MIT
+            LICENSE-APACHE
+            server-rust/licenses/
             gui/src-tauri/target/release/bundle/**
             server-rust/target/release/slimevr-server
             server-rust/target/release/slimevr-server.exe

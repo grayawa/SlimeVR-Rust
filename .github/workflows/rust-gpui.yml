@@ -64,6 +64,9 @@ jobs:
         with:
           name: slimevr-gpui-windows-x64
           path: |
+            LICENSE-MIT
+            LICENSE-APACHE
+            server-rust/licenses/
             gui-gpui/target/release/slimevr-gpui.exe
             gui-gpui/target/release/slimevr-gpui-components.exe
             docs/rust-gpui-components.zh-CN.md
@@ -76,6 +79,9 @@ jobs:
         with:
           name: slimevr-dashboard-windows-x64
           path: |
+            LICENSE-MIT
+            LICENSE-APACHE
+            server-rust/licenses/
             gui-gpui/target/release/slimevr-gpui-overlay.exe
             bindings-provider/openvr/bin/win64/openvr_api.dll
             bindings-provider/openvr/LICENSE

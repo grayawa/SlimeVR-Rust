@@ -1021,8 +1021,9 @@ test(
           p.message.includes('bone lengths or hierarchy changed')
       );
       const changed = await client.wait(
-        (p) => p?.type === 'backend_file_saved' && p.file.path === explicit
+        (p) => p?.type === 'backend_file_saved' && p.kind === 'bvh'
       );
+      assert.equal(await realpath(changed.file.path), await realpath(explicit));
       await assertClip(explicit, changed.file.frames);
       assert.equal((await status(client)).recording, false);
       // Ctrl-C finalizes the current count without a stop RPC.

@@ -81,7 +81,9 @@ def main():
         base.mkdir()
         shutil.copy2(args.gui_exe, base / 'SlimeVR.exe')
         shutil.copy2(args.server_exe, base / 'slimevr-server.exe')
-        shutil.copy2(args.gui_exe.parent / 'WebView2Loader.dll', base / 'WebView2Loader.dll')
+        # MSVC embeds the loader statically; GNU builds may import its DLL.
+        if 'webview2loader.dll' in pe_info(args.gui_exe)['imports']:
+            shutil.copy2(args.gui_exe.parent / 'WebView2Loader.dll', base / 'WebView2Loader.dll')
         for name in ['LICENSE-MIT', 'LICENSE-APACHE']:
             shutil.copy2(ROOT / name, base / name)
         driver = base / 'drivers/slimevr-openvr-driver-win64'
@@ -121,7 +123,7 @@ def main():
 本包包含 Tauri 界面、Rust 后端、官方 SteamVR 驱动、Bindings Provider 和驱动需要的 VC++ DLL。
 fix6-hand1 更新 Rust 后端，修复手部追踪 / 手柄切换时旧设备失效通知清掉新设备节点的问题；详见 手部切换修复说明.md。
 使用 Windows 11 系统已有的 WebView2；未附 WebView2 Runtime。无需安装 Java、Node 或 Rust。
-WebView2Loader.dll 是界面调用系统 WebView2 的小型加载库，需要保留。
+若包中附带 WebView2Loader.dll，请保留它；MSVC 构建将加载库静态链接。
 
 配置沿用 %APPDATA%\\dev.slimevr.SlimeVR\\vrconfig.yml / vrconfig.yaml。
 已有配置会被读取；保存保留原有字段并生成 .bak。GUI 偏好和日志也在相应应用目录。

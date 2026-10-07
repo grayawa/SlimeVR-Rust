@@ -87,3 +87,7 @@ cargo fmt --manifest-path gui-gpui/Cargo.toml
 ```
 
 字体使用随源码提交的 TTF；原 WOFF 转换与来源见 `assets/fonts/SOURCES.md`。发布包只装载编译程序、原版驱动和运行依赖，不包含用户配置或日志。
+
+## Actions 构建包
+
+使用 **Actions → SlimeVR AIO → Run workflow**，完成后下载 `SlimeVR-GPUI-Windows-x64`，或下载含 Tauri 与 Overlay 的 `SlimeVR-AIO-Windows-x64`。这些 ZIP 包含后端、驱动、OpenVR helper、运行库和许可证；详见 [AIO 说明](../docs/rust-ci.zh-CN.md)。

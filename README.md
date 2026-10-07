@@ -48,7 +48,7 @@ pnpm install --frozen-lockfile
 pnpm tauri:rust:build
 ```
 
-GitHub Actions 中的 Rust / Tauri、GPUI 和 SteamVR Dashboard 工作流支持手动构建和相关 PR 检查，详见 [CI 说明](docs/rust-ci.zh-CN.md)。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
+GitHub Actions 中的 **SlimeVR AIO** 工作流统一构建 Tauri、GPUI 和 SteamVR Dashboard，支持手动运行和 PR 检查，详见 [CI 说明](docs/rust-ci.zh-CN.md)。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
 
 ## 文档与许可
 

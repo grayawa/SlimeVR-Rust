@@ -41,6 +41,26 @@ pub fn feed_policy(visible: bool) -> (u16, u16, bool) {
         (1000, 1000, false)
     }
 }
+/// Accumulate state changes but redraw telemetry at no more than 30 Hz.
+/// Keep dirty state while hidden or throttled so the last update is rendered.
+#[derive(Default)]
+pub struct FrameThrottle {
+    dirty: bool,
+    next: Option<std::time::Instant>,
+}
+impl FrameThrottle {
+    pub fn redraw(&mut self, visible: bool, changed: bool, now: std::time::Instant) -> bool {
+        self.dirty |= changed;
+        if visible && self.dirty && self.next.is_none_or(|next| now >= next) {
+            self.dirty = false;
+            self.next = Some(now + std::time::Duration::from_millis(33));
+            true
+        } else {
+            false
+        }
+    }
+}
+
 pub fn reset_allowed(snapshot: &Snapshot, kind: ResetKind) -> bool {
     if snapshot.connection != Connection::Connected
         || snapshot.pending.is_some()
@@ -98,5 +118,15 @@ mod tests {
         let shown = feed_policy(true);
         assert!(!hidden.2 && shown.2);
         assert!(hidden.0 > shown.0 && hidden.1 > shown.1);
+    }
+    #[test]
+    fn throttled_and_hidden_updates_render_when_next_frame_is_ready() {
+        let start = std::time::Instant::now();
+        let mut frames = FrameThrottle::default();
+        assert!(!frames.redraw(false, true, start));
+        assert!(frames.redraw(true, false, start));
+        assert!(!frames.redraw(true, true, start + std::time::Duration::from_millis(10)));
+        assert!(frames.redraw(true, false, start + std::time::Duration::from_millis(33)));
+        assert!(!frames.redraw(true, false, start + std::time::Duration::from_millis(66)));
     }
 }

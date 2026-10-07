@@ -10,7 +10,7 @@ use std::{
     net::UdpSocket,
     process::{Child, Command, Stdio},
     sync::{
-        Arc,
+        Arc, Mutex,
         atomic::{AtomicBool, Ordering},
     },
     time::{Duration, Instant},
@@ -116,6 +116,19 @@ fn six_udp_trackers_assignment_yaml_resets_and_pause_use_real_backend() {
         LogLevel::Error,
     )
     .unwrap();
+    let live_audio = Arc::new(Mutex::new((
+        slimevr_gpui::sounds::Sequencer::default(),
+        Vec::new(),
+    )));
+    let observed_audio = live_audio.clone();
+    client.on_reset(move |session, reset| {
+        let mut audio = observed_audio.lock().unwrap();
+        let cues = audio
+            .0
+            .reset(session, reset.tx, reset.kind, reset.done, reset.progress_ms);
+        audio.1.extend(cues);
+    });
+
     wait(&client, |s| {
         s.feed.is_some() && s.settings.is_some() && s.paused == Some(false) && s.vrchat.is_some()
     });
@@ -310,6 +323,25 @@ fn six_udp_trackers_assignment_yaml_resets_and_pause_use_real_backend() {
                 && r.value["success"] == true
         })
     });
+
+    let deadline = Instant::now() + Duration::from_secs(1);
+    loop {
+        let finished = live_audio
+            .lock()
+            .unwrap()
+            .1
+            .iter()
+            .filter(|cue| matches!(cue, slimevr_gpui::sounds::Cue::Finished(_)))
+            .count();
+        if finished == 3 {
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "Live reset feedback did not reach playback independently of the undrained UI events"
+        );
+        std::thread::sleep(Duration::from_millis(5));
+    }
     let events = client.drain_events();
     let mut audio = slimevr_gpui::sounds::Sequencer::default();
     let mut finishes = 0;

@@ -1,0 +1,230 @@
+name: SlimeVR AIO
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - '.github/**'
+      - 'gui/**'
+      - 'gui-gpui/**'
+      - 'server-rust/**'
+      - 'shared/**'
+      - 'bindings-provider/**'
+      - 'solarxr-protocol'
+      - 'solarxr-protocol/**'
+      - '.gitmodules'
+      - '.node-version'
+      - '.editorconfig'
+      - '.prettierrc'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+  workflow_dispatch:
+    inputs:
+      other_tauri_platforms:
+        description: 'Also build Tauri for Linux x64/ARM64 and macOS'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: aio-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+env:
+  CARGO_INCREMENTAL: '0'
+  VITE_DESKTOP_VERSION: '0.1.0'
+jobs:
+  web:
+    name: Web and workflow checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Validate workflows
+        run: |
+          curl -fsSL https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o "$RUNNER_TEMP/actionlint.tar.gz"
+          echo '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  actionlint.tar.gz' > "$RUNNER_TEMP/actionlint.sha256"
+          (cd "$RUNNER_TEMP" && sha256sum --check actionlint.sha256 && tar -xzf actionlint.tar.gz actionlint)
+          "$RUNNER_TEMP/actionlint" -shellcheck= -pyflakes=
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check and build React UI
+        working-directory: gui
+        run: |
+          pnpm lint
+          pnpm test:desktop
+          pnpm web:build
+      - run: tar -czf slimevr-gui-dist.tar.gz -C gui/dist .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: gui-dist
+          path: slimevr-gui-dist.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+  windows:
+    name: Windows AIO bundles
+    runs-on: windows-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - uses: lukka/get-cmake@latest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            server-rust -> target
+            gui-gpui -> target
+            gui/src-tauri -> target
+          key: windows-aio
+          cache-on-failure: true
+      - run: pnpm install --frozen-lockfile
+      - name: Backend and protocol checks
+        run: |
+          python -m unittest discover -s server-rust/tools -p test_reference_sources.py
+          cargo fmt --manifest-path server-rust/Cargo.toml -p slimevr-core -p slimevr-server --check
+          cargo fmt --manifest-path gui-gpui/Cargo.toml --check
+          cargo fmt --manifest-path gui/src-tauri/Cargo.toml --check
+          cargo test --manifest-path server-rust/Cargo.toml --workspace --locked
+          cargo clippy --manifest-path server-rust/Cargo.toml --workspace --all-targets --locked -- -D warnings
+          cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked
+          cargo test --manifest-path gui-gpui/overlay-runtime/Cargo.toml --locked
+          python -m unittest discover -s gui/scripts -p test_package_aio.py
+      - name: Frontend communication checks
+        working-directory: gui
+        run: |
+          pnpm typecheck
+          pnpm test:desktop
+          pnpm test:backend
+          pnpm test:websocket
+      - name: Build shared backend and GPUI applications
+        run: |
+          cargo build --manifest-path server-rust/Cargo.toml --release --locked --bin slimevr-server
+          cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --features vr-dashboard --bins
+          cargo clippy --manifest-path gui-gpui/Cargo.toml --release --features vr-dashboard --all-targets --locked -- -D warnings
+          cargo test --manifest-path gui-gpui/Cargo.toml --release --features vr-dashboard --lib --locked
+      - name: Real backend loopback checks
+        shell: pwsh
+        run: |
+          $env:SLIMEVR_TEST_BACKEND = "$PWD/server-rust/target/release/slimevr-server.exe"
+          cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --test backend --locked -- --ignored
+      - name: Build Tauri host and test native commands
+        run: |
+          pnpm tauri:rust:build
+          cargo test --manifest-path gui/src-tauri/Cargo.toml --locked
+      - name: Package all Windows apps
+        run: |
+          python gui/scripts/fetch-vc-runtime.py --output dist/vc-runtime
+          python gui-gpui/scripts/package-windows.py --gui-exe gui-gpui/target/release/slimevr-gpui.exe --components-exe gui-gpui/target/release/slimevr-gpui-components.exe --server-exe server-rust/target/release/slimevr-server.exe --probe-exe gui-gpui/target/release/slimevr-gpui-probe.exe --vc-runtime-dir dist/vc-runtime --build-revision "$GITHUB_SHA" --output dist/SlimeVR-GPUI-Windows-x64.zip
+          python gui/scripts/package-windows-portable.py --gui-exe gui/src-tauri/target/release/slimevr-gui.exe --server-exe server-rust/target/release/slimevr-server.exe --bindings-dir gui/src-tauri/resources/bindings/win64 --vc-runtime-dir dist/vc-runtime --build-revision "$GITHUB_SHA" --output dist/SlimeVR-Tauri-Windows-x64.zip
+          python gui-gpui/scripts/package-overlay-windows.py --overlay-exe gui-gpui/target/release/slimevr-gpui-overlay.exe --vc-runtime-dir dist/vc-runtime --output dist/SlimeVR-Overlay-Windows-x64.zip
+          python gui/scripts/package-aio.py --directory dist --revision "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SlimeVR-GPUI-Windows-x64
+          path: |
+            dist/SlimeVR-GPUI-Windows-x64.zip
+            dist/SlimeVR-GPUI-Windows-x64.zip.sha256
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SlimeVR-Tauri-Windows-x64
+          path: |
+            dist/SlimeVR-Tauri-Windows-x64.zip
+            dist/SlimeVR-Tauri-Windows-x64.zip.sha256
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SlimeVR-Overlay-Windows-x64
+          path: |
+            dist/SlimeVR-Overlay-Windows-x64.zip
+            dist/SlimeVR-Overlay-Windows-x64.zip.sha256
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SlimeVR-AIO-Windows-x64
+          path: |
+            dist/SlimeVR-AIO-Windows-x64.zip
+            dist/SlimeVR-AIO-Windows-x64.zip.sha256
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: slimevr-tauri-windows-installers
+          path: gui/src-tauri/target/release/bundle/**
+          if-no-files-found: error
+          retention-days: 30
+  tauri-other-platforms:
+    name: Tauri (${{ matrix.os }})
+    if: github.event_name == 'workflow_dispatch' && inputs.other_tauri_platforms
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y g++-14 cmake ninja-build pkg-config libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libudev-dev patchelf
+      - if: runner.os == 'Linux'
+        run: echo "CXX=g++-14" >> "$GITHUB_ENV"
+      - uses: lukka/get-cmake@latest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            server-rust -> target
+            gui/src-tauri -> target
+          key: tauri-${{ matrix.os }}
+          cache-on-failure: true
+      - run: pnpm install --frozen-lockfile
+      - run: cargo test --manifest-path server-rust/Cargo.toml --workspace --locked
+      - run: pnpm tauri:rust:build
+      - run: cargo test --manifest-path gui/src-tauri/Cargo.toml --locked
+      - uses: actions/upload-artifact@v7
+        with:
+          name: slimevr-rust-tauri-${{ matrix.os }}
+          path: |
+            LICENSE-MIT
+            LICENSE-APACHE
+            server-rust/licenses/
+            gui/src-tauri/target/release/bundle/**
+            server-rust/target/release/slimevr-server
+          if-no-files-found: error
+          retention-days: 30

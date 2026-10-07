@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--baseline', type=Path, help='Audited prior package; copy only runtime DLLs and their licenses')
     parser.add_argument('--vc-runtime-dir', type=Path)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--build-revision', default='dashboard')
     args = parser.parse_args()
     shaders = gui.shader_audit.audit(args.overlay_exe)
     with tempfile.TemporaryDirectory(prefix='slimevr-dashboard-') as work:
@@ -74,7 +75,7 @@ def main():
                 f'start "" "%~dp0SlimeVR-Overlay.exe" {flags} %*\r\n'
             ).encode('ascii'))
         (base / '使用说明.txt').write_text(
-            'SlimeVR SteamVR 仪表盘附加程序 — dashboard-test3\n\n'
+            'SlimeVR SteamVR 仪表盘附加程序\n\n'
             '1. 解压整个文件夹；先启动现有 SlimeVR Rust 程序并连接追踪器。\n'
             '2. 启动 SteamVR，再双击 Start-Overlay.cmd。\n'
             '3. 按手柄系统键打开 SteamVR 仪表盘，选择 SlimeVR。\n'
@@ -83,7 +84,7 @@ def main():
             'Demo-Overlay.cmd 只显示示例数据；Preview-Overlay.cmd 同时显示桌面预览。\n'
             '无需 WebView2。沿用桌面程序的语言和主题；可加 --locale zh-Hans 指定中文。\n'
             '日志：%APPDATA%\\dev.slimevr.SlimeVR\\logs\\overlay\\gui-gpui.log。\n'
-            '这是首版测试包；Windows 实机与头显操作尚未验证，详见面板说明与测试.md。\n',
+            '功能和实机验证范围详见面板说明与测试.md。\n',
             encoding='utf-8-sig',
         )
         files = []
@@ -102,7 +103,7 @@ def main():
             files.append(entry)
         if gui.portable.pe_info(base / 'SlimeVR-Overlay.exe')['subsystem'] != 2:
             raise ValueError('Expected a Windows GUI executable')
-        manifest = {'build_revision': 'dashboard-test3', 'target': 'Windows x64',
+        manifest = {'build_revision': args.build_revision, 'target': 'Windows x64',
                     'built_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     'shaders': shaders, 'backend_included': False, 'webview2_required': False,
                     'windows_native_execution_tested': False, 'steamvr_headset_execution_tested': False,

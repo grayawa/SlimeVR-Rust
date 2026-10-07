@@ -135,7 +135,7 @@ jobs:
           python gui/scripts/fetch-vc-runtime.py --output dist/vc-runtime
           python gui-gpui/scripts/package-windows.py --gui-exe gui-gpui/target/release/slimevr-gpui.exe --components-exe gui-gpui/target/release/slimevr-gpui-components.exe --server-exe server-rust/target/release/slimevr-server.exe --probe-exe gui-gpui/target/release/slimevr-gpui-probe.exe --vc-runtime-dir dist/vc-runtime --build-revision "$GITHUB_SHA" --output dist/SlimeVR-GPUI-Windows-x64.zip
           python gui/scripts/package-windows-portable.py --gui-exe gui/src-tauri/target/release/slimevr-gui.exe --server-exe server-rust/target/release/slimevr-server.exe --bindings-dir gui/src-tauri/resources/bindings/win64 --vc-runtime-dir dist/vc-runtime --build-revision "$GITHUB_SHA" --output dist/SlimeVR-Tauri-Windows-x64.zip
-          python gui-gpui/scripts/package-overlay-windows.py --overlay-exe gui-gpui/target/release/slimevr-gpui-overlay.exe --vc-runtime-dir dist/vc-runtime --output dist/SlimeVR-Overlay-Windows-x64.zip
+          python gui-gpui/scripts/package-overlay-windows.py --overlay-exe gui-gpui/target/release/slimevr-gpui-overlay.exe --vc-runtime-dir dist/vc-runtime --build-revision "$GITHUB_SHA" --output dist/SlimeVR-Overlay-Windows-x64.zip
           python gui/scripts/package-aio.py --directory dist --revision "$GITHUB_SHA"
       - uses: actions/upload-artifact@v7
         with:

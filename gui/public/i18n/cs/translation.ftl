@@ -17,11 +17,6 @@ websocket-error-logs = Otevření složku s záznamy protokolů
 
 ## Update notification
 
-version_update-title = K dispozici je nová verze: { $version }
-version_update-description = Kliknutím na "{ version_update-update }", stáhnete instalační program SlimeVR.
-version_update-update = Aktualizace
-version_update-close = Zavřít
-
 ## Tips
 
 tips-find_tracker = Nejste si jisti, který tracker je který? Zatřeste tracker a zvýrazní se odpovídající položka.
@@ -648,14 +643,6 @@ settings-general-interface-discord_presence-message =
         [many] Používá { $amount } trackerů
        *[other] Používá { $amount } trackerů
     }
-settings-interface-behavior-error_tracking = Sběr chyb prostřednictvím Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>Souhlasíte se shromažďováním anonymizovaých údajů o chybých?</h1>
-    
-    <b>Neschrožďujeme osobní udaje!</b> pro příklad IP adresy nebo přihlašovací údaje k sítím Wi-Fi. SlimeVR respektuje vaše soukromí!
-    
-    Aby jsme mohli poskytnout nejlepší zážitek uživatelům, schromažďujeme proto anonymizované zprávy o chybých, metriky výkon a informace o operačním systém. To nám pomáhá zjištovat chyby a problémy s SlimeVR. Tyto matriky jsou schromažďovány prostřednictvím Sentry.io.
-settings-interface-behavior-error_tracking-label = Odeslat chyby vývojářům
 settings-interface-behavior-bvh_directory = Cesta pro uložení BVH záznamů
 settings-interface-behavior-bvh_directory-description = Vyberte cestu k uložení záznamů BHV. namísto toho, abyste pokaždé vybírali, kam je uložit.
 settings-interface-behavior-bvh_directory-label = Lokace pro BVH nahrávky
@@ -1391,14 +1378,6 @@ vrc_config-avatar_measurement_type-HEIGHT = Výška
 vrc_config-avatar_measurement_type-ARM_SPAN = Rozpětí paží
 
 ## Error collection consent modal
-
-error_collection_modal-title = Můžeme sbírat chyby?
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    
-    Tohle lze později změnit v sekci Chování v nastavení.
-error_collection_modal-confirm = Souhlasím
-error_collection_modal-cancel = Nesouhlasím
 
 ## Tracking checklist section
 

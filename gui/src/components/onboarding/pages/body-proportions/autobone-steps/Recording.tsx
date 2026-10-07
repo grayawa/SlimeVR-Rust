@@ -147,7 +147,9 @@ export function Recording({
               .with([ProcessStatus.PENDING, ProcessStatus.PENDING], () =>
                 l10n.getString(
                   'onboarding-automatic_proportions-recording-timer',
-                  { time: Math.round(eta) }
+                  {
+                    time: Math.round(eta),
+                  }
                 )
               )
               .otherwise(() => '')}

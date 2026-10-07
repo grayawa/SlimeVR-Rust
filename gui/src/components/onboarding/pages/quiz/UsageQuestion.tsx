@@ -15,11 +15,7 @@ export function QuizUsageQuestion() {
   const next = (type: typeof usage) => {
     setUsage(type);
     if (type === 'vr-gaming') {
-      if (window.__ANDROID__) {
-        nav('/');
-      } else {
-        nav('/onboarding/quiz/runtime');
-      }
+      nav('/onboarding/quiz/runtime');
     } else nav('/onboarding/quiz/mocap-pos');
   };
 

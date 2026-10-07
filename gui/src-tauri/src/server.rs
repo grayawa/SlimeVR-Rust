@@ -60,8 +60,6 @@ pub struct LaunchOptions {
     /// Directory containing the Rust server executable.
     #[arg(short, long)]
     pub path: Option<PathBuf>,
-    #[arg(short, long)]
-    pub steam: bool,
 }
 
 #[derive(Default)]

@@ -47,7 +47,6 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             presence::set_presence,
             commands::os_stats,
-            commands::is_steam,
             commands::install_dir,
             commands::i18n_override,
             commands::open_folder,

@@ -1,12 +1,12 @@
 # Contributing to SlimeVR Rust
 
-This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with Tauri and Electron hosts. The original Java / Gradle project has been removed. See [README.md](README.md) for project entry points and [CI checks](docs/rust-ci.zh-CN.md) for pull request validation.
+This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with a Tauri host. The original Java / Gradle project has been removed. See [README.md](README.md) for project entry points and [CI checks](docs/rust-ci.zh-CN.md) for pull request validation.
 
 ## Prerequisites
 
 - Git with recursive submodules.
 - Rust 1.88+ for the backend; Rust 1.92+ for GPUI.
-- Node.js from `.node-version` and pnpm from `package.json` for the React hosts.
+- Node.js from `.node-version` and pnpm from `package.json` for the React frontend.
 - CMake and a C++23 compiler for OpenVR helpers. Windows builds require Visual Studio C++ Build Tools and the Windows SDK; Tauri additionally uses WebView2.
 - Platform dependencies listed in [the GPUI guide](gui-gpui/README.zh-CN.md) and [the Tauri guide](gui/README.tauri.md).
 
@@ -34,9 +34,9 @@ pnpm tauri:rust:build
 
 Backend communication tests use `server-rust/target/debug/slimevr-server`; build it first or set `SLIMEVR_RUST_BINARY` to an existing executable.
 
-For Electron development, build the Rust backend and use `pnpm gui`; `--rust-server`, `--path`, `--config` and `--no-server` control backend startup. Electron packaging uses the release Rust binary and the driver / bindings resources prepared by `pnpm --dir gui tauri:prepare`.
+`pnpm gui` starts the Tauri development window with the Rust backend. Use `pnpm tauri:rust:build` for a complete desktop build, or `pnpm web` for browser development with a separately running backend.
 
-Format each Rust workspace with `cargo fmt --manifest-path <Cargo.toml>`. React and Electron use ESLint and Prettier. Keep behavior changes covered by relevant tests; real SteamVR / tracker validation is documented separately.
+Format each Rust workspace with `cargo fmt --manifest-path <Cargo.toml>`. React uses ESLint and Prettier. Keep behavior changes covered by relevant tests; real SteamVR / tracker validation is documented separately.
 
 ## Upstream behavior references
 

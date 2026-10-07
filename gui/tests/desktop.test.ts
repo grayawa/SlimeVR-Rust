@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { beforeEach, afterEach, test } from 'node:test';
 import { clearMocks, mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import { createTauriHost } from '../src/platform/tauri';
-import type { DesktopAPI } from '../src/platform/types';
 
 // Tauri's official IPC mocks let us exercise the real plugin adapters in Node.
 Object.assign(globalThis, { window: { crypto: globalThis.crypto } });
@@ -21,12 +20,7 @@ test('browser fallback never requires a desktop IPC bridge', () => {
   assert.equal(detectDesktopHost(), null);
 });
 
-test('existing Electron preload is reused and Tauri is detected independently', () => {
-  const electronAPI = {} as DesktopAPI;
-  Object.assign(window, { electronAPI });
-  assert.equal(detectDesktopHost()?.api, electronAPI);
-  assert.equal(detectDesktopHost()?.kind, 'electron');
-  Reflect.deleteProperty(window, 'electronAPI');
+test('Tauri is detected through its native IPC marker', () => {
   Object.assign(globalThis, { isTauri: true });
   assert.equal(detectDesktopHost()?.kind, 'tauri');
   assert.equal(detectDesktopHost()?.capabilities.discordPresence, true);

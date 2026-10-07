@@ -17,11 +17,6 @@ websocket-error-logs = 開啟日誌資料夾
 
 ## Update notification
 
-version_update-title = 有可用的新版本：{ $version }
-version_update-description = 按下「{ version_update-update }」將為你下載 SlimeVR 安裝程式。
-version_update-update = 更新
-version_update-close = 關閉
-
 ## Tips
 
 tips-find_tracker = 若你不確定手上的追蹤器是哪一個，搖一搖它，對應的項目會被高亮顯示出來。
@@ -764,14 +759,6 @@ settings-general-interface-discord_presence-message =
         [0] 正在捕捉史萊姆
        *[other] 正在使用 { $amount } 個追蹤器
     }
-settings-interface-behavior-error_tracking = 透過 Sentry.io 收集錯誤資訊
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>你是否同意我們蒐集匿名化的錯誤資料？</h1>
-    
-    <b>我們不會收集個人資訊</b> ，例如你的 IP 位址或無線網路認證資訊。SlimeVR 重視你的隱私！
-    
-    為了提供最佳的使用者體驗，我們會蒐集匿名化的錯誤報告、性能指標和作業系統資訊，這會對我們檢測 SlimeVR 的錯誤和問題有所幫助。我們會透過 Sentry.io 來蒐集這些指標。
-settings-interface-behavior-error_tracking-label = 向開發者傳送錯誤資訊
 settings-interface-behavior-bvh_directory = BVH 紀錄儲存目錄
 settings-interface-behavior-bvh_directory-description = 選擇儲存 BVH 紀錄文件的目錄，如此每次錄製 BVH 時不需要選擇儲存位置。
 settings-interface-behavior-bvh_directory-label = 存放 BVH 紀錄的目錄
@@ -1601,14 +1588,6 @@ vrc_config-avatar_measurement_type-HEIGHT = 身高
 vrc_config-avatar_measurement_type-ARM_SPAN = 臂展
 
 ## Error collection consent modal
-
-error_collection_modal-title = 我們可以蒐集錯誤資訊嗎？
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    
-    若之後要變更此設定，可以在「詳細設定」頁面中的「行為」來變更。
-error_collection_modal-confirm = 我同意
-error_collection_modal-cancel = 我不想要
 
 ## Tracking checklist section
 

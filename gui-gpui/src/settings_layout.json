@@ -322,7 +322,7 @@
         "label": "settings-general-tracker_mechanics-trackers_over_usb-enabled-label",
         "path": "/hid_settings/trackersOverHID",
         "field_type": "bool",
-        "disabled": "rustBackend && !backendInfo.capabilities.includes(\"hid\")"
+        "disabled": "rustBackend && !backendInfo.capabilities.includes('hid')"
       }
     ]
   },
@@ -2313,39 +2313,6 @@
                     ]
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "kind": "text",
-            "label": "settings-interface-behavior-error_tracking",
-            "variant": "section-title",
-            "color": "",
-            "bold": false
-          },
-          {
-            "kind": "container",
-            "classes": "flex flex-col pt-1 pb-2",
-            "children": [
-              {
-                "kind": "text",
-                "label": "settings-interface-behavior-error_tracking-description_v2",
-                "variant": "",
-                "color": "",
-                "bold": false
-              }
-            ]
-          },
-          {
-            "kind": "container",
-            "classes": "grid sm:grid-cols-2 pb-4",
-            "children": [
-              {
-                "kind": "control",
-                "widget": "CheckBox",
-                "name": "behavior.errorTracking",
-                "label": "settings-interface-behavior-error_tracking-label",
-                "preference": "errorTracking"
               }
             ]
           },

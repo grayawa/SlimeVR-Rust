@@ -12,11 +12,6 @@ websocket-connection_lost = サーバーへの接続が失われました。再�
 
 ## Update notification
 
-version_update-title = 新しいバージョンが利用可能です：{ $version }
-version_update-description = { version_update-update }をクリックすると、SlimeVRインストーラーがダウンロードされます。
-version_update-update = アップデート
-version_update-close = 閉じる
-
 ## Tips
 
 tips-find_tracker = どのトラッカーがどれだかわからない？トラッカーを振ると、該当する項目がハイライトされます。

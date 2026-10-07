@@ -17,11 +17,6 @@ websocket-error-logs = 로그 폴더 열기
 
 ## Update notification
 
-version_update-title = 새로운 버전 발견: { $version }
-version_update-description = "{ version_update-update }"를 눌러 설치 프로그램을 다운로드하세요.
-version_update-update = 업데이트
-version_update-close = 닫기
-
 ## Tips
 
 tips-find_tracker = 어떤 트래커가 어디에 대응되는지 모르겠나요? 트래커를 흔들면 해당 트래커에 해당되는 항목이 강조 표시돼요.
@@ -574,9 +569,6 @@ settings-general-interface-discord_presence-message =
         [0] 슬라임 갖고 노는 중
        *[other] 트래커 { $amount } 개 사용 중
     }
-settings-interface-behavior-error_tracking = Sentry.io 를 통한 오류 수집
-settings-interface-behavior-error_tracking-label = 개발자에게 오류 보내기
-
 ## Serial settings
 
 settings-serial = 시리얼 콘솔
@@ -1213,9 +1205,6 @@ unknown_device-modal-confirm = 당연하죠!
 unknown_device-modal-forget = 무시할게요
 
 ## Error collection consent modal
-
-error_collection_modal-title = 오류를 수집해도 될까요?
-error_collection_modal-confirm = 동의해요
 
 ## Tracking checklist section
 

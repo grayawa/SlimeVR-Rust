@@ -17,11 +17,6 @@ websocket-error-logs = 打开日志文件夹
 
 ## Update notification
 
-version_update-title = 新版本可用：{ $version }
-version_update-description = 点击“{ version_update-update }”将为您下载 SlimeVR 安装程序。
-version_update-update = 更新
-version_update-close = 关闭
-
 ## Tips
 
 tips-find_tracker = 不确定哪个追踪器是哪个？在现实中摇动一个追踪器，对应的那个将在屏幕上高亮显示。
@@ -758,14 +753,6 @@ settings-general-interface-discord_presence-message =
         [0] { "" }
        *[other] 正在使用 { $amount } 个追踪器
     }
-settings-interface-behavior-error_tracking = 通过 Sentry.io 收集错误信息
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>您是否同意收集匿名的错误信息？</h1>
-    
-    <b>我们不会收集您的个人信息</b> ，例如您的 IP 地址或 WiFi 信息。SlimeVR 重视您的隐私！
-    
-    为了提供最佳用户体验，我们会收集匿名错误报告、性能指标和操作系统信息。这有助于我们检测 SlimeVR 的错误和问题。这些指标将通过 Sentry.io 收集。
-settings-interface-behavior-error_tracking-label = 向开发人员发送错误信息
 settings-interface-behavior-bvh_directory = BVH 记录保存目录
 settings-interface-behavior-bvh_directory-description = 选择保存 BVH 记录文件的目录
 settings-interface-behavior-bvh_directory-label = BVH 记录保存目录
@@ -1638,14 +1625,6 @@ vrc_config-avatar_measurement_type-HEIGHT = 身高
 vrc_config-avatar_measurement_type-ARM_SPAN = 臂展
 
 ## Error collection consent modal
-
-error_collection_modal-title = 我们可以收集错误信息吗？
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    
-    您可以稍后在设置页面的行为部分中更改此设置。
-error_collection_modal-confirm = 我同意
-error_collection_modal-cancel = 还是算了
 
 ## Tracking checklist section
 

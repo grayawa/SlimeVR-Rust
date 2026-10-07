@@ -49,7 +49,7 @@ export function createTauriHost(): DesktopHost {
       minimize: () => report(appWindow.minimize()),
       toggleMaximize: () => report(appWindow.toggleMaximize()),
       showDecorations: (decorations) => report(appWindow.setDecorations(decorations)),
-      // Electron currently also uses a no-op; the native tray uses fixed labels.
+      // The native tray uses fixed labels.
       setTranslations: () => {},
       i18nOverride: () => invoke<string | false>('i18n_override'),
       getStorage: async (type) => {
@@ -97,7 +97,6 @@ export function createTauriHost(): DesktopHost {
       openFile: (path) => report(invoke('open_managed_path', { path })),
       ghGet: (options) => invoke('github_get', { options }),
       getInstallDir: () => invoke<string>('install_dir'),
-      isSteam: () => invoke<boolean>('is_steam'),
     },
   };
 }

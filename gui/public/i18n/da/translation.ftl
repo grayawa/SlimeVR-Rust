@@ -12,11 +12,6 @@ websocket-connection_lost = Forbindelse mistet til serveren. Forsøger at oprett
 
 ## Update notification
 
-version_update-title = Ny version tilgængelig: { $version }
-version_update-description = Ved at klikke på "Opdater" downloades SlimeVR-installationsprogrammet for dig.
-version_update-update = Opdater
-version_update-close = Luk
-
 ## Tips
 
 tips-find_tracker = Ikke sikker på, hvilken tracker er hvilken? Ryst trackeren, og den vil fremhæve det tilsvarende element.

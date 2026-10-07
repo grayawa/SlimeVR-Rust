@@ -12,11 +12,6 @@ websocket-connection_lost = Yhteys epäonnistui. Yritetään uudelleen...
 
 ## Update notification
 
-version_update-title = Uusi versio saatavilla: { $version }
-version_update-description = Valitsemalla "{ version_update-update }" lataa SlimeVR-asennusohjelman.
-version_update-update = Päivitys
-version_update-close = Sulje
-
 ## Tips
 
 tips-find_tracker = Epävarma, mikä jäljitin on mikä? Ravista jäljitintä ja se korostaa vastaavan kohdan.

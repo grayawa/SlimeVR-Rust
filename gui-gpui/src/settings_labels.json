@@ -300,10 +300,6 @@
     "label": "settings-general-interface-dev_mode-label"
   },
   {
-    "path": "behavior.errorTracking",
-    "label": "settings-interface-behavior-error_tracking-label"
-  },
-  {
     "path": "vmc.oscSettings.enabled",
     "label": "settings-osc-vmc-enable-label"
   },

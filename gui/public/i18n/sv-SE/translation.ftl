@@ -17,11 +17,6 @@ websocket-error-logs = Öppna logg-mappen
 
 ## Update notification
 
-version_update-title = Ny version tillgänglig: { $version }
-version_update-description = Att trycka på "{ version_update-update }" kommer ladda ner SlimeVR installatorn för dig
-version_update-update = Updatera
-version_update-close = Stäng
-
 ## Tips
 
 tips-find_tracker = Osäker vilken spårare är vilken? Dela en spårare och den kommer markera motsvarande spårare.
@@ -680,15 +675,6 @@ settings-general-interface-use_tray-label = Minimera till systemfältet
 settings-general-interface-discord_presence = Dela aktivitet på Discord
 settings-general-interface-discord_presence-description = Berättar för din Discord-klient att du använder SlimeVR tillsammans med antalet IMU-trackers du använder.
 settings-general-interface-discord_presence-label = Dela aktivitet på Discord
-settings-interface-behavior-error_tracking = Error samling via Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>Tillåter du samlingen av anonym error-data?</h1>
-    
-    <b>Vi samlar inte personlig information</b> så som din IP adress eller trådlösa referenser. Slimevr värdesätter din integritet!
-    
-    För att tillhandhålla den bästa användarupplevelsen, så samlar vi anonyma error-raporter, prestandamått och operativsystems-info. Detta hjälper oss upptäcka buggar och problem med Slimevr. Dessa rapporterna samlas via Sentry.io.
-settings-interface-behavior-error_tracking-label = Skicka errors till utväcklare
-
 ## Serial settings
 
 settings-serial = Seriell konsol
@@ -1239,14 +1225,6 @@ vrc_config-avatar_measurement_type-HEIGHT = Längd
 vrc_config-avatar_measurement_type-ARM_SPAN = Armspann
 
 ## Error collection consent modal
-
-error_collection_modal-title = Kan vi samla errors?
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    
-    Du kan ändra denna inställningen senare i beteende-sektionen av inställnings-sidan
-error_collection_modal-confirm = Jag tillåter.
-error_collection_modal-cancel = Jag vill inte
 
 ## Tracking checklist section
 

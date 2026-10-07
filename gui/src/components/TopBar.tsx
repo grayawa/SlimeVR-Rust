@@ -1,4 +1,4 @@
-import { ReactNode, useContext, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { NavLink, useMatch } from 'react-router-dom';
 import {
   RpcMessage,
@@ -13,8 +13,7 @@ import { MinimiseIcon } from './commons/icon/MinimiseIcon';
 import { SlimeVRIcon } from './commons/icon/SimevrIcon';
 import { ProgressBar } from './commons/ProgressBar';
 import { Typography } from './commons/Typography';
-import { DownloadIcon } from './commons/icon/DownloadIcon';
-import { DOCS_SITE, GH_REPO, VersionContext } from '@/App';
+import { DOCS_SITE, PROJECT_REPOSITORY } from '@/App';
 import classNames from 'classnames';
 import { QuestionIcon } from './commons/icon/QuestionIcon';
 import { useBreakpoint } from '@/hooks/breakpoint';
@@ -36,7 +35,7 @@ export function VersionTag() {
         'px-3 select-text cursor-pointer'
       )}
       onClick={() => {
-        const url = `https://github.com/${GH_REPO}/releases`;
+        const url = `https://github.com/${PROJECT_REPOSITORY}`;
         openUrl(url);
       }}
     >
@@ -56,7 +55,6 @@ export function TopBar({
   const { useRPCPacket, sendRPCPacket } = useWebsocketAPI();
   const connectedIMUTrackers = useAtomValue(connectedIMUTrackersAtom);
   const { config, setConfig, saveConfig } = useConfig();
-  const version = useContext(VersionContext);
   const [localIp, setLocalIp] = useState<string | null>(null);
   const [showConnectedTrackersWarning, setConnectedTrackerWarning] =
     useState(false);
@@ -168,21 +166,6 @@ export function TopBar({
                   )}
                 >
                   {localIp || 'unknown local ip'}
-                </div>
-              )}
-
-              {version && desktop.isDesktop && (
-                <div
-                  className="cursor-pointer"
-                  onClick={() => {
-                    const url =
-                      desktop.data().os.type === 'windows'
-                        ? 'https://slimevr.dev/download'
-                        : `https://github.com/${GH_REPO}/releases/latest`;
-                    openUrl(url);
-                  }}
-                >
-                  <DownloadIcon />
                 </div>
               )}
             </div>

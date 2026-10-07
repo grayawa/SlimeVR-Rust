@@ -12,11 +12,6 @@ websocket-connection_lost = З'єднання з сервером втрачен
 
 ## Update notification
 
-version_update-title = Доступна нова версія: { $version }
-version_update-description = Натискання "{ version_update-update }" почнеться завантаження SlimeVR installer.
-version_update-update = Оновлення
-version_update-close = Закрити
-
 ## Tips
 
 tips-find_tracker = Не знаєте який трекер вибирати? Потрясіть трекер і він підсвітить відповідний пункт.

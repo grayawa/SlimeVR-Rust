@@ -1,7 +1,7 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { desktopHost } from './index';
 
-/** Reuse the renderer's drag regions; Chromium's CSS rule is Electron-only. */
+/** Route the renderer's drag regions to the native Tauri window. */
 export function installWindowDragging() {
   if (desktopHost?.kind !== 'tauri') return;
   document.addEventListener('mousedown', (event) => {

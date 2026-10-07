@@ -473,7 +473,6 @@ export function Tooltip({
   spacing = 10,
 }: TooltipProps) {
   const childRef = useRef<HTMLElement | null>(null);
-  const isAndroid = window.__ANDROID__?.isThere();
 
   if (bindTo) {
     childRef.current = document.querySelector(bindTo);
@@ -481,9 +480,7 @@ export function Tooltip({
 
   let portal = null;
   if (variant === 'auto') {
-    portal = isAndroid ? (
-      <DrawerTooltip childRef={childRef}>{content}</DrawerTooltip>
-    ) : (
+    portal = (
       <FloatingTooltip
         preferedDirection={preferedDirection}
         blockedDirections={blockedDirections}

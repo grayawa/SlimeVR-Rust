@@ -17,11 +17,6 @@ websocket-error-logs = Открыть папку логов
 
 ## Update notification
 
-version_update-title = Доступна новая версия: { $version }
-version_update-description = Нажав «{ version_update-update }», вы загрузите установщик SlimeVR.
-version_update-update = Обновить
-version_update-close = Закрыть
-
 ## Tips
 
 tips-find_tracker = Не уверены, какой трекер какой? Встряхните его, и трекер выделится в списке.
@@ -736,13 +731,6 @@ settings-general-interface-discord_presence-message =
         [few] Используется { $amount } трекера
        *[many] Используется { $amount } трекеров
     }
-settings-interface-behavior-error_tracking = Сбор ошибок через Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>Даете ли вы согласие на сбор анонимных данных об ошибках?</h1>
-    <b>Мы не собираем личную информацию</b>, такую как ваш IP адрес или учётные данные беспроводной сети. SlimeVR ценит вашу конфиденциальность!
-    Чтобы обеспечить наилучший опыт для пользователей, мы собираем анонимные отчёты об ошибках, показатели производительности и информацию об операционной системе. Это помогает нам обнаруживать ошибки и проблемы со SlimeVR. Эти данные собираются с помощью Sentry.io.
-settings-interface-behavior-error_tracking-label = Отправлять ошибки разработчикам
-
 ## Serial settings
 
 settings-serial = Консоль
@@ -1499,14 +1487,6 @@ vrc_config-avatar_measurement_type-HEIGHT = Высота
 vrc_config-avatar_measurement_type-ARM_SPAN = Размах Рук
 
 ## Error collection consent modal
-
-error_collection_modal-title = Можем ли мы собирать данные об ошибках?
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    
-    Вы можете изменить эту настройку позже на странице настроек в разделе Поведение.
-error_collection_modal-confirm = Я согласен
-error_collection_modal-cancel = Я не согласен
 
 ## Tracking checklist section
 

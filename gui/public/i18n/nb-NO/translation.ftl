@@ -17,11 +17,6 @@ websocket-error-logs = Åpne opp "logs" mappen.
 
 ## Update notification
 
-version_update-title = Ny versjon tilgjengelig: { $version }
-version_update-description = Å klikke "{ version_update-update }" laster ned SlimeVR installatøren for deg.
-version_update-update = Oppdater
-version_update-close = Lukk
-
 ## Tips
 
 tips-find_tracker = Usikker på hvilken tracker som er hvilken? Rist en av dem! Den ristede trackeren vil bli fremhevet.
@@ -396,14 +391,6 @@ settings-general-interface-serial_detection-description = Dette valget viser en 
 settings-general-interface-serial_detection-label = Seriell enhets gjenkjenning
 
 ## Behavior settings
-
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>Samtykker du til innsamling av anonymiserte feildata?</h1>
-    
-    <b>Vi samler ikke inn personlig informasjon</b> slik som din IP-adresse eller trådløs-legitimasjon. SlimeVR verdsetter ditt personvern!
-    
-    For å gi deg den beste brukeropplevelsen, samler vi inn anonymiserte feilrapporter, ytelsesmålinger og informasjon om operativsystemet. Dette hjelper oss med å oppdage feil og problemer med SlimeVR. Disse beregningene samles inn via Sentry.io.
-settings-interface-behavior-error_tracking-label = Send feilmeldinger til utviklere
 
 ## Serial settings
 

@@ -29,7 +29,6 @@ interface InterfaceSettingsForm {
   behavior: {
     useTray: boolean;
     discordPresence: boolean;
-    errorTracking: boolean;
     bvhDirectory: string | null;
   };
   notifications: {
@@ -69,7 +68,6 @@ export function InterfaceSettings() {
         useTray: config?.useTray ?? defaultConfig.useTray ?? false,
         discordPresence:
           config?.discordPresence ?? defaultConfig.discordPresence,
-        errorTracking: config?.errorTracking ?? false,
         bvhDirectory: config?.bvhDirectory ?? defaultConfig.bvhDirectory,
       },
       developer: {
@@ -135,7 +133,6 @@ export function InterfaceSettings() {
 
       useTray: values.behavior.useTray,
       discordPresence: values.behavior.discordPresence,
-      errorTracking: values.behavior.errorTracking,
       bvhDirectory: values.behavior.bvhDirectory,
 
       debug: values.developer.enabled,
@@ -365,33 +362,6 @@ export function InterfaceSettings() {
                     ))}
                   </div>
                 )}
-              </div>
-
-              <Typography variant="section-title">
-                {l10n.getString('settings-interface-behavior-error_tracking')}
-              </Typography>
-              <div className="flex flex-col pt-1 pb-2">
-                <Localized
-                  id={
-                    'settings-interface-behavior-error_tracking-description_v2'
-                  }
-                  elems={{
-                    b: <b />,
-                  }}
-                >
-                  <Typography whitespace="whitespace-pre-line" />
-                </Localized>
-              </div>
-              <div className="grid sm:grid-cols-2 pb-4">
-                <CheckBox
-                  variant="toggle"
-                  control={control}
-                  outlined
-                  name="behavior.errorTracking"
-                  label={l10n.getString(
-                    'settings-interface-behavior-error_tracking-label'
-                  )}
-                />
               </div>
 
               {desktop.isDesktop && (

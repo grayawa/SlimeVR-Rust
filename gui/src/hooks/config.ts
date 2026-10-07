@@ -59,7 +59,6 @@ export interface Config {
   mirrorView: boolean;
   assignMode: AssignMode | null;
   discordPresence: boolean;
-  errorTracking: boolean | null;
   vrcMutedWarnings: string[];
   bvhDirectory: string | null;
   homeLayout: 'default' | 'table';
@@ -90,7 +89,6 @@ export const defaultConfig: Config = {
   mirrorView: true,
   assignMode: null,
   discordPresence: false,
-  errorTracking: null,
   vrcMutedWarnings: [],
   devSettings: defaultDevSettings,
   bvhDirectory: null,

@@ -267,10 +267,6 @@ impl SlimeView {
                         "discordPresence",
                         "settings-general-interface-discord_presence-label",
                     ),
-                    (
-                        "errorTracking",
-                        "settings-interface-behavior-error_tracking-label",
-                    ),
                 ] {
                     page = page.child(self.pref_toggle(key, label, cx));
                 }
@@ -616,18 +612,6 @@ impl SlimeView {
                     if !delay.is_finite()||delay<0.0{this.ui_error=Some(this.text("native-invalid-number"));cx.notify();return;}
                     this.rpc("ChangeKeybindRequest",json!({"keybind":{"keybind_id":id,"keybind_value":value,"keybind_delay":delay}}),cx);
                 }))));
-        }
-        page=page.child(Button::new("software-updates").label(self.text("native-check-updates")).disabled(self.http_pending.contains("software-release")).on_click(cx.listener(|this,_,_,cx|{this.http_job("software-release",||slimevr_gpui::firmware::http("GET","https://api.github.com/repos/SlimeVR/SlimeVR-Server/releases/latest",None),cx);}))) ;
-        if let Some(release) = self.http.get("software-release") {
-            page = page.child(release["name"].as_str().unwrap_or("").to_owned());
-            if let Some(url) = release["html_url"].as_str() {
-                let url = url.to_owned();
-                page = page.child(
-                    Button::new("release-page")
-                        .label(self.text("native-open"))
-                        .on_click(move |_, _, cx| cx.open_url(&url)),
-                );
-            }
         }
         page = page
             .child(self.settings_extra_fields(Section::Advanced, window, cx))

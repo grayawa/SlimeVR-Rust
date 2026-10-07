@@ -39,7 +39,7 @@ export const gui = [
         ...globals.jest,
       },
     },
-    files: ['{electron,src}/**/*.{js,jsx,ts,tsx,json}'],
+    files: ['src/**/*.{js,jsx,ts,tsx,json}'],
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       '@stylistic': stylistic,

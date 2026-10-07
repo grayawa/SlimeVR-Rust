@@ -1,4 +1,4 @@
-//! Discord IPC uses the same application ID and activity fields as the Electron host.
+//! Discord IPC uses the same application ID and activity fields as the original SlimeVR desktop host.
 use serde::Deserialize;
 use serde_json::{Value, json};
 use tokio::{

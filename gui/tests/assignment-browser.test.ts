@@ -151,7 +151,6 @@ test(
           JSON.stringify({
             lang: 'en',
             doneOnboarding: true,
-            errorTracking: false,
             watchNewDevices: false,
           })
         );

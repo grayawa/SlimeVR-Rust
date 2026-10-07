@@ -40,7 +40,7 @@ export function WifiCredsPage() {
             />
             <div
               className={classNames(
-                'flex flex-col gap-3 p-5 rounded-xl sentry-mask',
+                'flex flex-col gap-3 p-5 rounded-xl',
                 !state.alonePage && 'bg-background-70',
                 state.alonePage && 'bg-background-60'
               )}

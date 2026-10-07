@@ -29,14 +29,13 @@ pnpm tauri:rust:dev
 
 Tauri 参数：
 
-- `--backend auto`：默认；优先使用发现的 Rust 可执行文件，再尝试 Java。
+- `--backend auto`：默认；使用发现的 Rust 可执行文件或连接已有服务。
 - `--backend rust`：明确使用 Rust，找不到时显示启动错误。
 - `--rust-server <路径>`：指定 Rust 可执行文件。
 - `--config <路径>`：指定原版 YAML 配置文件；旧 `--rust-state` 参数仍作为别名接受。
 - `--pose-config <路径>`：导入初始姿态配置。
 - `--no-steamvr` / `--steamvr-endpoint <路径>`：关闭或指定 SteamVR 桥接端点。
 - `--bindings-provider <路径>` / `--no-bindings-provider`：指定或关闭原版辅助程序。
-- `--backend java --server-jar <路径>`：保留 Java 启动方式。
 - `--no-server`：连接已运行的服务。
 
 Rust 查找范围为应用资源目录、GUI 可执行文件同目录、`--path` 目录；开发构建还查找仓库 `server-rust/target/release` 和 `debug`。本地 21110 端口已占用时复用已有服务。GUI 自己启动的子进程在正常退出时回收，外部已运行的服务不会被停止。
@@ -49,7 +48,7 @@ Rust 查找范围为应用资源目录、GUI 可执行文件同目录、`--path`
 pnpm tauri:rust:build
 ```
 
-Windows 改用 `src-tauri/tauri.rust.windows.conf.json`。两个配置分别打包无扩展名和 `.exe` 后端；发布各平台安装包时应在对应平台构建。已有 `tauri.server.conf.json` 仍可打包 Java JAR。
+Windows 改用 `src-tauri/tauri.rust.windows.conf.json`。两个配置分别打包无扩展名和 `.exe` 后端；发布各平台安装包时应在对应平台构建。旧 Java 打包配置已移除。
 
 ## 已接通的功能
 

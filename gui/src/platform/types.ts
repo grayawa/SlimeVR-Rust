@@ -1,6 +1,6 @@
 import type { LogLevel } from './logging';
 
-/** Desktop capabilities shared by the renderer and host adapters. No Electron types. */
+/** Desktop capabilities shared by the renderer and Tauri host. */
 export type ServerStatusEvent = {
   type: 'stdout' | 'stderr' | 'error' | 'terminated' | 'other';
   message: string;
@@ -69,17 +69,10 @@ export interface DesktopAPI {
   ghGet<T extends GHGet>(options: T): Promise<GHReturn[T['type']]>;
   setPresence?(options: DiscordPresence): void;
   getInstallDir(): Promise<string>;
-  isSteam(): Promise<boolean>;
 }
 
 export type DesktopHost = {
-  kind: 'electron' | 'tauri';
+  kind: 'tauri';
   api: DesktopAPI;
   capabilities: { tray: boolean; discordPresence: boolean };
 };
-
-declare global {
-  interface Window {
-    readonly electronAPI?: DesktopAPI;
-  }
-}

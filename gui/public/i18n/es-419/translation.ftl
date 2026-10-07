@@ -17,11 +17,6 @@ websocket-error-logs = Abrir la carpeta de registros
 
 ## Update notification
 
-version_update-title = Nueva versión disponible: { $version }
-version_update-description = Presionando «{ version_update-update }» descargara un instalador de SlimeVR para usar.
-version_update-update = Actualizar
-version_update-close = Cerrar
-
 ## Tips
 
 tips-find_tracker = ¿No estás seguro de cuál sensor es cuál? Agita un sensor y se resaltará donde está asignado.
@@ -776,14 +771,6 @@ settings-general-interface-discord_presence-message =
         [many] Usando { $amount } de sensores
        *[other] Usando { $amount } sensores
     }
-settings-interface-behavior-error_tracking = Recopilación de errores a través de Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>Consientes a la recopilación de datos de errores anonimizados?</h1>
-
-    <b>No recopilamos información personal</b> como tu dirección IP o credenciales del Wi-Fi. ¡SlimeVR respeta tu privacidad!
-
-    Para proveer la mejor experiencia de usuario, recopilamos reportes de errores anonimizados, métricas de rendimiento, e información del sistema operativo. Esto nos ayuda a detectar errores y problemas con SlimeVR. Estas métricas son recopiladas a través de Sentry.io.
-settings-interface-behavior-error_tracking-label = Enviar errores a los desarrolladores
 settings-interface-behavior-bvh_directory = Carpeta para guardar grabaciones de BVH
 settings-interface-behavior-bvh_directory-description = Elige una carpeta para guardar tus grabaciones BVH en lugar de tener que elegir dónde guardarlas cada vez.
 settings-interface-behavior-bvh_directory-label = Carpeta de grabaciones BVH
@@ -1671,14 +1658,6 @@ vrc_config-avatar_measurement_type-HEIGHT = Altura
 vrc_config-avatar_measurement_type-ARM_SPAN = Longitud del brazo
 
 ## Error collection consent modal
-
-error_collection_modal-title = ¿Podemos recopilar errores?
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-
-    Tu puedes cambiar esta configuración más tarde en la sección de comportamiento de la pagina de configuración.
-error_collection_modal-confirm = Acepto
-error_collection_modal-cancel = No quiero
 
 ## Tracking checklist section
 

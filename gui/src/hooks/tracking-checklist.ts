@@ -10,7 +10,6 @@ import {
 } from 'solarxr-protocol';
 import { useWebsocketAPI } from './websocket-api';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import * as Sentry from '@sentry/react';
 
 export const trackingchecklistIdtoLabel: Record<TrackingChecklistStepId, string> = {
   [TrackingChecklistStepId.UNKNOWN]: '',
@@ -186,9 +185,7 @@ export function provideTrackingChecklist() {
       }
       return curr;
     });
-    Sentry.metrics.count(ignore ? 'mute_checklist_step' : 'unmute_checklist_step', 1, {
-      attributes: { step: TrackingChecklistStepId[step], session },
-    });
+
     if (session) {
       // Force refresh of the flightlist when ignoring a step as the filtering
       // is done only in one place to simplify the data flow

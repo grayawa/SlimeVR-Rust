@@ -1,5 +1,5 @@
 {
-  "name": "slimevr",
+  "name": "slimevr-rust",
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.33.0",
@@ -8,10 +8,9 @@
     "gui"
   ],
   "scripts": {
-    "gui": "pnpm run update-solarxr && cd gui && pnpm run gui",
+    "gui": "pnpm tauri:rust:dev",
     "lint:fix": "cd gui && pnpm lint:fix",
-    "skipbundler": "cd gui && pnpm run skipbundler",
-    "build": "cd gui && pnpm build",
+    "build": "pnpm tauri:rust:build",
     "update-solarxr": "cd solarxr-protocol && pnpm run build",
     "prepare": "husky && pnpm run update-solarxr",
     "preinstall": "npx only-allow pnpm",

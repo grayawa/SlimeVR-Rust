@@ -1,5 +1,7 @@
 # SlimeVR GPUI 原生前端
 
+可选的 [SteamVR 仪表盘面板](../docs/rust-steamvr-dashboard.zh-CN.md) 提供重置、骨架预览和节点信息，使用 `vr-dashboard` 功能构建为独立附加程序。
+
 使用 [GPUI Kit](https://gpui-kit.com/)（`longbridge/gpui-kit`，锁定 0.7.1）和 Rust 实现桌面界面，连接已有 Rust 后端。不需要 Electron、浏览器运行时或 WebView2。主页和原侧栏入口、顺序及设置分组保留。
 
 功能对照、验证结果和实机测试步骤见 [完整性与测试说明](../docs/rust-gpui-functional-parity.zh-CN.md)。VRChat 设置警告在设置区域打开，支持返回实际来源，并保留页面滚动位置及未保存编辑。

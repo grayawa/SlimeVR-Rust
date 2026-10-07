@@ -2,6 +2,18 @@ name: GPUI native frontend
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/rust-gpui.yml'
+      - 'gui-gpui/**'
+      - 'server-rust/**'
+      - 'bindings-provider/**'
+      - 'solarxr-protocol/**'
+      - '.gitmodules'
+
+concurrency:
+  group: rust-gpui-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -9,6 +21,10 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     env:
       CARGO_INCREMENTAL: '0'
     steps:
@@ -17,17 +33,27 @@ jobs:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
       - uses: lukka/get-cmake@latest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            gui-gpui -> target
+            server-rust -> target
+          key: windows-gpui
+          cache-on-failure: true
       - name: Communication and state checks
         run: |
           cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked
-          cargo clippy --manifest-path gui-gpui/Cargo.toml --all-targets --locked -- -D warnings
+          cargo test --manifest-path gui-gpui/overlay-runtime/Cargo.toml
+          cargo clippy --manifest-path gui-gpui/Cargo.toml --features vr-dashboard --all-targets --locked -- -D warnings
       - name: Build native Windows frontend
         run: |
           cargo build --manifest-path server-rust/Cargo.toml --release --locked --bin slimevr-server
           cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --bin slimevr-gpui --bin slimevr-gpui-components
+          cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --features vr-dashboard --bin slimevr-gpui-overlay
           cargo build --manifest-path gui-gpui/Cargo.toml --release --no-default-features --locked --bin slimevr-gpui-probe
           python gui-gpui/scripts/audit-windows-shaders.py gui-gpui/target/release/slimevr-gpui.exe
           python gui-gpui/scripts/audit-windows-shaders.py gui-gpui/target/release/slimevr-gpui-components.exe
+          python gui-gpui/scripts/audit-windows-shaders.py gui-gpui/target/release/slimevr-gpui-overlay.exe
       - name: Real backend loopback checks
         shell: pwsh
         run: |
@@ -44,4 +70,13 @@ jobs:
             gui-gpui/README.zh-CN.md
             server-rust/target/release/slimevr-server.exe
             docs/rust-gpui-functional-parity.zh-CN.md
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: slimevr-dashboard-windows-x64
+          path: |
+            gui-gpui/target/release/slimevr-gpui-overlay.exe
+            bindings-provider/openvr/bin/win64/openvr_api.dll
+            bindings-provider/openvr/LICENSE
+            docs/rust-steamvr-dashboard.zh-CN.md
           if-no-files-found: error

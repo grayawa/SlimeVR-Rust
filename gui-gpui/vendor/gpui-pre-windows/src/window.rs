@@ -258,6 +258,10 @@ impl WindowsWindowInner {
     /// has no notification for a window fully covered by other windows, so
     /// that case reports `Visible`.
     pub(crate) fn visibility(&self) -> WindowVisibility {
+        #[cfg(feature = "overlay-output")]
+        if crate::overlay_output::mode(self.hwnd).is_some_and(|(active, _)| active) {
+            return WindowVisibility::Visible;
+        }
         let is_visible =
             unsafe { IsWindowVisible(self.hwnd).as_bool() && !IsIconic(self.hwnd).as_bool() };
         if is_visible {
@@ -581,6 +585,12 @@ impl WindowsWindow {
             }
             unsafe { SetWindowPlacement(hwnd, &placement)? };
         } else {
+            // Offscreen dashboard hosts must receive WM_SIZE even though they
+            // never call ShowWindow. Otherwise the renderer remains 1x1 and
+            // OpenVR stretches its white clear pixel across the whole panel.
+            #[cfg(feature = "overlay-output")]
+            crate::hidden_window::apply_bounds(hwnd, placement.rcNormalPosition)
+                .context("initializing hidden window bounds")?;
             this.state.initial_placement.set(Some(WindowOpenStatus {
                 placement,
                 state: WindowOpenState::Windowed,

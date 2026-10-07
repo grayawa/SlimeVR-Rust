@@ -280,18 +280,10 @@ impl SlimeView {
                 }))
             });
         if let Some(feed) = &self.snapshot.feed {
-            for assigned in [true, false] {
-                let trackers: Vec<_> = feed
-                    .trackers
-                    .iter()
-                    .filter(|t| {
-                        (!t.computed
-                            || self.preferences.value["debug"] == true
-                                && self.preferences.value["devSettings"]["filterSlimesAndHMD"]
-                                    != true)
-                            && (t.body != 0) == assigned
-                    })
-                    .collect();
+            let list =
+                slimevr_gpui::tracker_list::Settings::from_preferences(&self.preferences.value);
+            for (index, trackers) in list.groups(feed).into_iter().enumerate() {
+                let assigned = index == 0;
                 if trackers.is_empty() {
                     continue;
                 }
@@ -300,16 +292,12 @@ impl SlimeView {
                 } else {
                     "native-unassigned-trackers"
                 };
-                let table = self.preferences.value["homeLayout"] == "table";
+                let table = list.table;
                 let mut cards = div()
                     .flex()
                     .gap_3()
                     .when(table, |d| d.flex_col())
                     .when(!table, |d| d.flex_row().flex_wrap());
-                let mut trackers = trackers;
-                if self.preferences.value["devSettings"]["sortByName"] == true {
-                    trackers.sort_by(|a, b| a.name.cmp(&b.name));
-                }
                 for tracker in trackers {
                     cards = cards.child(self.tracker(tracker, false, cx));
                 }

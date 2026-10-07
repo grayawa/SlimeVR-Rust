@@ -26,7 +26,8 @@ def reference_checkout(project_root: Path) -> tuple[Path, str]:
     if (cache / "server/core/src/main/java").is_dir():
         return cache, REFERENCE_COMMIT
     archive = subprocess.run(
-        ["git", "archive", "--format=tar", REFERENCE_COMMIT, "server"],
+        ["git", "-c", "core.autocrlf=false", "-c", "core.eol=lf",
+         "archive", "--format=tar", REFERENCE_COMMIT, "server"],
         cwd=project_root, capture_output=True, check=False,
     )
     if archive.returncode:

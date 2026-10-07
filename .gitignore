@@ -1,6 +1,3 @@
-# Ignore Gradle project-specific cache directory
-.gradle
-
 # Syncthing ignore file
 .stignore
 
@@ -33,9 +30,8 @@ stats.html
 # kotlin stuff
 /.kotlin
 
-# ignore gradle build folder
+# Build outputs
 build/
-server/desktop/config/
 
 # created by clangd for index cache
 .cache/

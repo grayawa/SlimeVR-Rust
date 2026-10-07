@@ -1,6 +1,6 @@
 # SlimeVR Rust
 
-基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri 前端。原 Java/Kotlin 和 Electron 代码保留，便于行为对照和兼容性验证。
+基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri / Electron 宿主。旧 Java/Kotlin 服务与 Gradle 工程已移除；算法对照数据和生成工具仍保留，参考源码从固定历史版本读取。见 [Java 工程清理说明](docs/rust-only-backend.zh-CN.md)。
 
 这是独立开发的衍生项目。上游基线为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`，原作者、许可证及商标说明保留在下文。
 
@@ -48,7 +48,7 @@ pnpm install --frozen-lockfile
 pnpm tauri:rust:build
 ```
 
-GitHub Actions 中的 `Rust and Tauri test bundles` 和 `GPUI native frontend` 支持手动构建。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
+GitHub Actions 中的 Rust / Tauri、GPUI 和 SteamVR Dashboard 工作流支持手动构建和相关 PR 检查，详见 [CI 说明](docs/rust-ci.zh-CN.md)。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
 
 ## 上游项目说明
 

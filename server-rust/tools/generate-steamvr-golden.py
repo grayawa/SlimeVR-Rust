@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from reference_sources import reference_checkout, source_path
 import re
 import shutil
 import subprocess
@@ -11,7 +12,8 @@ import tempfile
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufMessages.java'
+REFERENCE_ROOT, REFERENCE_COMMIT = reference_checkout(ROOT)
+SOURCE = REFERENCE_ROOT / 'server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufMessages.java'
 FIXTURES = ROOT / 'server-rust/crates/slimevr-server/tests/fixtures'
 HARNESS = r'''
 import dev.slimevr.desktop.platform.ProtobufMessages.*;

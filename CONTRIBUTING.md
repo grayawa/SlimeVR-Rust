@@ -1,124 +1,53 @@
-# Contributing to SlimeVR
+# Contributing to SlimeVR Rust
 
-Please follow general contribution guidelines: [CONTRIBUTING.md](https://github.com/SlimeVR/.github/blob/main/profile/CONTRIBUTING.md).
+This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with Tauri and Electron hosts. The original Java / Gradle project has been removed. See [README.md](README.md) for project entry points and [CI checks](docs/rust-ci.zh-CN.md) for pull request validation.
 
-This document describes essential knowledge required to contribute to the SlimeVR Server.
+## Prerequisites
 
-### Prerequisites
+- Git with recursive submodules.
+- Rust 1.88+ for the backend; Rust 1.92+ for GPUI.
+- Node.js from `.node-version` and pnpm from `package.json` for the React hosts.
+- CMake and a C++23 compiler for OpenVR helpers. Windows builds require Visual Studio C++ Build Tools and the Windows SDK; Tauri additionally uses WebView2.
+- Platform dependencies listed in [the GPUI guide](gui-gpui/README.zh-CN.md) and [the Tauri guide](gui/README.tauri.md).
 
-- [Git](https://git-scm.com/downloads)
-- [Java v17+](https://adoptium.net/temurin/releases/)
-- [Node.js v16.9+](https://nodejs.org) (We recommend the use of `nvm` instead of installing Node.js directly)
+## Build and check
 
-## Cloning the code
-First, clone the codebase using git in a terminal in the folder you want.
-
-```bash
-git clone --recursive https://github.com/SlimeVR/SlimeVR-Server.git
+```sh
+git submodule update --init --recursive
+cargo test --manifest-path server-rust/Cargo.toml --workspace --locked
+cargo clippy --manifest-path server-rust/Cargo.toml --workspace --all-targets --locked -- -D warnings
+cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked
+cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --bin slimevr-gpui
 ```
 
-Now you can open the codebase in [IDEA](https://www.jetbrains.com/idea/download/) (Recommended; VSCode and Eclipse also work but have limited Kotlin support).
+For the shared React GUI:
 
-
-## Building the code
-
-### Java (server)
-
-The Java code is built with `gradle`, a CLI tool that manages java projects and their
-dependencies.
-- You can run the server by running `./gradlew run` in your IDE's terminal.
-- To compile the code, run `./gradlew shadowJar`. The result will
-be at `server/build/libs/slimevr.jar` (you can ignore `server.jar`).
-
-(Note: Your IDE may be able to do all of the above for you.)
-
-### Electron (gui)
-
-- Activate corepack (included with Node.JS) via `corepack enable` (might require administrator permissions)
-- Run `pnpm i` in your IDE's terminal to download and install dependencies.
-- To launch the GUI in dev mode, run `pnpm gui`.
-- Finally, to compile for production, run `pnpm package:build`. The result
-will be at `dist/artifacts/` content will change depending of the platform.
-
-## Code style
-
-### Java (server)
-
-The Java code is auto-formatted with [spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle).
-Code is checked for autoformatting whenever you build, but you can also run
-`./gradlew spotlessCheck` if you prefer.
-
-To auto-format your Java and Kotlin code from the command line, you can run `./gradlew spotlessApply`.
-We recommend installing support for spotless in your IDE, and formatting
-whenever you save a file to make things easy.
-
-If you need to prevent autoformatting for a select region of code, use
-`// @formatter:off` and `// @formatter:on`
-
-#### Setting up spotless for IntelliJ IDEA
-* Install https://plugins.jetbrains.com/plugin/18321-spotless-gradle
-* Add a keyboard shortcut for `Code` > `Reformat Code with Spotless`
-* They are working on support to do this on save without a keybind
-  [here](https://github.com/ragurney/spotless-intellij-gradle/issues/8)
-
-#### Setting up spotless for VSCode
-* Install the `richardwillis.vscode-spotless-gradle` extension
-* Add the following to your workspace settings, at `.vscode/settings.json`:
-```json
-"spotlessGradle.format.enable": true,
-"editor.formatOnSave": true,
-"[java]": {
-	"editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-}
+```sh
+corepack enable
+pnpm install --frozen-lockfile
+pnpm --dir gui lint
+pnpm --dir gui test:desktop
+pnpm --dir gui test:backend
+pnpm tauri:rust:dev
+pnpm tauri:rust:build
 ```
 
-#### Setting up Eclipse autoformatting
-Import the formatting settings defined in `spotless.xml`, like this:
-* Go to `File > Properties`, then `Java Code Style > Formatter`
-* Check `Enable project specific settings`
-* Click `Import`, then open `spotless.xml`, then `Apply`
-* Go to `Java Editor > Save Actions`
-* Select `Enable project specific settings`, `Perform the selected actions on save`,
-`Format source code`, `Format all lines`
+Backend communication tests use `server-rust/target/debug/slimevr-server`; build it first or set `SLIMEVR_RUST_BINARY` to an existing executable.
 
-Eclipse will only do a subset of the checks in `spotless`, so you may still want to do
-`./gradlew spotlessApply` if you ever see an error from spotless.
+For Electron development, build the Rust backend and use `pnpm gui`; `--rust-server`, `--path`, `--config` and `--no-server` control backend startup. Electron packaging uses the release Rust binary and the driver / bindings resources prepared by `pnpm --dir gui tauri:prepare`.
 
-### Electron (gui)
+Format each Rust workspace with `cargo fmt --manifest-path <Cargo.toml>`. React and Electron use ESLint and Prettier. Keep behavior changes covered by relevant tests; real SteamVR / tracker validation is documented separately.
 
-We use ESLint and Prettier to format GUI code.
-- First, go into the GUI's directory with your terminal by running `cd gui`.
-- To check code formatting, run `pnpm run lint`.
-- To fix code formatting, run `pnpm run lint:fix` and `pnpm run format`
+## Upstream behavior references
 
-Don't forget to run `cd ..` to return to the root directory.
+Ordinary Rust tests use committed golden fixtures and require no JVM. To regenerate upstream references, see [reference source handling](docs/rust-only-backend.zh-CN.md). Test-only Kotlin adapters are kept separately from production code.
 
 ## SolarXR Protocol
 
-SolarXR is used to communicate between the server (backend) and GUI (frontend).
-It can also be used to communicate to third party applications.
+SolarXR is the WebSocket / FlatBuffers protocol shared by the backend and GUI. Update its schema in the `solarxr-protocol` submodule and regenerate the needed language bindings using its upstream scripts and documented `flatc` version. Commit protocol changes in the submodule and then update the submodule reference here.
 
-When touching SolarXR:
-- You will need `flatc`. To know which version to get, refer to
-[SolarXR's README](https://github.com/SlimeVR/SolarXR-Protocol/blob/main/README.md#flatc)
-- The only files you should edit are in the `schema` directory.
-- After editing files, you should run `cd solarxr-protocol`, then either run
-`./generate-flatbuffer.ps1` (Windows) or `./generate-flatbuffer.sh` (Linux/OSX)
-- Make sure to commit your changes inside the submodule.
-- To make sure the gui use the latest generated code, run `pnpm i`.
+## Licensing and upstream contributions
 
-## Code Licensing
-SlimeVR uses dual MIT and Apache-2.0 license. Be sure that any code that you reference,
-or dependencies you add, are compatible with these licenses. For example, `GPL-v3` is
-not compatible because it requires any and all code that depends on it to *also* be
-licensed under `GPL-v3`.
+Preserve the original MIT / Apache-2.0 license files, copyright notices and applicable dependency licenses. See [README.md](README.md) and [TRADEMARK.md](TRADEMARK.md).
 
-## Discord
-We use discord *a lot* to coordinate and discuss development. Come join us at
-https://discord.gg/SlimeVR!
-
-## Use of AI
-We DO NOT accept contributions that are generated with AI (for example, "vibe-coding").
-
-If you do use AI, and you believe your usage of AI is reasonable, you must clearly disclose
-how you used AI in your submission.
+When submitting changes to SlimeVR upstream, follow [its contribution policies](https://github.com/SlimeVR/.github/blob/main/profile/CONTRIBUTING.md) and repository instructions.

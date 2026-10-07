@@ -10,11 +10,13 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from reference_sources import reference_checkout, source_path
 import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'server/core/src/main/java'
+REFERENCE_ROOT, REFERENCE_COMMIT = reference_checkout(ROOT)
+SOURCE = REFERENCE_ROOT / 'server/core/src/main/java'
 RUST = ROOT / 'server-rust'
 ADAPTERS = {
     'Bone.kt': '''package dev.slimevr.tracking.processor
@@ -157,8 +159,8 @@ class HumanSkeleton(val bones: Map<BoneType, Bone>, val isTrackingLeftArmFromCon
         input_path = temp / 'input.json'
         input_path.write_text(json.dumps(inputs))
         result = json.loads(subprocess.check_output(['java', '-cp', str(classes) + ':' + cp, 'BvhOracleKt', str(input_path)]))
-    result['reference_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-    result['source_sha256'] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files + [human]}
+    result['reference_commit'] = REFERENCE_COMMIT
+    result['source_sha256'] = {source_path(p, ROOT, REFERENCE_ROOT): hashlib.sha256(p.read_bytes()).hexdigest() for p in files + [human]}
     result['method'] = 'Unmodified Kotlin BVH exporter and TickReducer; verbatim HumanSkeleton assembly methods; original cached ktmath; canonical FK snapshot adapters.'
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + '\n')

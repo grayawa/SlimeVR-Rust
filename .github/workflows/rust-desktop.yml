@@ -62,6 +62,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Rust checks
         run: |
+          python -m unittest discover -s server-rust/tools -p test_reference_sources.py
           cargo test --manifest-path server-rust/Cargo.toml --workspace --locked
           cargo clippy --manifest-path server-rust/Cargo.toml --workspace --all-targets --locked -- -D warnings
       - name: Frontend checks

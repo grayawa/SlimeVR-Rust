@@ -28,6 +28,7 @@ pub mod battery;
 pub mod checklist;
 pub mod dashboard;
 pub mod overlay;
+pub mod tracker_list;
 
 pub mod settings_layout;
 

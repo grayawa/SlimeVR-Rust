@@ -804,7 +804,9 @@ export function GeneralSettings() {
               variant="toggle"
               outlined
               control={control}
-              disabled={rustBackend && !backendInfo.capabilities.includes("hid")}
+              disabled={
+                rustBackend && !backendInfo.capabilities.includes('hid')
+              }
               name="hidSettings.trackersOverHID"
               label={l10n.getString(
                 'settings-general-tracker_mechanics-trackers_over_usb-enabled-label'

@@ -32,6 +32,8 @@ native-dashboard-resetting = 正在重置
 native-dashboard-reset-hint = 请保持校准姿势，直到重置完成。
 native-dashboard-demo = 示例数据 · 重置按钮不会操作后端
 native-dashboard-exit = 退出面板
+native-dashboard-panel-size = 面板宽度
+native-dashboard-fit-skeleton = 适合窗口
 
 # Generated field fallback labels
 native-field-vrc_osc-trackers-head = Head

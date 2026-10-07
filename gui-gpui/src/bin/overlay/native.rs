@@ -66,7 +66,17 @@ impl Host {
                 {
                     // SAFETY: renderer keeps the shared texture alive, on this UI thread.
                     let result = runtime.submit(texture.as_raw(), w, h);
-                    frame_dimensions.set([w as f32, h as f32]);
+                    if result.is_ok() {
+                        let dimensions = [w as f32, h as f32];
+                        if frame_dimensions.get() != dimensions {
+                            slimevr_gpui::logging::write(
+                                LogLevel::Info,
+                                "overlay-texture",
+                                &format!("Submitted frame: {w}x{h}"),
+                            );
+                        }
+                        frame_dimensions.set(dimensions);
+                    }
                     let message = result.err();
                     if *error.borrow() != message {
                         if let Some(message) = &message {
@@ -176,6 +186,14 @@ impl Host {
     }
     pub fn texture_error(&self) -> Option<String> {
         self.submission_error.borrow().clone()
+    }
+    pub fn set_width(&mut self, width: f32) -> Result<(), String> {
+        if let Some(runtime) = self.session.borrow_mut().as_mut() {
+            runtime.set_width(width)?;
+        }
+        // Keep the selected width for delayed SteamVR connection attempts too.
+        self.width = width;
+        Ok(())
     }
 }
 fn set_thumbnail(runtime: &mut Runtime) {

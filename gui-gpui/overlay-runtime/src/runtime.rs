@@ -18,6 +18,7 @@ unsafe extern "C" {
     ) -> *mut c_void;
     fn svro_close(session: *mut c_void);
     fn svro_visible(session: *mut c_void) -> i32;
+    fn svro_set_width(session: *mut c_void, width: f32) -> i32;
     fn svro_adapter(session: *mut c_void) -> i32;
     fn svro_poll(session: *mut c_void, event: *mut Event) -> i32;
     fn svro_submit(session: *mut c_void, texture: *mut c_void, width: u32, height: u32) -> i32;
@@ -69,6 +70,18 @@ impl Runtime {
     pub fn visible(&self) -> bool {
         // SAFETY: session is live and only accessed from its owning thread.
         unsafe { svro_visible(self.session.as_ptr()) != 0 }
+    }
+    pub fn set_width(&mut self, width: f32) -> Result<(), String> {
+        if !width.is_finite() || !(0.5..=3.).contains(&width) {
+            return Err("Invalid overlay width".into());
+        }
+        // SAFETY: session is live and owned by this UI thread.
+        let code = unsafe { svro_set_width(self.session.as_ptr(), width) };
+        if code == 0 {
+            Ok(())
+        } else {
+            Err(format!("SteamVR overlay resize failed ({code})"))
+        }
     }
     pub fn adapter_index(&self) -> Option<u32> {
         // SAFETY: the owned IVRSystem is live on this thread.

@@ -21,6 +21,8 @@ mod util;
 mod vsync;
 mod window;
 #[cfg(feature = "overlay-output")]
+mod hidden_window;
+#[cfg(feature = "overlay-output")]
 pub mod overlay_output;
 mod wrapper;
 

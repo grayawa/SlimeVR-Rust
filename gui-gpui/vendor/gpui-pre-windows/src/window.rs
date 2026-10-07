@@ -585,6 +585,12 @@ impl WindowsWindow {
             }
             unsafe { SetWindowPlacement(hwnd, &placement)? };
         } else {
+            // Offscreen dashboard hosts must receive WM_SIZE even though they
+            // never call ShowWindow. Otherwise the renderer remains 1x1 and
+            // OpenVR stretches its white clear pixel across the whole panel.
+            #[cfg(feature = "overlay-output")]
+            crate::hidden_window::apply_bounds(hwnd, placement.rcNormalPosition)
+                .context("initializing hidden window bounds")?;
             this.state.initial_placement.set(Some(WindowOpenStatus {
                 placement,
                 state: WindowOpenState::Windowed,

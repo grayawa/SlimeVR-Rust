@@ -1,8 +1,38 @@
 //! Small dashboard policy, shared by the VR host and desktop preview.
 use crate::{
     client::{Connection, Snapshot},
+    desktop::{Paths, Preferences},
     protocol::ResetKind,
 };
+
+pub const DEFAULT_WIDTH: f32 = 1.8;
+pub const DEFAULT_SKELETON_ZOOM: f32 = 0.7;
+pub const STORE_KEY: &str = "steamvrDashboard";
+pub fn valid_width(width: f32) -> bool {
+    width.is_finite() && (0.5..=3.).contains(&width)
+}
+pub fn saved_width(settings: &serde_json::Value) -> f32 {
+    settings["widthMeters"]
+        .as_f64()
+        .map(|w| w as f32)
+        .filter(|w| valid_width(*w))
+        .unwrap_or(DEFAULT_WIDTH)
+}
+/// Reload the latest desktop preferences before changing only the dashboard
+/// key: an older dashboard snapshot must not overwrite a GUI layout change.
+pub fn save_width(paths: &Paths, width: f32) -> Result<Preferences, String> {
+    if !valid_width(width) {
+        return Err("Overlay width must be between 0.5 and 3 meters".into());
+    }
+    let mut preferences = Preferences::load(paths)?;
+    let mut settings = preferences.store_value(STORE_KEY).clone();
+    if !settings.is_object() {
+        settings = serde_json::json!({});
+    }
+    settings["widthMeters"] = serde_json::json!(width);
+    preferences.save_store_value(STORE_KEY, settings)?;
+    Ok(preferences)
+}
 
 pub fn feed_policy(visible: bool) -> (u16, u16, bool) {
     if visible {

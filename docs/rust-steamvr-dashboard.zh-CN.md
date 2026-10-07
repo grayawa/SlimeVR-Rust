@@ -17,7 +17,7 @@
 
 ```powershell
 .\SlimeVR-Overlay.exe --url ws://127.0.0.1:21110 --locale zh-Hans
-.\SlimeVR-Overlay.exe --width-meters 1.3
+.\SlimeVR-Overlay.exe --width-meters 2.0
 .\SlimeVR-Overlay.exe --openvr-dll "D:\SlimeVR-Overlay\openvr_api.dll"
 ```
 
@@ -49,13 +49,22 @@ GitHub Actions：打开仓库 **Actions → SteamVR dashboard Windows bundle →
 
 首次连接会提交一帧，供仪表盘首次选择时显示；随后按可见性更新。隐藏时宿主事件检查降至每 200ms 一次。独立锁防止重复启动，同一后端仍可同时连接桌面界面。
 
+面板默认宽度为 **1.8 米**。顶部的“面板宽度”加减按钮以 0.1 米为步长实时调整，范围 0.5–3 米；选择保存在现有 GUI `settings.json` 的 `steamvrDashboard.widthMeters` 中，下次启动沿用。也可以启动时指定：`Start-Overlay.cmd --width-meters 2.0`。这个参数只覆盖本次启动，点击加减后会记住新值；调宽度不改变追踪器和骨架的真实坐标。
+
+右侧使用和 GPUI 桌面主页共用的列表规则：已分配 / 未分配分组，卡片 / 表格模式，名称排序和开发模式计算节点过滤。“更多信息”打开时附加 TPS、温度、电压。每秒检查现有 GUI 设置文件的变化，改完设置无需重启 Overlay。表格列适应 VR 面板宽度，卡片使用两列布局。
+
+骨架区域缩窄，初始缩放为 70%；可用加减按钮或滚轮缩放，“适合窗口”恢复初始比例，切换视角会保留缩放。示例模式的宽度调整不保存设置。
+
+如果旧版只有加 `--preview` 才能正常显示，更新附加包：隐藏宿主没有应用初始尺寸，导致 SteamVR 把 DirectX 的 1×1 白色纹理拉伸成整个面板。新版在保持窗口隐藏时初始化尺寸；日志的 `overlay-texture` 会记录首次成功提交的纹理尺寸。
+
 ## 验证范围
 
 已验证（2026-10-07）：
 
-- 输入转换 4 项测试、GUI 无桌面依赖测试 59 项通过，覆盖 DPI / Y 翻转、重复按键、取消拖动、无效滚动和重置 / 订阅策略。
+- 输入转换 4 项测试、Linux GUI 无桌面依赖测试 62 项通过，覆盖 DPI / Y 翻转、重复按键、取消拖动、无效滚动和重置 / 订阅策略；新增列表分组 / 排序 / 过滤、宽度持久化和 GUI 设置保存互不覆盖的检查。
 - 真实 Rust 后端回环测试通过：六个模拟 UDP 追踪器、分配及 YAML 保存、三种重置和暂停。
 - Linux 实际窗口确认视角切换、节点滚动、重置倒计时 / 完成提示、退出面板后后端继续运行；修正交互后静态页头和状态圆点的绘制缓存遗漏。
+- 实际窗口确认面板宽度按钮、命令行覆盖后的保存、骨架缩放 / 恢复、GUI 卡片 / 表格和开发信息自动同步、设置写入中断后的恢复。VR 中实时调宽度仍需头显复测。
 - Linux / Windows Clippy 检查与 Windows x64 release 构建通过；附加包审核 PE 架构、DLL 依赖、内嵌 shader 和 ZIP CRC。
 
 没有头显运行环境，纹理显示、手柄命中、GPU 选择、清晰度和满载表现仍需 Windows / SteamVR 实测。编译通过不等于 VR 实测通过。

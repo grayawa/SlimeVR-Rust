@@ -28,6 +28,12 @@ GPU recovery discards the export texture; resizing reallocates it. Hidden hosts
 receive asynchronous frame requests from the dashboard event loop. Unregistered
 desktop windows retain their original renderer behavior.
 
+`src/hidden_window.rs` applies the requested bounds with `SetWindowPos` without
+showing or activating hidden hosts. This delivers the initial `WM_SIZE` needed
+to resize DirectX's initial 1x1 target. Saving placement alone leaves the
+dashboard with a single white pixel until a desktop preview shows the window.
+A Windows regression test checks hidden client dimensions and visibility.
+
 `src/directx_devices.rs` uses the optional compositor adapter selected before
 application construction. The adapter preference is unused for normal desktop
 builds and avoids exporting a texture from a different GPU on multi-GPU systems.

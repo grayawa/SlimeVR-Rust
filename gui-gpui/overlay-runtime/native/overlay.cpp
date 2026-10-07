@@ -62,6 +62,9 @@ extern "C" Session *svro_open(const wchar_t *dll, const char *key, const char *t
     return s;
 }
 extern "C" int svro_visible(Session *s) { return s->overlay->IsOverlayVisible(s->main_handle) ? 1 : 0; }
+extern "C" int svro_set_width(Session *s, float width) {
+    return int(s->overlay->SetOverlayWidthInMeters(s->main_handle, width));
+}
 extern "C" int svro_adapter(Session *s) {
     int index = -1;
     s->system->GetDXGIOutputInfo(&index);

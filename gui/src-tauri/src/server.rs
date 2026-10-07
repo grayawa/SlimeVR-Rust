@@ -8,7 +8,7 @@ use serde::Serialize;
 use serde_json::json;
 use std::{
     io::{BufRead, BufReader},
-    path::{Path, PathBuf},
+    path::PathBuf,
     process::{Child, Command, Stdio},
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -22,7 +22,6 @@ use tauri::{AppHandle, Emitter, Manager};
 pub enum Backend {
     #[default]
     Auto,
-    Java,
     Rust,
 }
 
@@ -35,11 +34,11 @@ pub struct LaunchOptions {
     /// Diagnostic verbosity for the frontend, desktop and owned Rust backend.
     #[arg(long, value_enum)]
     pub log_level: Option<LogLevel>,
-    /// Select the backend. Auto prefers an available Rust server, then Java.
+    /// Start the Rust backend, or connect to an existing service in auto mode.
     #[arg(long, value_enum, default_value_t=Backend::Auto)]
     pub backend: Backend,
     /// Explicit Rust server executable.
-    #[arg(long, conflicts_with = "server_jar")]
+    #[arg(long)]
     pub rust_server: Option<PathBuf>,
     /// Original SlimeVR YAML, default: the server config folder/vrconfig.yml.
     #[arg(long = "config", alias = "rust-state")]
@@ -58,21 +57,11 @@ pub struct LaunchOptions {
     /// Seed a new Rust backend state with a pose configuration.
     #[arg(long)]
     pub pose_config: Option<PathBuf>,
-    /// Directory containing slimevr.jar (compatible with the Electron --path option).
+    /// Directory containing the Rust server executable.
     #[arg(short, long)]
     pub path: Option<PathBuf>,
-    /// Explicit path to the Java server JAR.
-    #[arg(long)]
-    pub server_jar: Option<PathBuf>,
-    /// Explicit Java executable, otherwise use bundled JRE, JAVA_HOME or PATH.
-    #[arg(long)]
-    pub java_path: Option<PathBuf>,
     #[arg(short, long)]
     pub steam: bool,
-    #[arg(short, long)]
-    pub install: bool,
-    #[arg(long)]
-    pub no_udev: bool,
 }
 
 #[derive(Default)]
@@ -154,116 +143,22 @@ pub fn server_status_history(state: tauri::State<'_, ServerProcess>) -> Vec<Serv
         .unwrap_or_default()
 }
 
-pub fn find_server_jar(
-    options: &LaunchOptions,
-    paths: &AppPaths,
-) -> Result<Option<PathBuf>, String> {
-    if let Some(explicit) = &options.server_jar {
-        return explicit
-            .canonicalize()
-            .map(Some)
-            .map_err(|e| format!("{}: {e}", explicit.display()));
-    }
-    let mut candidates = Vec::new();
-    if let Some(dir) = &options.path {
-        return dir
-            .join("slimevr.jar")
-            .canonicalize()
-            .map(Some)
-            .map_err(|e| format!("No slimevr.jar in {}: {e}", dir.display()));
-    }
-    candidates.extend([
-        paths.resources.join("slimevr.jar"),
-        paths.executable.join("slimevr.jar"),
-        PathBuf::from("/usr/share/slimevr/slimevr.jar"),
-        PathBuf::from("/app/share/slimevr/slimevr.jar"),
-    ]);
-    if cfg!(debug_assertions) {
-        candidates.push(
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../server/desktop/build/libs/slimevr.jar"),
-        );
-    }
-    Ok(candidates
-        .into_iter()
-        .find(|path| path.is_file())
-        .and_then(|p| p.canonicalize().ok()))
-}
-
-fn java_major_version(output: &str) -> Option<u32> {
-    let version = output.lines().find_map(|line| line.split('"').nth(1))?;
-    let mut components = version.split(['.', '-', '+']);
-    let first: u32 = components.next()?.parse().ok()?;
-    if first == 1 {
-        components.next()?.parse().ok()
-    } else {
-        Some(first)
-    }
-}
-
-fn compatible_java(path: &Path) -> bool {
-    let mut command = Command::new(path);
-    command.arg("-version").stdin(Stdio::null());
-    hide_console(&mut command);
-    command.output().ok().is_some_and(|output| {
-        output.status.success()
-            && java_major_version(&format!(
-                "{}\n{}",
-                String::from_utf8_lossy(&output.stderr),
-                String::from_utf8_lossy(&output.stdout)
-            ))
-            .is_some_and(|major| major >= 17)
-    })
-}
-
-fn find_java(options: &LaunchOptions, jar: &Path, paths: &AppPaths) -> Result<PathBuf, String> {
-    if let Some(explicit) = &options.java_path {
-        return if compatible_java(explicit) {
-            Ok(explicit.clone())
-        } else {
-            Err(format!("Java 17+ is required: {}", explicit.display()))
-        };
-    }
-    let binary = if cfg!(windows) { "java.exe" } else { "java" };
-    let mut candidates = vec![
-        jar.parent()
-            .unwrap_or(Path::new("."))
-            .join("jre/bin")
-            .join(binary),
-        paths.resources.join("jre/bin").join(binary),
-        paths.resources.join("jre/Contents/Home/bin").join(binary),
-    ];
-    if let Some(java_home) = std::env::var_os("JAVA_HOME") {
-        candidates.push(PathBuf::from(java_home).join("bin").join(binary));
-    }
-    for directory in ["/Library/Java/JavaVirtualMachines", "/usr/lib/jvm"] {
-        if let Ok(entries) = std::fs::read_dir(directory) {
-            for entry in entries.flatten() {
-                candidates.push(
-                    entry
-                        .path()
-                        .join(if cfg!(target_os = "macos") {
-                            "Contents/Home/bin"
-                        } else {
-                            "bin"
-                        })
-                        .join(binary),
-                );
-            }
-        }
-    }
-    candidates.push(PathBuf::from(binary));
-    candidates
-        .into_iter()
-        .find(|path| compatible_java(path))
-        .ok_or_else(|| "Unable to find Java 17+. Set JAVA_HOME or pass --java-path.".into())
-}
-
 pub fn find_rust_server(
     options: &LaunchOptions,
     paths: &AppPaths,
 ) -> Result<Option<PathBuf>, String> {
-    if let Some(path) = &options.rust_server {
+    let filename = if cfg!(windows) {
+        "slimevr-server.exe"
+    } else {
+        "slimevr-server"
+    };
+    let explicit = options.rust_server.clone().or_else(|| {
+        options
+            .path
+            .as_ref()
+            .map(|directory| directory.join(filename))
+    });
+    if let Some(path) = explicit {
         let path = path
             .canonicalize()
             .map_err(|e| format!("{}: {e}", path.display()))?;
@@ -272,21 +167,13 @@ pub fn find_rust_server(
         }
         return Ok(Some(path));
     }
-    let filename = if cfg!(windows) {
-        "slimevr-server.exe"
-    } else {
-        "slimevr-server"
-    };
     let mut candidates = vec![
         paths.resources.join(filename),
         paths.executable.join(filename),
     ];
-    if let Some(path) = &options.path {
-        candidates.push(path.join(filename));
-    }
     #[cfg(debug_assertions)]
     {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../server-rust/target");
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../server-rust/target");
         candidates.push(root.join("release").join(filename));
         candidates.push(root.join("debug").join(filename));
     }
@@ -327,17 +214,7 @@ pub fn start(app: AppHandle) {
         }
         let paths = app.state::<AppPaths>();
         let result = (|| -> Result<(), String> {
-            if options.backend == Backend::Java && options.rust_server.is_some() {
-                return Err("--rust-server cannot be combined with --backend java".into());
-            }
-            if options.backend == Backend::Rust && options.server_jar.is_some() {
-                return Err("--server-jar cannot be combined with --backend rust".into());
-            }
-            let rust = if options.backend == Backend::Java || options.server_jar.is_some() {
-                None
-            } else {
-                find_rust_server(&options, &paths)?
-            };
+            let rust = find_rust_server(&options, &paths)?;
             let (mut command, label) = if let Some(binary) = rust {
                 let mut command = Command::new(&binary);
                 let state = options.rust_state.clone().unwrap_or_else(|| {
@@ -423,31 +300,12 @@ pub fn start(app: AppHandle) {
                         "No Rust server found. Build server-rust or pass --rust-server.".into(),
                     );
                 }
-                let Some(jar) = find_server_jar(&options, &paths)? else {
-                    emit_status(
+                emit_status(
                     &app,
                     "other",
-                    "No backend found. Start a server separately, or pass --rust-server / --server-jar.",
+                    "No Rust backend found. Start a server separately, or pass --rust-server.",
                 );
-                    return Ok(());
-                };
-                let java = find_java(&options, &jar, &paths)?;
-                let mut command = Command::new(java);
-                command.args(["-Xmx128M", "-jar"]).arg(&jar);
-                if options.steam {
-                    command.arg("--steam");
-                }
-                if options.install {
-                    command.arg("--install");
-                }
-                if options.no_udev {
-                    command.arg("--no-udev");
-                }
-                command
-                    .arg("run")
-                    .current_dir(jar.parent().unwrap())
-                    .stdin(Stdio::null());
-                (command, format!("Java server: {}", jar.display()))
+                return Ok(());
             };
             command.stdout(Stdio::piped()).stderr(Stdio::piped());
             hide_console(&mut command);
@@ -561,13 +419,60 @@ mod tests {
         );
     }
     #[test]
-    fn parses_java_versions_without_treating_legacy_java_as_supported() {
+    fn rejects_removed_java_launch_options() {
+        for args in [
+            vec!["slimevr-gui", "--backend", "java"],
+            vec!["slimevr-gui", "--server-jar", "server.jar"],
+            vec!["slimevr-gui", "--java-path", "java"],
+        ] {
+            assert!(LaunchOptions::try_parse_from(args).is_err());
+        }
+    }
+
+    #[test]
+    fn explicit_rust_directory_takes_priority_over_bundled_backend() {
+        let root = std::env::temp_dir().join(format!(
+            "slimevr-tauri-discovery-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        struct Cleanup(PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = Cleanup(root.clone());
+        let resources = root.join("resources");
+        let explicit = root.join("custom");
+        std::fs::create_dir_all(&resources).unwrap();
+        std::fs::create_dir_all(&explicit).unwrap();
+        let filename = if cfg!(windows) {
+            "slimevr-server.exe"
+        } else {
+            "slimevr-server"
+        };
+        std::fs::write(resources.join(filename), b"bundled").unwrap();
+        std::fs::write(resources.join("slimevr.jar"), b"legacy").unwrap();
+        std::fs::write(explicit.join(filename), b"explicit").unwrap();
+        let paths = AppPaths {
+            gui: root.clone(),
+            server: root.clone(),
+            logs: root.clone(),
+            resources,
+            executable: root,
+        };
+        let options =
+            LaunchOptions::try_parse_from(["slimevr-gui", "--path", explicit.to_str().unwrap()])
+                .unwrap();
         assert_eq!(
-            java_major_version("openjdk version \"17.0.10\" 2024-01-16"),
-            Some(17)
+            find_rust_server(&options, &paths).unwrap(),
+            Some(explicit.join(filename).canonicalize().unwrap())
         );
-        assert_eq!(java_major_version("java version \"1.8.0_401\""), Some(8));
-        assert_eq!(java_major_version("openjdk version \"21-ea\""), Some(21));
-        assert_eq!(java_major_version("not a Java version"), None);
+        std::fs::remove_file(explicit.join(filename)).unwrap();
+        assert!(find_rust_server(&options, &paths).is_err());
     }
 }

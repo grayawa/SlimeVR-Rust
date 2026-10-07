@@ -13,13 +13,15 @@ import json
 import math
 import os
 from pathlib import Path
+from reference_sources import reference_checkout, source_path
 import re
 import shutil
 import subprocess
 import tempfile
 HERE=Path(__file__).resolve().parent
 ROOT=HERE.parent.parent
-SOURCE=ROOT/'server/core/src/main/java'
+REFERENCE_ROOT, REFERENCE_COMMIT = reference_checkout(ROOT)
+SOURCE=REFERENCE_ROOT/'server/core/src/main/java'
 OFFSET_FIELDS=dict(HEAD='head_shift',NECK='neck_length',UPPER_CHEST='upper_chest_length',CHEST='chest_length',CHEST_OFFSET='chest_offset',WAIST='waist_length',HIP='hip_length',HIP_OFFSET='hip_offset',HIPS_WIDTH='hips_width',UPPER_LEG='upper_leg_length',LOWER_LEG='lower_leg_length',FOOT_LENGTH='foot_length',FOOT_SHIFT='foot_shift',SKELETON_OFFSET='skeleton_offset',SHOULDERS_DISTANCE='shoulders_distance',SHOULDERS_WIDTH='shoulders_width',UPPER_ARM='upper_arm_length',LOWER_ARM='lower_arm_length',HAND_Y='hand_y',HAND_Z='hand_z',ELBOW_OFFSET='elbow_offset')
 METHODS=['loadConfigValues','applyConfig','calcTargetHmdHeight','updateRecordingScale','filterFrames','processFrames','epoch','step','sumAdjustedHeightOffsets','sumHeightOffsets','scaleSkeleton','scaleOffsets','getErrorDeriv']
 def extract(text,name):
@@ -96,9 +98,9 @@ val OFFSET_FIELDS=mapOf(\n'''+',\n'.join(f'SkeletonConfigOffsets.{key} to "{valu
     result=subprocess.run(['java','-cp',cp,'AutoBoneOracleKt'],input=''.join(json.dumps(c)+'\n' for c in selected),text=True,capture_output=True)
     if result.returncode: raise RuntimeError(result.stderr)
     expected=[json.loads(line) for line in result.stdout.splitlines()];assert len(expected)==len(selected)
-    hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*java,source,manager,*sources] if p.is_relative_to(ROOT)}
+    hashes={source_path(p, ROOT, REFERENCE_ROOT):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*java,source,manager,*sources] if (p.is_relative_to(ROOT) or p.is_relative_to(REFERENCE_ROOT))}
     hashes.update({'generated/'+p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [ab,scm,maps]})
-    fixture=dict(reference_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),scope=__doc__,source_sha256=hashes,core_fixture_sha256=hashlib.sha256((HERE.parent/'crates/slimevr-core/tests/fixtures/core-golden.json').read_bytes()).hexdigest(),extracted_methods=METHODS,cases=[dict(**c,expected=e) for c,e in zip(selected,expected)])
+    fixture=dict(reference_commit=REFERENCE_COMMIT,scope=__doc__,source_sha256=hashes,core_fixture_sha256=hashlib.sha256((HERE.parent/'crates/slimevr-core/tests/fixtures/core-golden.json').read_bytes()).hexdigest(),extracted_methods=METHODS,cases=[dict(**c,expected=e) for c,e in zip(selected,expected)])
     args.output.write_text(json.dumps(fixture,indent=2)+'\n');print(f'Generated {len(selected)} complete AutoBone training references: {args.output}')
 def cases(mod):
     frames=[]

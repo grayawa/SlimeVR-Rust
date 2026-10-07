@@ -113,8 +113,13 @@
         {
           devShells.default = pkgs.mkShell {
             packages = [
-              # for running the jar
-              pkgs.jdk17
+              # Rust backend and native frontends
+              pkgs.rustc
+              pkgs.cargo
+              pkgs.rustfmt
+              pkgs.clippy
+              pkgs.cmake
+              pkgs.ninja
               # for build
               pkgs.electron
               pkgs.rpm
@@ -137,9 +142,8 @@
               pkgs.git
               pkgs.node-gyp-build
             ];
-            buildInputs = runtimeLibs;
+            buildInputs = runtimeLibs ++ [ pkgs.webkitgtk_4_1 pkgs.libappindicator-gtk3 pkgs.openssl ];
 
-            JAVA_HOME = "${pkgs.jdk17}/lib/openjdk";
             USE_SYSTEM_FPM = "true";
             ELECTRON_BUILDER_7ZIP_PATH = "${pkgs.p7zip}/bin/7za";
             APPIMAGE_TOOLS_PATH = "${appImageTools}";

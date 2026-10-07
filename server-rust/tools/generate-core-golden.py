@@ -13,6 +13,7 @@ import json
 import math
 import os
 from pathlib import Path
+from reference_sources import reference_checkout, source_path
 import re
 import shutil
 import subprocess
@@ -21,7 +22,8 @@ import urllib.request
 
 HERE=Path(__file__).resolve().parent
 ROOT=HERE.parent.parent
-SOURCE=ROOT/'server/core/src/main/java'
+REFERENCE_ROOT, REFERENCE_COMMIT = reference_checkout(ROOT)
+SOURCE=REFERENCE_ROOT/'server/core/src/main/java'
 
 def quat(axis=(0,1,0),angle=0):
     s=math.sin(angle/2)
@@ -318,13 +320,13 @@ class VelocityReference {
     selected=cases()
     result=subprocess.run(['java','-cp',cp,'CoreOracleKt'],input=''.join(json.dumps(c)+'\n' for c in selected),text=True,capture_output=True,check=True)
     expected=[json.loads(line) for line in result.stdout.splitlines()];assert len(expected)==len(selected)
-    hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*[p for p in sources if p.is_relative_to(ROOT)],*java_sources,human,buffer_source,rest_source,iterator,tracker_source,HERE/'core-reference/LegSkeletonStub.kt',HERE/'core-reference/SkeletonReference.template.kt']}
+    hashes={source_path(p, ROOT, REFERENCE_ROOT):hashlib.sha256(p.read_bytes()).hexdigest() for p in [*[p for p in sources if (p.is_relative_to(ROOT) or p.is_relative_to(REFERENCE_ROOT))],*java_sources,human,buffer_source,rest_source,iterator,tracker_source,HERE/'core-reference/LegSkeletonStub.kt',HERE/'core-reference/SkeletonReference.template.kt']}
     hashes['generated/VelocityReference.explicit-clock.kt']=hashlib.sha256(velocity_text.encode()).hexdigest()
     hashes['generated/FrameOrdersReference.kt']=hashlib.sha256(orders_text.encode()).hexdigest()
     hashes['generated/RestDetector.explicit-clock.kt']=hashlib.sha256(rest_generated.read_bytes()).hexdigest()
     hashes['generated/LegTweaksBuffer.explicit-clock.kt']=hashlib.sha256(generated_buffer.read_bytes()).hexdigest()
     hashes['generated/LegSkeletonStub.kt']=hashlib.sha256(stub.encode()).hexdigest()
-    fixture=dict(reference_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),scope=__doc__,source_sha256=hashes,extracted_methods=extracted,extracted_source_sha256=hashlib.sha256(template.encode()).hexdigest(),cases=[dict(**c,expected=e) for c,e in zip(selected,expected)])
+    fixture=dict(reference_commit=REFERENCE_COMMIT,scope=__doc__,source_sha256=hashes,extracted_methods=extracted,extracted_source_sha256=hashlib.sha256(template.encode()).hexdigest(),cases=[dict(**c,expected=e) for c,e in zip(selected,expected)])
     args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(fixture,indent=2)+'\n')
     print(f'Generated {len(selected)} algorithm cases: {args.output}')
 

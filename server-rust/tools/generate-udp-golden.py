@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 from pathlib import Path
+from reference_sources import reference_checkout, source_path
 import struct
 import subprocess
 import tempfile
@@ -17,7 +18,8 @@ import urllib.request
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
-SOURCE = ROOT / "server/core/src/main/java"
+REFERENCE_ROOT, REFERENCE_COMMIT = reference_checkout(ROOT)
+SOURCE = REFERENCE_ROOT / "server/core/src/main/java"
 ARTIFACTS = [
     ("org.jetbrains.kotlin", "kotlin-compiler-embeddable", "2.2.0"),
     ("org.jetbrains.kotlin", "kotlin-stdlib", "2.2.0"),
@@ -106,9 +108,9 @@ def main():
     lines = [json.loads(line) for line in result.stdout.splitlines()]
     assert len(lines) == len(selected) + 1
     fixture = {
-        "reference_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+        "reference_commit": REFERENCE_COMMIT,
         "scope": "Actual Kotlin UDPProtocolParser, UDPPacket and ktmath; TrackerPosition lookup and unused UDPDevice compile stubs. Synthetic inputs, not hardware recordings.",
-        "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
+        "source_sha256": {source_path(p, ROOT, REFERENCE_ROOT): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
         "replies": lines[0],
         "cases": [{"name": name, "hex": data.hex(), **expected} for (name, data), expected in zip(selected, lines[1:])],
     }

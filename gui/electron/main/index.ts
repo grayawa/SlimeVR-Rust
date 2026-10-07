@@ -19,8 +19,6 @@ import { readFile, stat } from 'fs/promises';
 import { pathToFileURL } from 'node:url';
 import { getPlatform, handleIpc, isPortAvailable } from './utils';
 import {
-  findServerJar,
-  findSystemJRE,
   getExeFolder,
   getGuiDataFolder,
   getLogsFolder,
@@ -28,6 +26,7 @@ import {
   getWindowStateFile,
 } from './paths';
 import { initStores } from './store';
+import { findRustServer, rustServerArgs } from './rust-server';
 import { closeLogger, logger } from './logger';
 
 import { spawn } from 'node:child_process';
@@ -370,23 +369,11 @@ function createWindow() {
   });
 }
 
-const checkEnvironmentVariables = () => {
-  const disallowedVars = ['_JAVA_OPTIONS', 'JAVA_TOOL_OPTIONS'];
-
-  const set = disallowedVars.filter((env) => !!process.env[env]);
-  if (set.length > 0) {
-    dialog.showErrorBox(
-      'SlimeVR',
-      `You have environment variables ${set.join(', ')} set, which may cause the SlimeVR Server to fail to launch properly.`
-    );
-    app.quit();
-  }
-};
-
 const isServerRunning = async () => !(await isPortAvailable(21110));
 
 const spawnServer = async () => {
-  if (options.skipServerIfRunning && (await isServerRunning())) {
+  if (options.server === false) return;
+  if (await isServerRunning()) {
     logger.info(
       { skipServerIfRunning: options.skipServerIfRunning },
       'Server is already running, skipping server start'
@@ -394,45 +381,43 @@ const spawnServer = async () => {
     return;
   }
 
-  const serverJar = findServerJar();
-  if (!serverJar) {
-    logger.info('server jar not found, skipping');
+  const resources = app.isPackaged
+    ? process.resourcesPath
+    : path.resolve(__dirname, '../../src-tauri/resources');
+  const directories = [
+    ...(options.path ? [path.resolve(options.path)] : []),
+    resources,
+    getExeFolder(),
+    ...(app.isPackaged
+      ? []
+      : [
+          path.resolve(__dirname, '../../../server-rust/target/release'),
+          path.resolve(__dirname, '../../../server-rust/target/debug'),
+        ]),
+    '/usr/share/slimevr',
+    '/app/share/slimevr',
+    ...(process.env['APPDIR']
+      ? [join(process.env['APPDIR'], 'usr/share/slimevr')]
+      : []),
+  ];
+  const binary = findRustServer(directories, options.rustServer);
+  if (!binary) {
+    logger.info('Rust backend not found; waiting for an existing service');
     return;
   }
-  const sharedDir = dirname(serverJar);
-  const javaBin = await findSystemJRE(sharedDir);
-  if (!javaBin) {
-    dialog.showErrorBox(
-      'SlimeVR',
-      'Unable to find a compatible Java version, please download Java 17 or higher'
-    );
-    app.quit();
-    return;
-  }
-
-  logger.info({ javaBin, serverJar }, 'Found Java and server jar');
-  const platform = getPlatform();
-
-  const serverArgs = ['-Xmx128M', '-jar', serverJar];
-  if (options.steam) serverArgs.push('--steam');
-  if (options.install) serverArgs.push('--install');
-  if (options.noUdev) serverArgs.push('--no-udev');
-
-  serverArgs.push('run');
-
-  const serverProcess = spawn(javaBin, serverArgs, {
-    cwd: sharedDir,
+  const serverDirectory = getServerDataFolder();
+  const serverArgs = rustServerArgs(
+    serverDirectory,
+    resources,
+    options.config,
+    options.logLevel
+  );
+  logger.info({ binary }, 'Starting Rust backend');
+  const serverProcess = spawn(binary, serverArgs, {
+    cwd: serverDirectory,
     shell: false,
-    env:
-      platform === 'windows'
-        ? {
-            ...process.env,
-            APPDATA: app.getPath('appData'),
-            LOCALAPPDATA: process.env['USERPROFILE']
-              ? path.join(process.env['USERPROFILE'], 'AppData', 'Local')
-              : undefined,
-          }
-        : undefined,
+    windowsHide: true,
+    stdio: ['pipe', 'pipe', 'pipe'],
   });
 
   const sendToWindow = (event: ServerStatusEvent) => {
@@ -450,7 +435,7 @@ const spawnServer = async () => {
   });
 
   serverProcess.on('error', (err) => {
-    logger.info({ err }, 'Error launching the java server');
+    logger.error({ err }, 'Error launching the Rust backend');
     if (!isQuitting) app.quit();
   });
 
@@ -458,12 +443,29 @@ const spawnServer = async () => {
     logger.info('Server process exiting');
   });
 
-  const exited = new Promise<void>((resolve) => serverProcess.once('exit', resolve));
+  const exited = new Promise<void>((resolve) =>
+    serverProcess.once('close', () => resolve())
+  );
 
   return {
     process: serverProcess,
-    close: () => serverProcess.kill(),
-    waitForExit: () => exited,
+    close: () => serverProcess.stdin?.end(),
+    waitForExit: async () => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          exited,
+          new Promise<void>((resolve) => {
+            timer = setTimeout(() => {
+              serverProcess.kill();
+              resolve();
+            }, 3000);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
+    },
   };
 };
 
@@ -494,8 +496,15 @@ app.whenReady().then(async () => {
   }
 
   stores = await initStores();
-  checkEnvironmentVariables();
-  const server = await spawnServer();
+  let server: Awaited<ReturnType<typeof spawnServer>>;
+  try {
+    server = await spawnServer();
+  } catch (err) {
+    logger.error({ err }, 'Failed to start the Rust backend');
+    dialog.showErrorBox('SlimeVR', String(err));
+    app.quit();
+    return;
+  }
 
   createWindow();
 

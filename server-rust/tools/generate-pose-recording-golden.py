@@ -2,7 +2,10 @@
 """Compile and execute original PfsIO/PfrIO with explicit recording-container adapters."""
 import argparse, hashlib, json, os, subprocess
 from pathlib import Path
-HERE=Path(__file__).resolve().parent;ROOT=HERE.parent.parent;SOURCE=ROOT/'server/core/src/main/java';CACHE=Path('/tmp/slimevr-udp-oracle')
+from reference_sources import reference_checkout, source_path
+HERE=Path(__file__).resolve().parent;ROOT=HERE.parent.parent
+REFERENCE_ROOT, REFERENCE_COMMIT = reference_checkout(ROOT)
+SOURCE=REFERENCE_ROOT/'server/core/src/main/java';CACHE=Path('/tmp/slimevr-udp-oracle')
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--cache',type=Path,default=CACHE);args=p.parse_args()
  classes=args.cache/'poseio-classes';classes.mkdir(exist_ok=True)
@@ -16,6 +19,6 @@ def main():
  cases=[dict(name='all_flags_and_modified_utf',interval=.02,trackers=[dict(name='头显\0🎮',frames=[dict(body='head',rotation=q,position=v,acceleration=v,raw_rotation=q),dict(body='head',rotation=q,position=v)]),dict(name='sensor',frames=[dict(body='left_lower_arm',rotation=q),{},dict(body='right_little_distal',rotation=q)])])]
  result=subprocess.run(['java','-cp',cp,'OracleKt'],input=''.join(json.dumps(c)+'\n' for c in cases),text=True,capture_output=True,check=True)
  expected=[json.loads(l) for l in result.stdout.splitlines()]
- fixture=dict(reference_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),scope=__doc__,source_sha256={str(f.relative_to(ROOT)):hashlib.sha256(f.read_bytes()).hexdigest() for f in [frame,*sources] if f.is_relative_to(ROOT)},generated_sha256=hashlib.sha256(generated.read_bytes()).hexdigest(),cases=[dict(**c,expected=e) for c,e in zip(cases,expected)])
+ fixture=dict(reference_commit=REFERENCE_COMMIT,scope=__doc__,source_sha256={source_path(f, ROOT, REFERENCE_ROOT):hashlib.sha256(f.read_bytes()).hexdigest() for f in [frame,*sources] if (f.is_relative_to(ROOT) or f.is_relative_to(REFERENCE_ROOT))},generated_sha256=hashlib.sha256(generated.read_bytes()).hexdigest(),cases=[dict(**c,expected=e) for c,e in zip(cases,expected)])
  out=HERE.parent/'crates/slimevr-server/tests/fixtures/pose-recording-golden.json';out.write_text(json.dumps(fixture,indent=2)+'\n');print(f'Generated {len(cases)} original PFS/PFR recording references')
 if __name__=='__main__':main()

@@ -117,11 +117,11 @@ server-rust/
 
 主要参考：
 
-- [`TrackersUDPServer.kt`](../server/core/src/main/java/dev/slimevr/tracking/trackers/udp/TrackersUDPServer.kt)
-- [`UDPProtocolParser.kt`](../server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPProtocolParser.kt)
-- [`UDPPacket.kt`](../server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPPacket.kt)
-- [`UDPDevice.kt`](../server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPDevice.kt)
-- [`FeatureFlags.kt`](../server/core/src/main/java/dev/slimevr/tracking/trackers/udp/FeatureFlags.kt)
+- [`TrackersUDPServer.kt`](https://github.com/SlimeVR/SlimeVR-Server/blob/83941fd38e91cc91ca6b360deab5c2ae986dd1b6/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/TrackersUDPServer.kt)
+- [`UDPProtocolParser.kt`](https://github.com/SlimeVR/SlimeVR-Server/blob/83941fd38e91cc91ca6b360deab5c2ae986dd1b6/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPProtocolParser.kt)
+- [`UDPPacket.kt`](https://github.com/SlimeVR/SlimeVR-Server/blob/83941fd38e91cc91ca6b360deab5c2ae986dd1b6/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPPacket.kt)
+- [`UDPDevice.kt`](https://github.com/SlimeVR/SlimeVR-Server/blob/83941fd38e91cc91ca6b360deab5c2ae986dd1b6/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPDevice.kt)
+- [`FeatureFlags.kt`](https://github.com/SlimeVR/SlimeVR-Server/blob/83941fd38e91cc91ca6b360deab5c2ae986dd1b6/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/FeatureFlags.kt)
 
 建议按下面顺序完成：
 

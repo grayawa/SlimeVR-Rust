@@ -169,17 +169,13 @@ pub fn write(level: LogLevel, source: &str, message: &str) {
 mod tests {
     use super::*;
     use std::sync::Arc;
-    fn directory() -> PathBuf {
-        let path = std::env::temp_dir().join(format!(
-            "slimevr-logs-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        std::fs::create_dir_all(&path).unwrap();
-        path
+    fn directory() -> tempfile::TempDir {
+        // Windows wall-clock timestamps can repeat across parallel tests.
+        // TempDir creates each directory exclusively and owns its cleanup.
+        tempfile::Builder::new()
+            .prefix("slimevr-logs-")
+            .tempdir()
+            .unwrap()
     }
     #[test]
     fn severity_does_not_confuse_stderr_or_stream_names_with_errors() {
@@ -207,7 +203,8 @@ mod tests {
     }
     #[test]
     fn filters_before_opening_and_keeps_warnings_with_source_and_millisecond_time() {
-        let path = directory();
+        let directory = directory();
+        let path = directory.path().to_path_buf();
         let logger = Logger::new(path.clone(), LogLevel::Info);
         logger
             .append(LogLevel::Debug, "backend", &[json!("pose")])
@@ -226,11 +223,11 @@ mod tests {
             line["time_ms"].as_u64().unwrap() / 1000
         );
         drop(logger);
-        std::fs::remove_dir_all(path).unwrap();
     }
     #[test]
     fn rotation_and_concurrent_writes_keep_complete_records_and_newest_files() {
-        let path = directory();
+        let directory = directory();
+        let path = directory.path().to_path_buf();
         let logger = Logger::new(path.clone(), LogLevel::Info);
         logger.writer.lock().unwrap().max_bytes = 300;
         let logger = Arc::new(logger);
@@ -266,11 +263,11 @@ mod tests {
                 .unwrap()
                 .contains("final crash")
         );
-        std::fs::remove_dir_all(path).unwrap();
     }
     #[test]
     fn oversized_existing_log_rotates_on_first_new_record() {
-        let path = directory();
+        let directory = directory();
+        let path = directory.path().to_path_buf();
         std::fs::write(path.join("gui-gpui.log"), "old log".repeat(100)).unwrap();
         let logger = Logger::new(path.clone(), LogLevel::Info);
         logger.writer.lock().unwrap().max_bytes = 300;
@@ -284,6 +281,5 @@ mod tests {
                 .contains("old log")
         );
         drop(logger);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

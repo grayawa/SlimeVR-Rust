@@ -187,6 +187,14 @@ impl Host {
     pub fn texture_error(&self) -> Option<String> {
         self.submission_error.borrow().clone()
     }
+    pub fn set_width(&mut self, width: f32) -> Result<(), String> {
+        if let Some(runtime) = self.session.borrow_mut().as_mut() {
+            runtime.set_width(width)?;
+        }
+        // Keep the selected width for delayed SteamVR connection attempts too.
+        self.width = width;
+        Ok(())
+    }
 }
 fn set_thumbnail(runtime: &mut Runtime) {
     if let Ok(thumbnail) = image::load_from_memory(include_bytes!(

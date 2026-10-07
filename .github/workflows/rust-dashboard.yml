@@ -49,13 +49,13 @@ jobs:
       - name: Fetch licensed Microsoft runtime and package
         run: |
           python gui/scripts/fetch-vc-runtime.py --output dist/vc-runtime
-          python gui-gpui/scripts/package-overlay-windows.py --overlay-exe gui-gpui/target/release/slimevr-gpui-overlay.exe --vc-runtime-dir dist/vc-runtime --output dist/SlimeVR-Overlay-Windows-x64-dashboard-test2.zip
+          python gui-gpui/scripts/package-overlay-windows.py --overlay-exe gui-gpui/target/release/slimevr-gpui-overlay.exe --vc-runtime-dir dist/vc-runtime --output dist/SlimeVR-Overlay-Windows-x64-dashboard-test3.zip
       - uses: actions/upload-artifact@v7
         with:
           name: SlimeVR-Overlay-Windows-x64
           path: |
-            dist/SlimeVR-Overlay-Windows-x64-dashboard-test2.zip
-            dist/SlimeVR-Overlay-Windows-x64-dashboard-test2.zip.sha256
+            dist/SlimeVR-Overlay-Windows-x64-dashboard-test3.zip
+            dist/SlimeVR-Overlay-Windows-x64-dashboard-test3.zip.sha256
           compression-level: 0
           retention-days: 30
           if-no-files-found: error

@@ -110,6 +110,23 @@ impl Preferences {
         merge(&mut self.value, &Self::defaults());
         self.save()
     }
+    pub fn store_value(&self, key: &str) -> &Value {
+        &self.store[key]
+    }
+    /// An add-on owns its store key, while config.json belongs to the GUI.
+    /// Writing this key must preserve the GUI's latest serialized preferences.
+    pub fn save_store_value(&mut self, key: &str, value: Value) -> Result<(), String> {
+        self.store = match std::fs::read(&self.path) {
+            Ok(bytes) => serde_json::from_slice(&bytes).map_err(|e| e.to_string())?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => json!({}),
+            Err(error) => return Err(error.to_string()),
+        };
+        if !self.store.is_object() {
+            return Err("Existing GUI preference store must be an object".into());
+        }
+        self.store[key] = value;
+        self.write_store()
+    }
     pub fn save(&mut self) -> Result<(), String> {
         // Reload unrelated store keys, preserving changes made by the other frontend.
         if let Ok(bytes) = std::fs::read(&self.path)
@@ -120,13 +137,22 @@ impl Preferences {
         }
         self.store["config.json"] =
             json!(serde_json::to_string(&self.value).map_err(|e| e.to_string())?);
-        let temporary = self.path.with_extension("gpui.tmp");
+        self.write_store()
+    }
+    fn write_store(&self) -> Result<(), String> {
+        let temporary = self
+            .path
+            .with_extension(format!("gpui-{}.tmp", uuid::Uuid::new_v4()));
         std::fs::write(
             &temporary,
             serde_json::to_vec_pretty(&self.store).map_err(|e| e.to_string())?,
         )
         .map_err(|e| e.to_string())?;
-        std::fs::rename(&temporary, &self.path).map_err(|e| e.to_string())
+        let result = std::fs::rename(&temporary, &self.path).map_err(|e| e.to_string());
+        if result.is_err() {
+            let _ = std::fs::remove_file(&temporary);
+        }
+        result
     }
 }
 pub struct SingleInstance {

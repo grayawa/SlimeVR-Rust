@@ -146,13 +146,28 @@ enum Command {
     },
 }
 
-#[tokio::main(flavor = "current_thread")]
+// The root future owns receiver/pose state on the calling thread. Spawned IPC,
+// WebSocket and UDP tasks run on two independent I/O workers.
+#[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() {
-    if let Err(error) = run().await {
+    let logs = match slimevr_server::logging::start() {
+        Ok(guard) => guard,
+        Err(error) => {
+            eprintln!("Unable to start diagnostic writer: {error}");
+            std::process::exit(1);
+        }
+    };
+    let failed = if let Err(error) = run().await {
         slimevr_server::logging::diagnostic(
             LogLevel::Error,
             &serde_json::json!({"type":"backend_fatal_error", "message":error.to_string()}),
         );
+        true
+    } else {
+        false
+    };
+    drop(logs);
+    if failed {
         std::process::exit(1);
     }
 }

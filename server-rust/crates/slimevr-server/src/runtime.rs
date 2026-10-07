@@ -1,3 +1,4 @@
+mod ingress;
 use crate::{
     api::{self, FrontendConfig, Service},
     log_level::LogLevel,
@@ -12,6 +13,7 @@ use std::{
     io::{self, Write},
     net::SocketAddr,
     path::PathBuf,
+    sync::{atomic::Ordering, Arc},
     time::{Duration, Instant},
 };
 use tokio::{
@@ -169,7 +171,7 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         .map(PoseEngine::new)
         .transpose()
         .map_err(io::Error::other)?;
-    let socket = UdpSocket::bind(options.bind).await?;
+    let socket = Arc::new(UdpSocket::bind(options.bind).await?);
     socket.set_broadcast(options.discovery)?;
     let mut recorder = options
         .record
@@ -366,7 +368,7 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
     let mut next_summary = options.summary_ms;
     let mut next_discovery = DISCOVERY_INTERVAL_MS;
     let mut next_api_publish = 0;
-    let mut buffer = vec![0u8; 65536];
+    let mut ingress = ingress::Ingress::start(socket.clone());
     let shutdown = tokio::signal::ctrl_c();
     tokio::pin!(shutdown);
     let parent_shutdown = async {
@@ -385,11 +387,13 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
     tokio::pin!(parent_shutdown);
     loop {
         tokio::select! {
-            result = socket.recv_from(&mut buffer) => {
-                let (length, from) = result?;
+            packet = ingress.packets.recv() => {
+                let packet = packet.ok_or_else(|| io::Error::other("UDP ingress stopped"))??;
+                let from = packet.from;
+                let bytes = &packet.bytes;
                 let at = start.elapsed().as_millis() as u64;
-                if let Some(journal) = &mut recorder {journal.write(&Record::Receive {at_ms:at, from, hex:encode_hex(&buffer[..length])})?;}
-                let effects = receiver.receive(from, &buffer[..length], at);
+                if let Some(journal) = &mut recorder {journal.write(&Record::Receive {at_ms:at, from, hex:encode_hex(bytes)})?;}
+                let effects = receiver.receive(from, bytes, at);
                 apply_effects(&socket, &mut recorder, effects, at, &mut engine, &api).await?;
             }
             _ = clock.tick() => {
@@ -439,6 +443,8 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                 }
                 if at >= next_summary {
                     next_summary = at.saturating_add(options.summary_ms);
+                    let dropped = ingress.dropped.swap(0, Ordering::Relaxed);
+                    if dropped != 0 {logging::diagnostic(LogLevel::Warn, &serde_json::json!({"type":"udp_ingress_backpressure","at_ms":at,"dropped":dropped}));}
                     if logging::enabled(LogLevel::Debug) {write_json(LogLevel::Debug, &receiver.snapshot(at))?;}
                     if let Some(journal) = &mut recorder {journal.flush()?;}
                 }

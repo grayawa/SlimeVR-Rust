@@ -183,3 +183,65 @@ fn environment_overrides_default_cli_overrides_environment_and_invalid_values_fa
     assert_eq!(failure["level"], "error");
     assert_eq!(failure["type"], "backend_fatal_error");
 }
+
+#[test]
+fn unread_diagnostic_pipe_does_not_stop_tracker_handshakes() {
+    let dir = tempfile::tempdir().unwrap();
+    let pose = dir.path().join("pose.json");
+    std::fs::write(&pose, "{}").unwrap();
+    let mut child = Running(
+        Command::new(env!("CARGO_BIN_EXE_slimevr-server"))
+            .env_remove("SLIMEVR_LOG_LEVEL")
+            .args([
+                "listen",
+                "--bind",
+                "127.0.0.1:0",
+                "--no-discovery",
+                "--accept-new-devices",
+                "--run-for",
+                "2",
+                "--log-level",
+                "trace",
+                "--pose-ms",
+                "1",
+                "--pose-output-ms",
+                "1",
+                "--pose-config",
+            ])
+            .arg(pose)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap(),
+    );
+    let mut stdout = BufReader::new(child.0.stdout.take().unwrap());
+    let stderr = child.0.stderr.take().unwrap();
+    let errors = std::thread::spawn(move || {
+        std::io::copy(&mut BufReader::new(stderr), &mut std::io::sink()).unwrap()
+    });
+    let mut first = String::new();
+    stdout.read_line(&mut first).unwrap();
+    let listening: Value = serde_json::from_str(&first).unwrap();
+    // No stdout consumer: rapid full pose snapshots fill the child pipe.
+    std::thread::sleep(Duration::from_millis(300));
+    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    socket.connect(listening["bind"].as_str().unwrap()).unwrap();
+    socket
+        .set_read_timeout(Some(Duration::from_secs(1)))
+        .unwrap();
+    socket.send(&handshake()).unwrap();
+    let mut buffer = [0; 1500];
+    socket
+        .recv(&mut buffer)
+        .expect("blocked logs must not stall handshake");
+    socket.recv(&mut buffer).unwrap();
+    socket.send(&wire(15, 1, &[0, 1, 13])).unwrap();
+    socket
+        .recv(&mut buffer)
+        .expect("sensor registration must remain responsive");
+    let reader =
+        std::thread::spawn(move || std::io::copy(&mut stdout, &mut std::io::sink()).unwrap());
+    assert!(child.0.wait().unwrap().success());
+    reader.join().unwrap();
+    errors.join().unwrap();
+}

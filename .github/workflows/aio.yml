@@ -106,7 +106,7 @@ jobs:
           cargo test --manifest-path server-rust/Cargo.toml --workspace --locked
           cargo clippy --manifest-path server-rust/Cargo.toml --workspace --all-targets --locked -- -D warnings
           cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked
-          cargo test --manifest-path gui-gpui/overlay-runtime/Cargo.toml --locked
+          cargo test --manifest-path gui-gpui/overlay-runtime/Cargo.toml
           python -m unittest discover -s gui/scripts -p test_package_aio.py
       - name: Frontend communication checks
         working-directory: gui

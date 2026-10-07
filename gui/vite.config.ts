@@ -1,4 +1,3 @@
-import { sentryVitePlugin } from '@sentry/vite-plugin';
 import react from '@vitejs/plugin-react';
 import { defineConfig, PluginOption } from 'vite';
 import { execSync } from 'child_process';
@@ -16,7 +15,6 @@ const versionTag =
 // If not empty then it's not clean
 const gitCleanString = execSync('git status --porcelain').toString();
 const gitClean = gitCleanString ? false : true;
-if (!gitClean) console.log('Git is dirty because of:\n' + gitCleanString);
 
 console.log(`version is ${versionTag || commitHash}${gitClean ? '' : '-dirty'}`);
 
@@ -47,10 +45,6 @@ export default defineConfig({
     react({ babel: { plugins: [jotaiReactRefresh] } }),
     i18nHotReload(),
     visualizer() as PluginOption,
-    sentryVitePlugin({
-      org: 'slimevr',
-      project: 'slimevr-server-gui-react',
-    }),
   ],
   build: {
     target: 'es2022',

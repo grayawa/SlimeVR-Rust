@@ -1,6 +1,6 @@
 # SlimeVR Rust
 
-基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri / Electron 宿主。旧 Java/Kotlin 服务与 Gradle 工程已移除；算法对照数据和生成工具仍保留，参考源码从固定历史版本读取。见 [Java 工程清理说明](docs/rust-only-backend.zh-CN.md)。
+基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri 宿主。旧 Java/Kotlin 服务与 Gradle 工程已移除；算法对照数据和生成工具仍保留，参考源码从固定历史版本读取。见 [Java 工程清理说明](docs/rust-only-backend.zh-CN.md)。
 
 这是独立开发的衍生项目。上游基线为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`，原作者、许可证及商标说明保留在下文。
 
@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | `server-rust/` | UDP/HID 接收、姿态算法、校准、AutoBone、SteamVR、OSC/VMC、SolarXR API、YAML 配置、BVH | [后端](server-rust/README.zh-CN.md) · [算法](server-rust/README.core.zh-CN.md) · [API 架构](docs/rust-backend-api-architecture.zh-CN.md) |
 | `gui-gpui/` | GPUI Kit 原生界面、组件库、引导、原版 Fluent 翻译 | [构建与使用](gui-gpui/README.zh-CN.md) · [组件库](docs/rust-gpui-components.zh-CN.md) |
-| `gui/` | React 界面、Electron/Tauri 宿主及打包工具 | [Tauri 构建](gui/README.tauri.md) |
+| `gui/` | React 界面、Tauri 宿主及打包工具 | [Tauri 构建](gui/README.tauri.md) |
 | `docs/` | 移植说明、功能对照、修复记录及实机测试清单 | [交接记录](docs/rust-completion-worklog.zh-CN.md) · [统一测试清单](docs/rust-unified-hardware-test.zh-CN.md) |
 
 后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 前端不需要 WebView2；Tauri 前端需要系统提供 WebView2。
@@ -50,103 +50,15 @@ pnpm tauri:rust:build
 
 GitHub Actions 中的 Rust / Tauri、GPUI 和 SteamVR Dashboard 工作流支持手动构建和相关 PR 检查，详见 [CI 说明](docs/rust-ci.zh-CN.md)。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
 
-## 上游项目说明
+## 文档与许可
 
-以下保留上游 SlimeVR 项目介绍及许可说明；其中官方安装器安装的是上游版本。
+- [SteamVR 驱动桥接](docs/rust-steamvr-bridge.zh-CN.md) · [SteamVR 仪表盘 Overlay](docs/rust-steamvr-dashboard.zh-CN.md)
+- [原版 YAML 配置兼容](docs/rust-config-compatibility.zh-CN.md) · [BVH 导出](docs/rust-bvh-export.zh-CN.md)
+- [前后端联调](docs/rust-frontend-integration.zh-CN.md) · [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)
+- [仓库清理范围](docs/repository-cleanup.zh-CN.md) · [参与开发](CONTRIBUTING.md)
 
-Server app for SlimeVR ecosystem
+硬件使用和佩戴说明可参考 [SlimeVR 官方文档](https://docs.slimevr.dev/)。本项目构建包从本仓库 GitHub Actions 的 artifacts 下载。
 
-Server orchestrates communication between multiple sensors and integrations, like SteamVR.
+继承的 SlimeVR 代码版权属于 Eiren Rain 和 SlimeVR Contributors，按原始 [MIT](LICENSE-MIT) / [Apache-2.0](LICENSE-APACHE) 双许可证分发。分发源码或二进制时须保留原始许可文件和版权声明；数学代码的第三方许可位于 `server-rust/licenses/`，构建包一并携带。贡献默认使用相同双许可证。
 
-Sensors implementations:
-* [SlimeVR Tracker for ESP](https://github.com/SlimeVR/SlimeVR-Tracker-ESP) - ESP microcontrollers and multiple IMUs are supported
-* [owoTrack Mobile App](https://github.com/abb128/owoTrackVRSyncMobile) - use phones as trackers (limited functionality and compatibility)
-* [SlimeVR Wrangler](https://github.com/carl-anders/slimevr-wrangler) - use Nintendo Switch Joycon controllers as trackers
-
-Integrations:
-* Use [SlimeVR OpenVR Driver](https://github.com/SlimeVR/SlimeVR-OpenVR-Driver) as a driver for SteamVR.
-* Use built-in OSC Trackers support for FBT integration with VRChat, PCVR or Standalone.
-* Use built-in VMC support for sending and receiving tracking data to and from other apps such as VSeeFace.
-* Export recordings as .BVH files to integrate motion capture data into 3d applications such as Blender.
-
-## Installing
-It's highly recommended to install using the installer downloadable here: https://github.com/SlimeVR/SlimeVR-Installer/releases/latest/download/slimevr_web_installer.exe
-
-Latest setup instructions are [in our docs](https://docs.slimevr.dev/server/index.html).
-
-## Building & Contributing
-For information on building and contributing to the codebase, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-The shared web interface can also run in Tauri. See [the Tauri setup and build guide](gui/README.tauri.md).
-
-A native Rust interface using GPUI Kit is available in [gui-gpui](gui-gpui/README.zh-CN.md). See [its feature and validation checklist](docs/rust-gpui-functional-parity.zh-CN.md) for the Windows test package scope.
-
-The backend migration plan and its original sequencing are documented in [the Rust rewrite plan](docs/rust-backend-rewrite-plan.zh-CN.md).
-
-The first Rust UDP receiver is runnable independently. See [its setup, recording and validation guide](server-rust/README.zh-CN.md).
-
-The Rust pose core supports live UDP solving, full-body skeletons, constraints, leg corrections, alignment, localization, and offline AutoBone. See [the algorithm core guide](server-rust/README.core.zh-CN.md).
-
-## Translating
-
-Translation is done via Pontoon at [i18n.slimevr.dev](https://i18n.slimevr.dev/). Please join our [Discord translation forum](https://discord.com/channels/817184208525983775/1050413434249949235) to coordinate.
-
-## License clarification
-**SlimeVR software** (including server, firmware, drivers, installer, documents, and others - see
-licence for each case specifically) **is distributed under a dual MIT/Apache 2.0 License
-([LICENSE-MIT] and [LICENSE-APACHE]). The software is the copyright of the SlimeVR
-contributors.**
-
-**However, these licenses have some limits, and if you wish to distribute software based
-on SlimeVR, you need to be aware of them:**
-
-* When distributing any software that uses or is based on SlimeVR, you have to provide
-  to the end-user at least one of the original, unmodified [LICENSE-MIT] or
-  [LICENSE-APACHE] files from SlimeVR. This includes the `Copyright (c) 2020 Eiren Rain
-  and SlimeVR Contributors` part of the license. It is insufficient to use a generic MIT
-  or Apache-2.0 License, **it must be the original license file**.
-* This applies even if you distribute software without the source code. In this case,
-  one way to provide it to the end-user is to have a menu in your application that lists
-  all the open source licenses used, including SlimeVR's.
-
-Please refer to the [LICENSE-MIT] and [LICENSE-APACHE] files if you are at any point
-uncertain what the exact requirements are.
-
-## Trademark and Logo use
-**SlimeVR is a trademark or a registered trademark of SlimeVR B.V. Usage of SlimeVR software, hardware, or other intellectual property in this or other repositories does not grant you the right to use SlimeVR trademark as your own.**
-
-For more information, please refer to the [TRADEMARK].
-
-## Contributions
-Any contributions submitted for inclusion in this repository will be dual-licensed under
-either:
-
-- MIT License ([LICENSE-MIT])
-- Apache License, Version 2.0 ([LICENSE-APACHE])
-
-Unless you explicitly state otherwise, any contribution intentionally submitted for
-inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual
-licensed as above, without any additional terms or conditions.
-
-You also certify that the code you have used is compatible with those licenses or is
-authored by you. If you're doing so on your work time, you certify that your employer is
-okay with this and that you are authorized to provide the above licenses.
-
-[LICENSE-MIT]: LICENSE-MIT
-[LICENSE-APACHE]: LICENSE-APACHE
-[TRADEMARK]: TRADEMARK.md
-
-
-*if you read this, u cute*
-
-Rust backend + Web/Tauri integration: [联调与启动说明](docs/rust-frontend-integration.zh-CN.md).
-
-Rust BVH recording: [导出规则与使用说明](docs/rust-bvh-export.zh-CN.md).
-
-Rust backend configuration: [原版 vrconfig.yml 复用与兼容范围](docs/rust-config-compatibility.zh-CN.md).
-
-Rust SteamVR integration: [驱动桥接、共享设置与验证范围](docs/rust-steamvr-bridge.zh-CN.md).
-
-Rust daily workflow: [AutoBone 文件、敲击分配、磁力计与驱动管理，以及集中实测清单](docs/rust-daily-workflow.zh-CN.md).
-
-Rust / Tauri completion: [实施交接与构建](docs/rust-completion-worklog.zh-CN.md) · [统一实机测试清单](docs/rust-unified-hardware-test.zh-CN.md).
+SlimeVR 商标与标识的使用规则见 [TRADEMARK.md](TRADEMARK.md)。本项目不代表 SlimeVR 官方发行版。

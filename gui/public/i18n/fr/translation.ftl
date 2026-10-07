@@ -17,11 +17,6 @@ websocket-error-logs = Ouvrir le dossier des logs
 
 ## Update notification
 
-version_update-title = Nouvelle version disponible: { $version }
-version_update-description = Cliquer sur « { version_update-update } » téléchargera l'installateur SlimeVR pour vous.
-version_update-update = Mettre à jour
-version_update-close = Fermer
-
 ## Tips
 
 tips-find_tracker = Impossible de différencier vos capteurs ? Secouez-en un pour qu'il soit mis en évidence.
@@ -775,14 +770,6 @@ settings-general-interface-discord_presence-message =
         [one] Utilise { $amount } capteur
        *[other] Utilise { $amount } capteurs
     }
-settings-interface-behavior-error_tracking = Collecte des erreurs via Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>Consentez-vous à la collecte de données d'erreur anonymisée ?</h1>
-    
-    <b>Nous ne collectons pas d'informations personnelles</b> telles que votre adresse IP ou vos identifiants Wi-Fi. SlimeVR accorde une grande importance à votre vie privée !
-    
-    Pour offrir la meilleure expérience utilisateur possible, nous collectons des rapports d'erreurs anonymisés, des mesures de performance et des informations sur le système d'exploitation. Cela nous aide à détecter les bugs et les problèmes liés à SlimeVR. Ces données sont collectées via Sentry.io.
-settings-interface-behavior-error_tracking-label = Envoyer les erreurs aux développeurs
 settings-interface-behavior-bvh_directory = Répertoire pour sauvegarder les enregistrements BVH
 settings-interface-behavior-bvh_directory-description = Choisissez un répertoire où sauvegarder vos enregistrements BVH au lieu d’avoir à choisir où les sauvegarder à chaque fois.
 settings-interface-behavior-bvh_directory-label = Répertoire où sauvegarder les enregistrements BVH
@@ -1629,14 +1616,6 @@ vrc_config-avatar_measurement_type-HEIGHT = Taille
 vrc_config-avatar_measurement_type-ARM_SPAN = Envergure des bras
 
 ## Error collection consent modal
-
-error_collection_modal-title = Avons nous l'autorisation de collecter les erreurs ?
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    
-    Vous pouvez modifier ce paramètre ultérieurement dans la section "Comportement" des paramètres.
-error_collection_modal-confirm = Je suis d'accord
-error_collection_modal-cancel = Je ne veux pas
 
 ## Tracking checklist section
 

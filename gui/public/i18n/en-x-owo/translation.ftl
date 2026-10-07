@@ -17,11 +17,6 @@ websocket-error-logs = open da logs fowder
 
 ## Update notification
 
-version_update-title = mew vewsion avaiwabwe: { $version }
-version_update-description = cwicking "{ version_update-update }" will downwoad da SwimeVR instawlew fow u.
-version_update-update = pupdate
-version_update-close = cwose
-
 ## Tips
 
 tips-find_tracker = nawt suwe whicsh twayckyaw is whicsh? shayke a twackaw and it will hyighwight the cowowesponding iytem.

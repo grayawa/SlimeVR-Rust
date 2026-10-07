@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { HashRouter as Router, Outlet, Route, Routes } from 'react-router-dom';
 import { Home } from './components/home/Home';
 import { MainLayout } from './components/MainLayout';
@@ -17,7 +17,6 @@ import { AutomaticProportionsPage } from './components/onboarding/pages/body-pro
 import { ManualProportionsPage } from './components/onboarding/pages/body-proportions/ManualProportions';
 import { ConnectTrackersPage } from './components/onboarding/pages/ConnectTracker';
 import { HomePage } from './components/onboarding/pages/Home';
-import { ErrorCollectingConsentPage } from './components/onboarding/pages/ErrorCollectingConsent';
 import { AutomaticMountingPage } from './components/onboarding/pages/mounting/AutomaticMounting';
 import { ManualMountingPage } from './components/onboarding/pages/mounting/ManualMounting';
 import { TrackersAssignPage } from './components/onboarding/pages/trackers-assign/TrackerAssignment';
@@ -31,12 +30,9 @@ import { TrackerSettingsPage } from './components/tracker/TrackerSettings';
 import { OSCRouterSettings } from './components/settings/pages/OSCRouterSettings';
 import { VMCSettings } from './components/settings/pages/VMCSettings';
 import { MountingChoose } from './components/onboarding/pages/mounting/MountingChoose';
-import { VersionUpdateModal } from './components/VersionUpdateModal';
-import semver from 'semver';
 import { useBreakpoint } from './hooks/breakpoint';
 import { VRModePage } from './components/vr-mode/VRModePage';
 import { InterfaceSettings } from './components/settings/pages/InterfaceSettings';
-import { error, log } from './utils/logging';
 import { FirmwareToolSettings } from './components/firmware-tool/FirmwareTool';
 import { AppLayout } from './AppLayout';
 import { Preload } from './components/Preload';
@@ -45,7 +41,7 @@ import { BackendNotice } from './components/BackendNotice';
 import { BVHSaved } from './components/BVHSaved';
 import { UnknownDeviceModal } from './components/UnknownDeviceModal';
 import { useDiscordPresence } from './hooks/discord-presence';
-import { withSentryReactRouterV6Routing } from '@sentry/react';
+
 import { ScaledProportionsPage } from './components/onboarding/pages/body-proportions/ScaledProportions';
 import { AdvancedSettings } from './components/settings/pages/AdvancedSettings';
 import { FirmwareUpdate } from './components/firmware-update/FirmwareUpdate';
@@ -62,16 +58,11 @@ import { QuizMocapPosQuestion } from './components/onboarding/pages/quiz/MocapPr
 import { DesktopContextC, useDesktopProvider } from './hooks/desktop';
 import { AppLocalizationProvider } from './i18n/config';
 import { openUrl } from './hooks/crossplatform';
-import { desktopHost } from './platform';
 import { UdevRulesModal } from './components/onboarding/UdevRulesModal';
 
-export const GH_REPO =
-  import.meta.env.VITE_RELEASE_REPOSITORY || 'SlimeVR/SlimeVR-Server';
-export const VersionContext = createContext('');
+export const PROJECT_REPOSITORY = 'grayawa/SlimeVR-Rust';
 export const DOCS_SITE = 'https://docs.slimevr.dev';
 export const SLIMEVR_DISCORD = 'https://discord.gg/slimevr';
-
-const SentryRoutes = withSentryReactRouterV6Routing(Routes);
 
 function Layout() {
   const { isMobile } = useBreakpoint('mobile');
@@ -80,13 +71,12 @@ function Layout() {
   return (
     <>
       <SerialDetectionModal />
-      <VersionUpdateModal />
       <UnknownDeviceModal />
       <BackendError />
       <BackendNotice />
       <BVHSaved />
       <UdevRulesModal />
-      <SentryRoutes>
+      <Routes>
         <Route element={<AppLayout />}>
           <Route
             path="/"
@@ -163,10 +153,6 @@ function Layout() {
             }
           >
             <Route path="home" element={<HomePage />} />
-            <Route
-              path="error-collecting-consent"
-              element={<ErrorCollectingConsentPage />}
-            />
             <Route path="wifi-creds" element={<WifiCredsPage />} />
             <Route path="quiz/slime-set" element={<QuizSlimeSetQuestion />} />
             <Route path="quiz/usage" element={<QuizUsageQuestion />} />
@@ -195,14 +181,13 @@ function Layout() {
           </Route>
           <Route path="*" element={<TopBar />} />
         </Route>
-      </SentryRoutes>
+      </Routes>
     </>
   );
 }
 
 export default function App() {
   const websocketAPI = useProvideWebsocketApi();
-  const [updateFound, setUpdateFound] = useState('');
   const desktop = useDesktopProvider();
 
   useEffect(() => {
@@ -222,48 +207,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // don't show update stuff when on android
-    if (window.__ANDROID__?.isThere()) return;
-    if (
-      desktopHost?.kind === 'tauri' &&
-      !import.meta.env.VITE_RELEASE_REPOSITORY
-    )
-      return;
-
-    if (!semver.valid(__VERSION_TAG__)) {
-      log(
-        { version: __VERSION_TAG__ || 'development' },
-        'Non semver version, skipping the server update check'
-      );
-      return;
-    }
-
-    async function fetchReleases() {
-      const releases = await fetch(
-        `https://api.github.com/repos/${GH_REPO}/releases`
-      )
-        .then((res) => res.json())
-        .catch(() => null)
-        .then((json: any[]) =>
-          Array.isArray(json)
-            ? json.filter((rl) => rl?.prerelease === false && !rl?.draft)
-            : null
-        );
-
-      if (!releases?.length) return;
-
-      if (typeof releases[0].tag_name !== 'string') return;
-
-      const version = semver.coerce(releases[0].tag_name);
-
-      if (version && semver.gt(version, __VERSION_TAG__)) {
-        setUpdateFound(releases[0].tag_name);
-      }
-    }
-    fetchReleases().catch((e) => error(e, 'failed to fetch releases'));
-  }, []);
-
-  useEffect(() => {
     if (!desktop.isDesktop) return;
     const unlisten = desktop.api.onServerStatus(({ type, message, level }) => {
       if (type === 'stdout' || type === 'stderr') {
@@ -272,16 +215,11 @@ export default function App() {
         const output = severity === 'trace' ? 'debug' : severity;
         console[output]('[SERVER] %s', message);
       } else if (type === 'error') {
-        if (desktopHost?.kind === 'tauri') console.error('Error: %s', message);
-        else error('Error: %s', message);
+        console.error('Error: %s', message);
       } else if (type === 'terminated') {
-        if (desktopHost?.kind === 'tauri')
-          console.error('Server Process Terminated: %s', message);
-        else error('Server Process Terminated: %s', message);
+        console.error('Server Process Terminated: %s', message);
       } else if (type === 'other') {
-        if (desktopHost?.kind === 'tauri')
-          console.info('Other process event: %s', message);
-        else log('Other process event: %s', message);
+        console.info('Other process event: %s', message);
       }
     });
 
@@ -310,13 +248,11 @@ export default function App() {
               <AppContextProvider>
                 <OnboardingContextProvider>
                   <TrackingChecklistProvider>
-                    <VersionContext.Provider value={updateFound}>
-                      <div className="h-full w-full text-standard bg-background-80 text-background-10">
-                        <Preload />
-                        {!websocketAPI.isConnected && <ConnectionLost />}
-                        {websocketAPI.isConnected && <Layout />}
-                      </div>
-                    </VersionContext.Provider>
+                    <div className="h-full w-full text-standard bg-background-80 text-background-10">
+                      <Preload />
+                      {!websocketAPI.isConnected && <ConnectionLost />}
+                      {websocketAPI.isConnected && <Layout />}
+                    </div>
                   </TrackingChecklistProvider>
                 </OnboardingContextProvider>
               </AppContextProvider>

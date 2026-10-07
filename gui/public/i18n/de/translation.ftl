@@ -17,11 +17,6 @@ websocket-error-logs = Öffne den Logs-Ordner
 
 ## Update notification
 
-version_update-title = Neue Version verfügbar: { $version }
-version_update-description = Wenn Sie auf "{ version_update-update }" klicken, wird das SlimeVR-Installationsprogramm heruntergeladen.
-version_update-update = Aktualisieren
-version_update-close = Schließen
-
 ## Tips
 
 tips-find_tracker = Sie sind sich nicht sicher, welcher Tracker welcher ist? Schütteln Sie einen Tracker, um den zugehörigen Eintrag hervorzuheben.
@@ -693,14 +688,6 @@ settings-general-interface-discord_presence-message =
         [one] nutzt 1 Tracker
        *[other] nutzt { $amount } Tracker
     }
-settings-interface-behavior-error_tracking = Fehlererfassung über Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>Sind Sie mit der Erhebung anonymisierter Fehlerdaten einverstanden?</h1>
-    
-    <b>Wir erfassen keine personenbezogenen Daten,</b> wie Ihre IP-Adresse oder WLAN-Zugangsdaten. SlimeVR respektiert Ihre Privatsphäre!
-    
-    Um die bestmögliche Benutzererfahrung zu bieten, erfassen wir anonymisierte Fehlerberichte, Leistungsmetriken und Informationen zum Betriebssystem. Dies hilft uns, Fehler und Probleme mit SlimeVR zu erkennen. Diese Metriken werden über Sentry.io erfasst.
-settings-interface-behavior-error_tracking-label = Fehler an Entwickler senden
 settings-interface-behavior-bvh_directory = Verzeichnis zum Speichern von BVH-Aufnahmen
 settings-interface-behavior-bvh_directory-label = Verzeichnis für BVH-Aufnahmen
 
@@ -1511,14 +1498,6 @@ vrc_config-avatar_measurement_type-HEIGHT = Höhe
 vrc_config-avatar_measurement_type-ARM_SPAN = Armspannweite
 
 ## Error collection consent modal
-
-error_collection_modal-title = Können wir Fehler sammeln?
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    
-    Sie können diese Einstellung später im Abschnitt Verhalten auf der Einstellungsseite ändern.
-error_collection_modal-confirm = Ich stimme zu
-error_collection_modal-cancel = Ich will nicht
 
 ## Tracking checklist section
 

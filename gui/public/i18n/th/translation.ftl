@@ -17,11 +17,6 @@ websocket-error-logs = เปิดโฟลเดอร์ไฟล์บัน
 
 ## Update notification
 
-version_update-title = มีเวอร์ชันใหม่พร้อมแล้ว: { $version }
-version_update-description = คลิกที่ "{ version_update-update }" เพื่อดาวน์โหลดตัวติดตั้ง SlimeVR ให้คุณ
-version_update-update = อัปเดต
-version_update-close = ปิด
-
 ## Tips
 
 tips-find_tracker = ไม่แน่ใจว่าแทร็กเกอร์ตัวไหน? ให้ขยับแทร็กเกอร์ตัวนั้นเพื่อสังเกตว่าอุปกรณ์ใดกำลังสว่างอยู่
@@ -765,14 +760,6 @@ settings-general-interface-discord_presence-message =
         [0] กำลังจะใส่ Slime
        *[other] ใช้แทร็กเกอร์อยู่ { $amount } ตัว
     }
-settings-interface-behavior-error_tracking = รวบรวมข้อผิดพลาดผ่าน Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>คุณยินยอมให้รวบรวมข้อมูลข้อผิดพลาดแบบไม่ระบุตัวตนหรือไม่?</h1>
-    
-    <b>เราไม่เก็บรวบรวมข้อมูลส่วนบุคคล</b> เช่น ที่อยู่ IP หรือข้อมูลประจำตัว Wi-Fi ของคุณ SlimeVR ให้ความสำคัญกับความเป็นส่วนตัวของคุณ!
-    
-    เพื่อมอบประสบการณ์การใช้งานที่ดีที่สุด เราจึงรวบรวมรายงานข้อผิดพลาดที่ไม่ระบุตัวตน, เมตริกประสิทธิภาพ, และข้อมูลระบบปฏิบัติการ สิ่งนี้ช่วยให้เราตรวจจับบักและปัญหาของ SlimeVR ได้ เมตริกเหล่านี้จะถูกรวบรวมผ่าน Sentry.io
-settings-interface-behavior-error_tracking-label = ส่งข้อผิดพลาดให้นักพัฒนา
 settings-interface-behavior-bvh_directory = ไดเร็กทอรีสำหรับบันทึกไฟล์ BVH
 settings-interface-behavior-bvh_directory-description = เลือกไดเร็กทอรีเพื่อบันทึกไฟล์ BVH แทนที่จะต้องเลือกที่บันทึกทุกครั้ง
 settings-interface-behavior-bvh_directory-label = ไดเร็กทอรีสำหรับบันทึกไฟล์ BVH
@@ -1596,13 +1583,6 @@ vrc_config-avatar_measurement_type-HEIGHT = ความสูง:
 vrc_config-avatar_measurement_type-ARM_SPAN = ช่วงแขน
 
 ## Error collection consent modal
-
-error_collection_modal-title = อนุญาตให้เราเก็บข้อมูลข้อผิดพลาดหรือไม่?
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    คุณสามารถเปลี่ยนการตั้งค่านี้ในภายหลังได้ในแถบ พฤติกรรมการทำงาน ภายในหน้าการตั้งค่า
-error_collection_modal-confirm = ฉันตกลง
-error_collection_modal-cancel = ฉันไม่ต้องการ
 
 ## Tracking checklist section
 

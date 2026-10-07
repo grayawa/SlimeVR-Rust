@@ -2,9 +2,9 @@
 
 生产后端统一使用 `server-rust/`。旧 `server/core`、`server/desktop`、`server/android`、Gradle wrapper / 配置和 Java 版本探测 JAR 已移除。原代码仍可从 Git 历史或 [固定的上游版本](https://github.com/SlimeVR/SlimeVR-Server/tree/83941fd38e91cc91ca6b360deab5c2ae986dd1b6) 查看。
 
-Tauri 和 Electron 自动启动 Rust 可执行文件，沿用 `vrconfig.yml` / `.yaml`、SolarXR 和既有 GUI 设置。`--rust-server` 指定可执行文件，`--path` 指定所在目录，`--no-server` 只连接已经运行的服务。Tauri 的 `--backend auto` / `rust` 保留；Java JAR / JVM 的启动选项和打包配置已移除。关闭自己启动的后端时先关闭 stdin，让录制和 journal 正常完成；超时后终止进程。
+Tauri 自动启动 Rust 可执行文件，沿用 `vrconfig.yml` / `.yaml`、SolarXR 和既有 GUI 设置。`--rust-server` 指定可执行文件，`--path` 指定所在目录，`--no-server` 只连接已经运行的服务。Tauri 的 `--backend auto` / `rust` 保留；Java JAR / JVM 的启动选项和打包配置已移除。关闭自己启动的后端时先关闭 stdin，让录制和 journal 正常完成；超时后终止进程。
 
-移植数学代码的 ktmath / jMonkeyEngine 许可证保留在 `server-rust/licenses/`，并随 Tauri、Electron、GPUI 和 Overlay 构建包分发。
+移植数学代码的 ktmath / jMonkeyEngine 许可证保留在 `server-rust/licenses/`，并随 Tauri、GPUI 和 Overlay 构建包分发。
 
 GPUI、Overlay、共享 React 页面、翻译、OpenVR helper 和 SteamVR 驱动资源保留。WebView2 需求仍取决于是否使用 Tauri。旧 Java / Android 构建任务已从 CI 移除，当前工作流见 [CI 说明](rust-ci.zh-CN.md)。
 
@@ -19,3 +19,5 @@ git fetch https://github.com/SlimeVR/SlimeVR-Server.git 83941fd38e91cc91ca6b360d
 ```
 
 也可设置 `SLIMEVR_REFERENCE_ROOT`，指向单独的上游 Git checkout；此时记录该 checkout 的提交与实际源码哈希。普通 Rust 测试不需要执行这些生成工具，也不需要完整 Git 历史。
+
+后续已移除 Electron 宿主和上游专用集成；保留与删除的具体范围见 [仓库清理说明](repository-cleanup.zh-CN.md)。

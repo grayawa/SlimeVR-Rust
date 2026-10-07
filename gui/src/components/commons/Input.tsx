@@ -91,7 +91,7 @@ export const InputInside = forwardRef<
         <input
           type={forceText ? 'text' : type}
           className={classNames(classes, {
-            'pr-10 sentry-mask': type === 'password',
+            'pr-10': type === 'password',
           })}
           placeholder={placeholder || undefined}
           autoComplete={autocomplete ? 'off' : 'on'}

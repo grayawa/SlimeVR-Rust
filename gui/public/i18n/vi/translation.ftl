@@ -17,11 +17,6 @@ websocket-error-logs = Mở thư mục nhật ký logs
 
 ## Update notification
 
-version_update-title = Phiên bản mới có thể cập nhật:
-version_update-description = Nhấp vào "{ version_update-update }" sẽ tải xuống trình cài đặt SlimeVR cho bạn.
-version_update-update = Cập nhật
-version_update-close = Đóng
-
 ## Tips
 
 tips-find_tracker = Không rõ tracker nào đang được chọn? Di chuyển nó và trong menu sẽ sáng lên tracker đó

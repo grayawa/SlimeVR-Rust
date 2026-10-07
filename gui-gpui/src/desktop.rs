@@ -90,7 +90,7 @@ impl Preferences {
         Ok(Self { value, path, store })
     }
     pub fn defaults() -> Value {
-        json!({"uuid":uuid::Uuid::new_v4().to_string(),"lang":"zh-Hans","doneOnboarding":false,"watchNewDevices":true,"feedbackSound":true,"feedbackSoundVolume":0.5,"connectedTrackersWarning":true,"theme":"slime","textSize":12,"fonts":["poppins"],"useTray":false,"mirrorView":true,"discordPresence":false,"homeLayout":"default","skeletonPreview":true,"errorTracking":null,"bvhDirectory":null,"devSettings":{"highContrast":false,"preciseRotation":false,"fastDataFeed":false,"filterSlimesAndHMD":false,"sortByName":false,"rawSlimeRotation":false,"moreInfo":false}})
+        json!({"uuid":uuid::Uuid::new_v4().to_string(),"lang":"zh-Hans","doneOnboarding":false,"watchNewDevices":true,"feedbackSound":true,"feedbackSoundVolume":0.5,"connectedTrackersWarning":true,"theme":"slime","textSize":12,"fonts":["poppins"],"useTray":false,"mirrorView":true,"discordPresence":false,"homeLayout":"default","skeletonPreview":true,"bvhDirectory":null,"devSettings":{"highContrast":false,"preciseRotation":false,"fastDataFeed":false,"filterSlimesAndHMD":false,"sortByName":false,"rawSlimeRotation":false,"moreInfo":false}})
     }
     pub fn reset_known(&mut self) -> Result<(), String> {
         fn merge(target: &mut Value, defaults: &Value) {

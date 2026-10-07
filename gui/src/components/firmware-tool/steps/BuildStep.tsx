@@ -26,7 +26,10 @@ export function BuildStep({
   const { selectedSource, setFiles, selectedDefault } = useFirmwareTool();
   const [buildStatus, setBuildStatus] = useState<
     BuildStatusDone | BuildStatusBasic
-  >({ status: 'QUEUED', id: '' });
+  >({
+    status: 'QUEUED',
+    id: '',
+  });
 
   const startBuild = async () => {
     if (!selectedSource) throw 'invalid state - no source';

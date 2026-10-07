@@ -17,11 +17,6 @@ websocket-error-logs = افتح مجلد السجلات
 
 ## Update notification
 
-version_update-title = نسخة جديدة متوفرة: { $version }
-version_update-description = سيؤدي النقر على "{ version_update-update }" إلى تنزيل مثبت SlimeVR نيابة عنك.
-version_update-update = تحديث
-version_update-close = أغلق
-
 ## Tips
 
 tips-find_tracker = لست متأكد من أجهزة التعقب؟ قم بتحريك الجهاز لتحديد العنصر المناسب.
@@ -633,15 +628,6 @@ settings-general-interface-discord_presence-message =
         [many] كثيرة
        *[other] أخرى
     }
-settings-interface-behavior-error_tracking = جمع الأخطاء عبر Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>هل توافق على جمع بيانات الخطأ مجهولة المصدر؟</h1>
-    
-    <b>نحن لا نجمع معلومات شخصية</b> مثل عنوان IP الخاص بك أو بيانات الاعتماد اللاسلكية. يقدر SlimeVR خصوصيتك!
-    
-    لتوفير أفضل تجربة للمستخدم، نقوم بجمع تقارير الأخطاء ومقاييس الأداء ومعلومات نظام التشغيل مجهولة المصدر. يساعدنا هذا في اكتشاف الأخطاء والمشكلات المتعلقة ب SlimeVR. يتم جمع هذه المقاييس عبر Sentry.io.
-settings-interface-behavior-error_tracking-label = إرسال الأخطاء إلى المطورين
-
 ## Serial settings
 
 settings-serial = وحدة التحكم التسلسلية

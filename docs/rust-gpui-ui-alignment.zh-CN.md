@@ -2,7 +2,7 @@
 
 2026-10-07，当前测试包标识 `GPUI-test14-components1`。
 
-参照仓库当前 `gui/src` 的 React 界面；Electron 和 Tauri 共用这份前端。参照截图使用中文、Slime 主题、1280 × 800 和六台模拟设备。GPUI 使用同一 Rust 后端、原始 SolarXR 协议、原翻译和原图片素材。
+参照仓库当前 `gui/src` 的 React 界面；Tauri 使用这份前端。参照截图使用中文、Slime 主题、1280 × 800 和六台模拟设备。GPUI 使用同一 Rust 后端、原始 SolarXR 协议、原翻译和原图片素材。
 
 ## test14 设置页组件库第一轮
 

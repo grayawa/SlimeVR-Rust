@@ -2,8 +2,6 @@
 
 # JS/TS dependencies
 /node_modules
-/.pnp
-.pnp.js
 
 # testing
 /coverage
@@ -20,8 +18,6 @@
 .env.production.local
 
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 *.log
 
@@ -29,16 +25,9 @@ yarn-error.log*
 /dist
 /stats.html
 vite.config.ts.timestamp*
-electron.vite.config.*.mjs
 
 # eslint
 .eslintcache
-
-# Sentry Config File
-.env.sentry-build-plugin
-
-# electron
-out/
 
 # Tauri / Rust
 /src-tauri/target/

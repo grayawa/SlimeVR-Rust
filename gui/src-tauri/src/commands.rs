@@ -1,4 +1,4 @@
-use crate::{paths::AppPaths, server::LaunchOptions};
+use crate::paths::AppPaths;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use tauri::{AppHandle, State};
@@ -12,11 +12,6 @@ pub fn os_stats() -> Value {
         "linux" => "linux",
         _ => "unknown",
     } })
-}
-
-#[tauri::command]
-pub fn is_steam(options: State<'_, LaunchOptions>) -> bool {
-    options.steam
 }
 
 #[tauri::command]

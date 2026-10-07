@@ -17,11 +17,6 @@ websocket-error-logs = Atidaryti log'ų aplanką
 
 ## Update notification
 
-version_update-title = Yra nauja versija: { $version }
-version_update-description = Paspaudus „{ version_update-update }“, bus atsiųstas SlimeVR diegiklis.
-version_update-update = Atnaujinti
-version_update-close = Atmesti
-
 ## Tips
 
 tips-find_tracker = Neaiškų, kuris sekiklis yra kuris? Pakratykite vieną - atitinkamas elementas bus paryškintas.
@@ -697,9 +692,6 @@ settings-general-gesture_control-trackers =
 
 
 ## Error collection consent modal
-
-error_collection_modal-confirm = Sutinku
-error_collection_modal-cancel = Nesutinku
 
 ## Tracking checklist section
 

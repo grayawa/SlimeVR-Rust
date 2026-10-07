@@ -17,11 +17,6 @@ websocket-error-logs = Open het logboek.
 
 ## Update notification
 
-version_update-title = Nieuwe versie beschikbaar: { $version }
-version_update-description = Als je op "{ version_update-update }" klikt, wordt het SlimeVR-installatieprogramma voor je gedownload.
-version_update-update = Bijwerken
-version_update-close = Sluiten
-
 ## Tips
 
 tips-find_tracker = Weet je niet welke tracker welke is? Schud een tracker en het corresponderende item zal worden gemarkeerd.
@@ -769,14 +764,6 @@ settings-general-interface-discord_presence-message =
         [one] Gebruikt 1 tracker
        *[other] Gebruikt { $amount } trackers
     }
-settings-interface-behavior-error_tracking = Foutverzameling via Sentry.io
-settings-interface-behavior-error_tracking-description_v2 =
-    <h1>Geef je toestemming voor het verzamelen van geanonimiseerde foutgegevens?</h1>
-    
-    <b>We verzamelen geen persoonlijke informatie</b> zoals jouw IP-adres of draadloze inloggegevens. SlimeVR hecht veel waarde aan je privacy!
-    
-    Om de beste gebruikerservaring te bieden, verzamelen we geanonimiseerde foutrapporten, prestatiestatistieken en informatie over het besturingssysteem. Dit helpt ons bij het detecteren van fouten en problemen met SlimeVR. Deze statistieken worden verzameld via Sentry.io.
-settings-interface-behavior-error_tracking-label = Stuur fouten naar de ontwikkelaars
 settings-interface-behavior-bvh_directory = Map om BVH-opnames op te slaan
 settings-interface-behavior-bvh_directory-description = Kies een map om je BVH-opnames op te slaan, zodat je niet elke keer hoeft te kiezen waar je ze opslaat.
 settings-interface-behavior-bvh_directory-label = Map voor BVH-opnames
@@ -1614,14 +1601,6 @@ vrc_config-avatar_measurement_type-HEIGHT = Height
 vrc_config-avatar_measurement_type-ARM_SPAN = Arm Span
 
 ## Error collection consent modal
-
-error_collection_modal-title = Kunnen we fouten verzamelen?
-error_collection_modal-description_v2 =
-    { settings-interface-behavior-error_tracking-description_v2 }
-    
-    U kunt deze instelling later wijzigen in de sectie Gedrag van de instellingenpagina.
-error_collection_modal-confirm = Ik ben akkoord
-error_collection_modal-cancel = Ik wil het niet
 
 ## Tracking checklist section
 

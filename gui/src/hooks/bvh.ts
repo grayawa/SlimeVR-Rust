@@ -55,8 +55,7 @@ export function useBHV() {
 
   return {
     available:
-      (backendInfo?.backend !== 'rust' || backendInfo.capabilities.includes('bvh')) &&
-      (typeof window.__ANDROID__ === 'undefined' || !window.__ANDROID__?.isThere()),
+      backendInfo?.backend !== 'rust' || backendInfo.capabilities.includes('bvh'),
     state,
     toggle,
   };

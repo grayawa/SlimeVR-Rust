@@ -59,6 +59,9 @@ enum Command {
         log_level: Option<LogLevel>,
         #[arg(long, default_value_t=1000, value_parser=clap::value_parser!(u64).range(1..))]
         summary_ms: u64,
+        /// Timing histogram window; p999 needs at least 1000 observed intervals.
+        #[arg(long, default_value_t=10_000, value_parser=clap::value_parser!(u64).range(1..))]
+        timing_window_ms: u64,
         /// Exit after this many seconds (useful for captures and integration tests).
         #[arg(long, value_parser=clap::value_parser!(u64).range(1..))]
         run_for: Option<u64>,
@@ -189,6 +192,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             record,
             events,
             summary_ms,
+            timing_window_ms,
             log_level,
             run_for,
             pose_config,
@@ -219,6 +223,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 record,
                 log_level: LogLevel::resolve(log_level, events)?,
                 summary_ms,
+                timing_window_ms,
                 run_for: run_for.map(Duration::from_secs),
                 discovery: !no_discovery,
                 discovery_targets,

@@ -3,13 +3,13 @@
 默认日志级别为 `info`，前端、桌面进程和由桌面启动的 Rust 后端使用同一级别。
 日志仍保存在 `%APPDATA%\dev.slimevr.SlimeVR\logs`，无需改动 `vrconfig.yml`，也不新增 JSON 配置文件。
 
-| 级别 | 内容 |
-| --- | --- |
-| `error` | 后端启动失败、异常退出、操作失败、无法解析服务端响应 |
-| `warn` | WebSocket 异常关闭、连接处理失败、设备超时、损坏数据包、UDP 发送失败、后端调度停顿 |
-| `info` | 启动与停止、连接和重连、设备连接与状态、SteamVR 状态变更、重置完成、BVH 开始与保存 |
-| `debug` | 完整姿态与设备快照、API 请求类型和事务号 |
-| `trace` | 逐样本数据、遥测、被忽略的数据包、API 心跳请求 |
+| 级别    | 内容                                                                               |
+| ------- | ---------------------------------------------------------------------------------- |
+| `error` | 后端启动失败、异常退出、操作失败、无法解析服务端响应                               |
+| `warn`  | WebSocket 异常关闭、连接处理失败、设备超时、损坏数据包、UDP 发送失败、后端调度停顿 |
+| `info`  | 启动与停止、连接和重连、设备连接与状态、SteamVR 状态变更、重置完成、BVH 开始与保存 |
+| `debug` | 完整姿态与设备快照、API 请求类型和事务号                                           |
+| `trace` | 逐样本数据、遥测、被忽略的数据包、API 心跳请求                                     |
 
 指定级别会同时保留比它更严重的记录。默认 `info` 不生成完整快照及逐样本日志；正常姿态计算、前端数据订阅、SteamVR 输出和回放录制照常运行。
 
@@ -39,7 +39,7 @@
 
 API 调试日志记录请求类型和事务号，不记录请求正文。重置只在完成时写常规日志，不逐帧写倒计时。
 
-`runtime_stall` 表示后端 tick 间隔超过 100 ms，包含实际 `tick_gap_ms` 与预期 `expected_tick_ms`；连续异常最多每 10 秒记录一次。它表示处理停顿，不能单独证明 CPU 饱和。同一 UDP 设备重新握手时，`device_connected` 的 `session` 递增，`preserve_calibration: true` 表示保留旋转校准。排查步骤见 [重连校准修复](rust-load-reconnect.zh-CN.md)。
+`runtime_timing` 默认每 10 秒汇总 tick jitter 与 tick 实际耗时的 p50 / p95 / p99 / p999 / max。`runtime_stall` 字段统计实际 tick 间隔超出目标周期后严格超过 2 / 5 / 10 / 50 / 100 ms 的次数；超过 50 ms 的窗口为 warn，其余为 info。可通过 `--timing-window-ms` 调整窗口，退出时补发剩余样本。这些指标不能单独证明 CPU 饱和，口径和量化精度见 [后端架构说明](rust-backend-api-architecture.zh-CN.md#tick-延迟统计)。同一 UDP 设备重新握手时，`device_connected` 的 `session` 递增，`preserve_calibration: true` 表示保留旋转校准。排查步骤见 [重连校准修复](rust-load-reconnect.zh-CN.md)。
 
 ## 文件格式与轮转
 

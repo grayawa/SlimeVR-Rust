@@ -1,4 +1,5 @@
 mod ingress;
+mod timing;
 use crate::{
     api::{self, FrontendConfig, Service},
     log_level::LogLevel,
@@ -33,6 +34,7 @@ pub struct ListenOptions {
     pub record: Option<PathBuf>,
     pub log_level: LogLevel,
     pub summary_ms: u64,
+    pub timing_window_ms: u64,
     pub run_for: Option<Duration>,
     pub discovery: bool,
     pub discovery_targets: Vec<SocketAddr>,
@@ -356,15 +358,20 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         "steamvr_endpoint": steamvr.as_ref().and_then(|b| b.state.status.endpoint.as_ref())}),
     )?;
     let start = Instant::now();
-    let mut clock = interval(Duration::from_millis(if engine.is_some() {
+    let period = Duration::from_millis(if engine.is_some() {
         options.pose_ms
     } else {
         50
-    }));
+    });
+    let mut clock = interval(period);
     clock.set_missed_tick_behavior(MissedTickBehavior::Skip);
+    let mut timing = timing::Timing::new(
+        start,
+        period,
+        Duration::from_millis(options.timing_window_ms),
+        engine.is_some(),
+    );
     let mut next_pose_output = 0;
-    let mut last_tick_ms = 0u64;
-    let mut next_stall_warning_ms = 0u64;
     let mut next_summary = options.summary_ms;
     let mut next_discovery = DISCOVERY_INTERVAL_MS;
     let mut next_api_publish = 0;
@@ -398,15 +405,8 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
             }
             _ = clock.tick() => {
                 let at = start.elapsed().as_millis() as u64;
-                let gap_ms = at.saturating_sub(last_tick_ms);
-                last_tick_ms = at;
-                if gap_ms > 100 && at >= next_stall_warning_ms {
-                    next_stall_warning_ms = at.saturating_add(10_000);
-                    write_json(LogLevel::Warn, &serde_json::json!({
-                        "type": "runtime_stall", "at_ms": at,
-                        "tick_gap_ms": gap_ms, "expected_tick_ms": if engine.is_some() {options.pose_ms} else {50},
-                    }))?;
-                }
+                let tick_started = Instant::now();
+                timing.begin_tick(tick_started);
                 if let (Some(bridge),Some(service),Some(engine))=(&mut steamvr,&mut api,&mut engine) {
                     for input in bridge.expire(at) { dispatch_source(service,input,&mut receiver,engine)?; }
                     bridge.provider_tick(at);
@@ -447,6 +447,11 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                     if dropped != 0 {logging::diagnostic(LogLevel::Warn, &serde_json::json!({"type":"udp_ingress_backpressure","at_ms":at,"dropped":dropped}));}
                     if logging::enabled(LogLevel::Debug) {write_json(LogLevel::Debug, &receiver.snapshot(at))?;}
                     if let Some(journal) = &mut recorder {journal.flush()?;}
+                }
+                let tick_finished = Instant::now();
+                timing.end_tick(tick_finished.duration_since(tick_started));
+                if let Some(report) = timing.report(tick_finished, start.elapsed().as_millis() as u64, false) {
+                    report_timing(&report);
                 }
                 if options.run_for.is_some_and(|duration| start.elapsed() >= duration) {break;}
             }
@@ -515,6 +520,9 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         }
     }
     let at = start.elapsed().as_millis() as u64;
+    if let Some(report) = timing.report(Instant::now(), at, true) {
+        report_timing(&report);
+    }
     if let (Some(service), Some(engine)) = (&mut api, &mut engine) {
         service.before_tick(engine, at);
         write_api_changes(service, &mut recorder, at)?;
@@ -620,4 +628,13 @@ fn dispatch_source(
     } else {
         service.steamvr_input(input, engine)
     }
+}
+
+fn report_timing(report: &timing::Report) {
+    let level = if report.runtime_stall.gt_50ms != 0 {
+        LogLevel::Warn
+    } else {
+        LogLevel::Info
+    };
+    logging::diagnostic(level, report);
 }

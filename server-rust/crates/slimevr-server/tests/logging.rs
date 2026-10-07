@@ -245,3 +245,70 @@ fn unread_diagnostic_pipe_does_not_stop_tracker_handshakes() {
     reader.join().unwrap();
     errors.join().unwrap();
 }
+
+#[test]
+fn timing_windows_emit_percentiles_cumulative_stalls_and_final_partial_window() {
+    let dir = tempfile::tempdir().unwrap();
+    let pose = dir.path().join("pose.json");
+    std::fs::write(&pose, "{}").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_slimevr-server"))
+        .env_remove("SLIMEVR_LOG_LEVEL")
+        .args([
+            "listen",
+            "--bind",
+            "127.0.0.1:0",
+            "--no-discovery",
+            "--run-for",
+            "1",
+            "--log-level",
+            "info",
+            "--pose-ms",
+            "4",
+            "--timing-window-ms",
+            "200",
+            "--pose-config",
+        ])
+        .arg(pose)
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    let reports: Vec<Value> = stdout
+        .lines()
+        .chain(stderr.lines())
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .filter(|value| value["type"] == "runtime_timing")
+        .collect();
+    assert!(!reports.is_empty());
+    let mut ticks = 0;
+    let mut samples = 0;
+    for report in &reports {
+        assert_eq!(report["tick_kind"], "pose");
+        assert_eq!(report["expected_tick_ms"], 4.);
+        assert!(report["window_ms"].as_f64().unwrap() > 0.);
+        ticks += report["ticks"].as_u64().unwrap();
+        let count = report["interval_samples"].as_u64().unwrap();
+        samples += count;
+        for key in ["tick_work_ms", "tick_jitter_ms"] {
+            if key == "tick_jitter_ms" && count == 0 {
+                assert!(report[key].is_null());
+                continue;
+            }
+            let p: Vec<_> = ["p50", "p95", "p99", "p999", "max"]
+                .into_iter()
+                .map(|p| report[key][p].as_f64().unwrap())
+                .collect();
+            assert!(p.windows(2).all(|pair| pair[0] <= pair[1]));
+        }
+        let stalls: Vec<_> = ["gt_2ms", "gt_5ms", "gt_10ms", "gt_50ms", "gt_100ms"]
+            .into_iter()
+            .map(|key| report["runtime_stall"][key].as_u64().unwrap())
+            .collect();
+        assert!(stalls.windows(2).all(|pair| pair[0] >= pair[1]));
+        assert!(stalls[0] <= count);
+    }
+    // Every observed interval is represented once, including across window boundaries.
+    assert_eq!(samples + 1, ticks);
+    assert!(!stdout.contains("\"type\":\"runtime_stall\""));
+}

@@ -1,0 +1,9 @@
+[package]
+name = "slimevr-openvr-overlay"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Owned OpenVR dashboard session and tested pointer conversion"
+
+[build-dependencies]
+cc = "1"

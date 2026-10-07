@@ -1,0 +1,17 @@
+# Rust 分支的 GitHub Actions 检查
+
+Rust / Tauri、GPUI 和 SteamVR Dashboard 工作流支持手动构建，也会在相关 PR 中自动运行。PR 按修改路径触发，避免翻译或 Java 工作流的更新重复构建所有 Rust 界面。
+
+| 工作流 | PR 检查范围 | 手动构建 |
+| --- | --- | --- |
+| Rust and Tauri test bundles | Windows：后端测试和 Clippy、前端类型与通信测试、Tauri 构建和宿主测试 | Windows、Linux x64 / ARM64、macOS |
+| GPUI native frontend | Windows：通信 / 状态测试、Clippy、后端和界面构建、着色器检查、真实后端回环测试 | Windows |
+| SteamVR dashboard Windows bundle | Windows：通信和输入测试、Clippy、Overlay / 后端构建、真实后端回环测试、运行库校验和打包 | Windows |
+
+修改各工作流自身会触发对应检查；修改共享后端、SolarXR 或 OpenVR 依赖也会触发相关工作流。GitHub Actions 的 Dependabot 更新因此能验证实际受影响的 Rust 构建。手动构建保留原来的 artifact 下载入口。PR 更新会取消同一 PR 的旧运行，手动运行不会被取消。
+
+继承的 `SlimeVR Full Build` 仍检查 Web GUI 和 Java；GUI 检查同时运行固定版本、校验 SHA-256 的 actionlint，检查工作流语法和表达式。新版 `setup-java` 使用 `temurin`，Java 版本仍为 17。`setup-node` / `setup-python` 的 action 版本与安装的 Node / Python 版本分别配置。
+
+Crowdin 同步只支持手动触发。默认 `dry_run: true` 对应 action 的 `dryrun_action`，并关闭翻译分支推送；真正同步需要配置 Crowdin 项目和授权。PR 构建不访问 Crowdin 项目，语法检查通过也不代表翻译同步已通过在线测试。
+
+Dependabot 仍每周检查 GitHub Actions 更新。合并前查看相关 PR 的实际检查结果；Windows 构建和自动测试通过后，SteamVR 中的真实设备表现仍由实机测试确认。

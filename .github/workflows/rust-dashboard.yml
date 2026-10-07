@@ -10,6 +10,9 @@ jobs:
   windows:
     runs-on: windows-latest
     timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     env:
       CARGO_INCREMENTAL: '0'
     steps:
@@ -27,6 +30,7 @@ jobs:
             gui-gpui -> target
             server-rust -> target
           key: windows-dashboard
+          cache-on-failure: true
       - name: Protocol and dashboard input tests
         run: |
           cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked

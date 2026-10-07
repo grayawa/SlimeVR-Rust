@@ -66,7 +66,17 @@ impl Host {
                 {
                     // SAFETY: renderer keeps the shared texture alive, on this UI thread.
                     let result = runtime.submit(texture.as_raw(), w, h);
-                    frame_dimensions.set([w as f32, h as f32]);
+                    if result.is_ok() {
+                        let dimensions = [w as f32, h as f32];
+                        if frame_dimensions.get() != dimensions {
+                            slimevr_gpui::logging::write(
+                                LogLevel::Info,
+                                "overlay-texture",
+                                &format!("Submitted frame: {w}x{h}"),
+                            );
+                        }
+                        frame_dimensions.set(dimensions);
+                    }
                     let message = result.err();
                     if *error.borrow() != message {
                         if let Some(message) = &message {

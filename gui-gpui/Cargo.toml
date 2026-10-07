@@ -44,7 +44,7 @@ windows-sys = { version = "0.61", features = ["Win32_UI_WindowsAndMessaging"] }
 tempfile = "3"
 
 [target.'cfg(windows)'.dev-dependencies]
-windows = { version = "0.62", features = ["Win32_Graphics_Direct3D_Fxc"] }
+windows = { version = "0.62", features = ["Win32_Graphics_Direct3D_Fxc", "Win32_UI_WindowsAndMessaging"] }
 
 [[bin]]
 name = "slimevr-gpui"

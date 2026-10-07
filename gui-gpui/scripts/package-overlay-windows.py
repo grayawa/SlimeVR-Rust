@@ -73,7 +73,7 @@ def main():
                 f'start "" "%~dp0SlimeVR-Overlay.exe" {flags} %*\r\n'
             ).encode('ascii'))
         (base / '使用说明.txt').write_text(
-            'SlimeVR SteamVR 仪表盘附加程序 — dashboard-test1\n\n'
+            'SlimeVR SteamVR 仪表盘附加程序 — dashboard-test2\n\n'
             '1. 解压整个文件夹；先启动现有 SlimeVR Rust 程序并连接追踪器。\n'
             '2. 启动 SteamVR，再双击 Start-Overlay.cmd。\n'
             '3. 按手柄系统键打开 SteamVR 仪表盘，选择 SlimeVR。\n'
@@ -101,7 +101,7 @@ def main():
             files.append(entry)
         if gui.portable.pe_info(base / 'SlimeVR-Overlay.exe')['subsystem'] != 2:
             raise ValueError('Expected a Windows GUI executable')
-        manifest = {'build_revision': 'dashboard-test1', 'target': 'Windows x64',
+        manifest = {'build_revision': 'dashboard-test2', 'target': 'Windows x64',
                     'built_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     'shaders': shaders, 'backend_included': False, 'webview2_required': False,
                     'windows_native_execution_tested': False, 'steamvr_headset_execution_tested': False,

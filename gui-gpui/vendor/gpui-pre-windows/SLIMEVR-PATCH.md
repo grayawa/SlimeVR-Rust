@@ -16,4 +16,24 @@ Windows package to panic during DirectWrite initialization with OS error 3.
 
 Changed files: `Cargo.toml`, `build.rs`, `src/gpui_windows.rs`,
 `src/directx_renderer.rs`; added `src/shader_source.rs`. All other files retain
-the upstream content.
+the upstream content in the original shader patch.
+
+## Optional SteamVR dashboard output
+
+The `overlay-output` feature adds a UI-thread registration in
+`src/overlay_output.rs`, virtual visibility in `src/window.rs`, and an opt-in
+branch in `src/directx_renderer.rs`. Registered windows copy into a stable shared
+D3D11 texture and submit it through the caller's sink, without CPU readback.
+GPU recovery discards the export texture; resizing reallocates it. Hidden hosts
+receive asynchronous frame requests from the dashboard event loop. Unregistered
+desktop windows retain their original renderer behavior.
+
+`src/hidden_window.rs` applies the requested bounds with `SetWindowPos` without
+showing or activating hidden hosts. This delivers the initial `WM_SIZE` needed
+to resize DirectX's initial 1x1 target. Saving placement alone leaves the
+dashboard with a single white pixel until a desktop preview shows the window.
+A Windows regression test checks hidden client dimensions and visibility.
+
+`src/directx_devices.rs` uses the optional compositor adapter selected before
+application construction. The adapter preference is unused for normal desktop
+builds and avoids exporting a texture from a different GPU on multi-GPU systems.

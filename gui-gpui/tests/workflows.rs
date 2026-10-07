@@ -88,9 +88,16 @@ fn existing_preferences_preserve_unknown_keys_and_single_instance_signals_show()
     let loaded = Preferences::load(&paths).unwrap();
     assert_eq!(loaded.value["futureKey"], json!([1, 2]));
     let first = SingleInstance::acquire(&paths).unwrap().unwrap();
+    let address = paths.root.join("gui-gpui.instance-address");
+    assert!(
+        std::fs::read_to_string(&address)
+            .unwrap()
+            .starts_with("127.0.0.1:")
+    );
     assert!(SingleInstance::acquire(&paths).unwrap().is_none());
     assert!(first.requested());
     drop(first);
+    assert!(!address.exists());
     assert!(SingleInstance::acquire(&paths).unwrap().is_some());
     assert!(!paths.config.exists());
 }

@@ -3,7 +3,7 @@ use fs2::FileExt;
 use serde_json::{Value, json};
 use std::{
     fs::{File, OpenOptions},
-    io::{Read, Seek, SeekFrom, Write},
+    io::{Seek, SeekFrom, Write},
     net::{TcpListener, TcpStream},
     path::PathBuf,
     time::Duration,
@@ -110,6 +110,23 @@ impl Preferences {
         merge(&mut self.value, &Self::defaults());
         self.save()
     }
+    pub fn store_value(&self, key: &str) -> &Value {
+        &self.store[key]
+    }
+    /// An add-on owns its store key, while config.json belongs to the GUI.
+    /// Writing this key must preserve the GUI's latest serialized preferences.
+    pub fn save_store_value(&mut self, key: &str, value: Value) -> Result<(), String> {
+        self.store = match std::fs::read(&self.path) {
+            Ok(bytes) => serde_json::from_slice(&bytes).map_err(|e| e.to_string())?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => json!({}),
+            Err(error) => return Err(error.to_string()),
+        };
+        if !self.store.is_object() {
+            return Err("Existing GUI preference store must be an object".into());
+        }
+        self.store[key] = value;
+        self.write_store()
+    }
     pub fn save(&mut self) -> Result<(), String> {
         // Reload unrelated store keys, preserving changes made by the other frontend.
         if let Ok(bytes) = std::fs::read(&self.path)
@@ -120,21 +137,32 @@ impl Preferences {
         }
         self.store["config.json"] =
             json!(serde_json::to_string(&self.value).map_err(|e| e.to_string())?);
-        let temporary = self.path.with_extension("gpui.tmp");
+        self.write_store()
+    }
+    fn write_store(&self) -> Result<(), String> {
+        let temporary = self
+            .path
+            .with_extension(format!("gpui-{}.tmp", uuid::Uuid::new_v4()));
         std::fs::write(
             &temporary,
             serde_json::to_vec_pretty(&self.store).map_err(|e| e.to_string())?,
         )
         .map_err(|e| e.to_string())?;
-        std::fs::rename(&temporary, &self.path).map_err(|e| e.to_string())
+        let result = std::fs::rename(&temporary, &self.path).map_err(|e| e.to_string());
+        if result.is_err() {
+            let _ = std::fs::remove_file(&temporary);
+        }
+        result
     }
 }
 pub struct SingleInstance {
     _lock: File,
     listener: TcpListener,
+    address_path: PathBuf,
 }
 impl SingleInstance {
     pub fn acquire(paths: &Paths) -> Result<Option<Self>, String> {
+        let address_path = paths.root.join("gui-gpui.instance-address");
         let mut lock = OpenOptions::new()
             .create(true)
             .truncate(false)
@@ -143,12 +171,18 @@ impl SingleInstance {
             .open(paths.root.join("gui-gpui.lock"))
             .map_err(|e| e.to_string())?;
         if let Err(error) = lock.try_lock_exclusive() {
-            if error.kind() != std::io::ErrorKind::WouldBlock {
+            if error.kind() != std::io::ErrorKind::WouldBlock
+                && error.raw_os_error() != fs2::lock_contended_error().raw_os_error()
+            {
                 return Err(error.to_string());
             }
-            let mut address = String::new();
-            lock.read_to_string(&mut address)
-                .map_err(|e| e.to_string())?;
+            // Windows byte-range locks also block reads from the lock file.
+            // Keep the wake-up address in an unlocked sidecar instead.
+            let address = match std::fs::read_to_string(&address_path) {
+                Ok(address) => address,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+                Err(e) => return Err(e.to_string()),
+            };
             if let Ok(address) = address.trim().parse()
                 && let Ok(mut stream) =
                     TcpStream::connect_timeout(&address, Duration::from_millis(300))
@@ -168,13 +202,29 @@ impl SingleInstance {
         )
         .map_err(|e| e.to_string())?;
         lock.flush().map_err(|e| e.to_string())?;
+        std::fs::write(
+            &address_path,
+            listener
+                .local_addr()
+                .map_err(|e| e.to_string())?
+                .to_string(),
+        )
+        .map_err(|e| e.to_string())?;
         Ok(Some(Self {
             _lock: lock,
             listener,
+            address_path,
         }))
     }
     pub fn requested(&self) -> bool {
         self.listener.accept().is_ok()
+    }
+}
+impl Drop for SingleInstance {
+    fn drop(&mut self) {
+        // Remove the sidecar while the ownership lock is still held, so a new
+        // instance cannot publish an address that this old instance deletes.
+        let _ = std::fs::remove_file(&self.address_path);
     }
 }
 

@@ -97,8 +97,8 @@ export const trackerFromIdAtom = ({
     atom((get) =>
       get(flatTrackersAtom).find(
         ({ tracker }) =>
-          trackerNum &&
-          deviceId &&
+          trackerNum !== undefined &&
+          deviceId !== undefined &&
           tracker?.trackerId?.trackerNum == trackerNum &&
           tracker?.trackerId?.deviceId?.id == deviceId
       )

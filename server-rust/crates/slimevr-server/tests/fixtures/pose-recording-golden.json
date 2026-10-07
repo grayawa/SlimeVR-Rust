@@ -1,0 +1,97 @@
+{
+  "reference_commit": "83941fd38e91cc91ca6b360deab5c2ae986dd1b6",
+  "scope": "Compile and execute original PfsIO/PfrIO with explicit recording-container adapters.",
+  "source_sha256": {
+    "server/core/src/main/java/dev/slimevr/poseframeformat/trackerdata/TrackerFrame.kt": "c7f55890f373e5246a26bacea2f54eedd0138f07990732f3c27620770a09b9fd",
+    "server/core/src/main/java/dev/slimevr/poseframeformat/PfsIO.kt": "36266564eeb60a0d69dacf2cafe74518e7a50d713dd5e3f3ea1e89707ffaf39d",
+    "server/core/src/main/java/dev/slimevr/poseframeformat/PfrIO.kt": "49c91c72bf49df30be2abffdcd866c9dc7e62d3aef509a0bcec37a4c5df8a5cd",
+    "server/core/src/main/java/dev/slimevr/poseframeformat/PfsPackets.kt": "e1151a498b24e9cf5a3c64f236f5d4f5d9097f064956604ff7a2b19542166dfe",
+    "server/core/src/main/java/dev/slimevr/poseframeformat/trackerdata/TrackerFrameData.kt": "90bcc24bc48786e35335e8b584e1ff3d69b3d10725cd1cdc4c4f631067477c57",
+    "server-rust/tools/pose-recording-reference/Adapters.kt": "0d0d68d7edd4f3d8226855dba37f78235c9d6239d97b6c1c15cc7293c16613da",
+    "server-rust/tools/pose-recording-reference/Config.kt": "3c02d2716dcc839ec11b59b743ebebe61fe60f1e552e27810104d2a671793385",
+    "server-rust/tools/pose-recording-reference/Frames.kt": "50e5628085004e482df2b5347accb1e807a8163b449adc4d227c1faccfbf9921",
+    "server-rust/tools/pose-recording-reference/Log.kt": "776ad54e43a03f1583d6d3797aa2cf563a658ffc3c0e531a55f4da99c445988a",
+    "server-rust/tools/pose-recording-reference/Oracle.kt": "48c27df7b1fb9a0b3eba6a7b1256c7be892686cf9455f3f41de5b37a63741285"
+  },
+  "generated_sha256": "3cc33293fe1c836ba08d3340ecc3d10823b60376fdfa7718186e461730cffba2",
+  "cases": [
+    {
+      "name": "all_flags_and_modified_utf",
+      "interval": 0.02,
+      "trackers": [
+        {
+          "name": "\u5934\u663e\u0000\ud83c\udfae",
+          "frames": [
+            {
+              "body": "head",
+              "rotation": {
+                "w": 1.0,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "position": {
+                "x": 0.1,
+                "y": 1.7,
+                "z": -0.2
+              },
+              "acceleration": {
+                "x": 0.1,
+                "y": 1.7,
+                "z": -0.2
+              },
+              "raw_rotation": {
+                "w": 1.0,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              }
+            },
+            {
+              "body": "head",
+              "rotation": {
+                "w": 1.0,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "position": {
+                "x": 0.1,
+                "y": 1.7,
+                "z": -0.2
+              }
+            }
+          ]
+        },
+        {
+          "name": "sensor",
+          "frames": [
+            {
+              "body": "left_lower_arm",
+              "rotation": {
+                "w": 1.0,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              }
+            },
+            {},
+            {
+              "body": "right_little_distal",
+              "rotation": {
+                "w": 1.0,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "pfs": "003ca3d70a0100000ee5a4b4e698bec080eda0bcedbeae0101000673656e736f720200000000000000003e0000000000000000000000003f8000003dcccccd3fd9999abe4ccccd000000003dcccccd3fd9999abe4ccccd0000000000000000000000003f8000000201000000000000000a0000000000000000000000003f8000000000000c0200000000010000000e0000000000000000000000003f8000003dcccccd3fd9999abe4ccccd00000000020100000001000000000201000000020000000a0000000000000000000000003f80000000000031",
+        "pfr": "00000002000ee5a4b4e698bec080eda0bcedbeae000000020000003e0000000000000000000000003f8000003dcccccd3fd9999abe4ccccd000000003dcccccd3fd9999abe4ccccd0000000000000000000000003f8000000000000e0000000000000000000000003f8000003dcccccd3fd9999abe4ccccd00000000000673656e736f72000000030000000a0000000000000000000000003f8000000000000c000000000000000a0000000000000000000000003f80000000000031"
+      }
+    }
+  ]
+}

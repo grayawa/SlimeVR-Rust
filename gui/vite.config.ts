@@ -7,10 +7,12 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import jotaiReactRefresh from 'jotai/babel/plugin-react-refresh';
 
 const commitHash = execSync('git rev-parse --verify --short=8 HEAD').toString().trim();
-const versionTag = execSync('git --no-pager tag --sort -taggerdate --points-at HEAD')
-  .toString()
-  .split('\n')[0]
-  .trim();
+const versionTag =
+  process.env.VITE_DESKTOP_VERSION ||
+  execSync('git --no-pager tag --sort -taggerdate --points-at HEAD')
+    .toString()
+    .split('\n')[0]
+    .trim();
 // If not empty then it's not clean
 const gitCleanString = execSync('git status --porcelain').toString();
 const gitClean = gitCleanString ? false : true;

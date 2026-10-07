@@ -3,28 +3,28 @@ import { LoaderIcon, SlimeState } from '@/components/commons/icon/LoaderIcon';
 import { Typography } from '@/components/commons/Typography';
 import { EmptyLayout } from '@/components/EmptyLayout';
 import { useConfig } from '@/hooks/config';
-import { useElectron } from '@/hooks/electron';
+import { useDesktop } from '@/hooks/desktop';
 import { useWebsocketAPI } from '@/hooks/websocket-api';
 import { error } from '@/utils/logging';
 import { Localized } from '@fluent/react';
 
 function Error({ title, desc }: { title: string; desc: string }) {
-  const electron = useElectron();
+  const desktop = useDesktop();
   const { saveConfig } = useConfig();
 
   const openLogsFolder = async () => {
-    if (!electron.isElectron) throw 'invalid state - electron should be here';
+    if (!desktop.isDesktop) throw 'invalid state - desktop host required';
     try {
-      electron.api.openLogsFolder();
+      desktop.api.openLogsFolder();
     } catch (err) {
       error('Failed to open logs folder:', err);
     }
   };
 
   const closeApp = async () => {
-    if (!electron.isElectron) throw 'invalid state - electron should be here';
+    if (!desktop.isDesktop) throw 'invalid state - desktop host required';
     await saveConfig();
-    electron.api.close();
+    desktop.api.close();
   };
 
   return (
@@ -37,7 +37,7 @@ function Error({ title, desc }: { title: string; desc: string }) {
         <Localized id={desc}>
           <Typography variant="standard" />
         </Localized>
-        {electron.isElectron && (
+        {desktop.isDesktop && (
           <div className="flex gap-2 justify-center mt-4">
             <Localized id="websocket-error-close">
               <Button variant="primary" onClick={closeApp} />
@@ -56,7 +56,7 @@ export function ConnectionLost() {
   const { isFirstConnection, timedOut } = useWebsocketAPI();
 
   const isLoading = isFirstConnection && !timedOut;
-  const isCrashed = !isFirstConnection && !timedOut;
+  const isDisconnected = !isFirstConnection && !timedOut;
   const isTimedOut = isFirstConnection && timedOut;
   return (
     <EmptyLayout>
@@ -72,7 +72,7 @@ export function ConnectionLost() {
               </div>
             </>
           )}
-          {isCrashed && (
+          {isDisconnected && (
             <Error
               title="websocket-connection_lost"
               desc="websocket-connection_lost-desc"

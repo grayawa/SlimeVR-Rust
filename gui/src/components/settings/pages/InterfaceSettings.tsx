@@ -18,7 +18,7 @@ import { Range } from '@/components/commons/Range';
 import { Dropdown } from '@/components/commons/Dropdown';
 import { ArrowRightLeftIcon } from '@/components/commons/icon/ArrowIcons';
 import { SystemFileInput } from '@/components/commons/SystemFileInput';
-import { useElectron } from '@/hooks/electron';
+import { useDesktop } from '@/hooks/desktop';
 
 interface InterfaceSettingsForm {
   appearance: {
@@ -44,7 +44,7 @@ interface InterfaceSettingsForm {
 }
 
 export function InterfaceSettings() {
-  const electron = useElectron();
+  const desktop = useDesktop();
   const { currentLocales } = useLocaleConfig();
   const { l10n } = useLocalization();
   const { config, setConfig } = useConfig();
@@ -275,7 +275,7 @@ export function InterfaceSettings() {
               {l10n.getString('settings-interface-behavior')}
             </Typography>
             <div className="pt-2">
-              {electron.isElectron && (
+              {desktop.isDesktop && (
                 <>
                   <Typography variant="section-title">
                     {l10n.getString('settings-general-interface-use_tray')}
@@ -301,27 +301,33 @@ export function InterfaceSettings() {
                 </>
               )}
 
-              <Typography variant="section-title">
-                {l10n.getString('settings-general-interface-discord_presence')}
-              </Typography>
-              <div className="flex flex-col pt-1 pb-2">
-                <Typography>
-                  {l10n.getString(
-                    'settings-general-interface-discord_presence-description'
-                  )}
-                </Typography>
-              </div>
-              <div className="grid sm:grid-cols-2 pb-4">
-                <CheckBox
-                  variant="toggle"
-                  control={control}
-                  outlined
-                  name="behavior.discordPresence"
-                  label={l10n.getString(
-                    'settings-general-interface-discord_presence-label'
-                  )}
-                />
-              </div>
+              {desktop.isDesktop && desktop.capabilities.discordPresence && (
+                <>
+                  <Typography variant="section-title">
+                    {l10n.getString(
+                      'settings-general-interface-discord_presence'
+                    )}
+                  </Typography>
+                  <div className="flex flex-col pt-1 pb-2">
+                    <Typography>
+                      {l10n.getString(
+                        'settings-general-interface-discord_presence-description'
+                      )}
+                    </Typography>
+                  </div>
+                  <div className="grid sm:grid-cols-2 pb-4">
+                    <CheckBox
+                      variant="toggle"
+                      control={control}
+                      outlined
+                      name="behavior.discordPresence"
+                      label={l10n.getString(
+                        'settings-general-interface-discord_presence-label'
+                      )}
+                    />
+                  </div>
+                </>
+              )}
 
               <Typography variant="section-title">
                 {l10n.getString('settings-general-interface-dev_mode')}
@@ -388,7 +394,7 @@ export function InterfaceSettings() {
                 />
               </div>
 
-              {electron.isElectron && (
+              {desktop.isDesktop && (
                 <>
                   <Typography variant="section-title">
                     {l10n.getString(

@@ -8,8 +8,6 @@ import {
   QuatT,
   RpcMessage,
   TrackerIdT,
-  SettingsRequestT,
-  SettingsResponseT,
   TapDetectionSettingsT,
   ChangeSettingsRequestT,
   TapDetectionSetupNotificationT,
@@ -56,7 +54,7 @@ export function TrackersAssignPage() {
   const { l10n } = useLocalization();
   const { config, setConfig } = useConfig();
   const { applyProgress, state, slimeSet } = useOnboarding();
-  const { sendRPCPacket, useRPCPacket } = useWebsocketAPI();
+  const { sendRPCPacket, useRPCPacket, isConnected } = useWebsocketAPI();
   const defaultValues = {
     mirrorView: config?.mirrorView ?? defaultConfig.mirrorView,
   };
@@ -73,71 +71,22 @@ export function TrackersAssignPage() {
     setConfig({ mirrorView });
   }, [mirrorView]);
 
-  const [tapDetectionSettings, setTapDetectionSettings] = useState<Omit<
-    TapDetectionSettingsT,
-    'pack'
-  > | null>(null);
-
   useEffect(() => {
-    sendRPCPacket(RpcMessage.SettingsRequest, new SettingsRequestT());
-  }, []);
-
-  useRPCPacket(RpcMessage.SettingsResponse, (settings: SettingsResponseT) => {
-    if (settings.tapDetectionSettings) {
-      setTapDetectionSettings(settings.tapDetectionSettings);
-    }
-  });
-
-  useEffect(() => {
-    if (!tapDetectionSettings) return;
-    const newTapSettings = new TapDetectionSettingsT(
-      tapDetectionSettings.fullResetDelay,
-      tapDetectionSettings.fullResetEnabled,
-      tapDetectionSettings.fullResetTaps,
-      tapDetectionSettings.yawResetDelay,
-      tapDetectionSettings.yawResetEnabled,
-      tapDetectionSettings.yawResetTaps,
-      tapDetectionSettings.mountingResetDelay,
-      tapDetectionSettings.mountingResetEnabled,
-      tapDetectionSettings.mountingResetTaps,
-      true,
-      null,
-      tapDetectionSettings.yawResetTracker,
-      tapDetectionSettings.fullResetTracker,
-      tapDetectionSettings.mountingResetTracker
-    );
-
-    sendRPCPacket(
-      RpcMessage.ChangeSettingsRequest,
-      new ChangeSettingsRequestT(
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        newTapSettings
-      )
-    );
-
-    return () => {
-      newTapSettings.setupMode = false;
-      sendRPCPacket(
-        RpcMessage.ChangeSettingsRequest,
-        new ChangeSettingsRequestT(
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          newTapSettings
-        )
-      );
+    if (!isConnected) return;
+    const setSetupMode = (enabled: boolean) => {
+      const tapSettings = new TapDetectionSettingsT();
+      tapSettings.setupMode = enabled;
+      const request = new ChangeSettingsRequestT();
+      request.tapDetectionSettings = tapSettings;
+      sendRPCPacket(RpcMessage.ChangeSettingsRequest, request, {
+        ignoreIfDisconnected: true,
+      });
     };
-  }, [tapDetectionSettings]);
+    // SettingsResponse is a notification, not a reason to write settings again.
+    // Enter/leave the page (or restore its connection) without replaying stale tap values.
+    setSetupMode(true);
+    return () => setSetupMode(false);
+  }, [isConnected]);
 
   const trackerPartGrouped = useMemo(
     () =>

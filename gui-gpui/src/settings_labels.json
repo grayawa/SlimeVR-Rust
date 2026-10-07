@@ -1,0 +1,406 @@
+[
+  {
+    "path": "exitType",
+    "label": "tray_or_exit_modal-radio-exit"
+  },
+  {
+    "path": "exitType",
+    "label": "tray_or_exit_modal-radio-tray"
+  },
+  {
+    "path": "ssid",
+    "label": "onboarding-wifi_creds-ssid"
+  },
+  {
+    "path": "password",
+    "label": "onboarding-wifi_creds-password"
+  },
+  {
+    "path": "trackerName",
+    "label": "tracker-settings-name_section-label"
+  },
+  {
+    "path": "isVisible",
+    "label": "widget-overlay-is_visible_label"
+  },
+  {
+    "path": "isMirrored",
+    "label": "widget-overlay-is_mirrored_label"
+  },
+  {
+    "path": "serial.ssid",
+    "label": "onboarding-wifi_creds-ssid"
+  },
+  {
+    "path": "serial.password",
+    "label": "onboarding-wifi_creds-password"
+  },
+  {
+    "path": "serial.selectedDevicePort",
+    "label": "firmware_tool-flash_method_serial-no_devices"
+  },
+  {
+    "path": "flashingMethod",
+    "label": "firmware_tool-flash_method_step-ota-v2"
+  },
+  {
+    "path": "flashingMethod",
+    "label": "firmware_tool-flash_method_step-serial-v2"
+  },
+  {
+    "path": "magToggle",
+    "label": "settings-general-tracker_mechanics-use_mag_on_all_trackers-label"
+  },
+  {
+    "path": "magToggle",
+    "label": "tracker-settings-use_mag-label"
+  },
+  {
+    "path": "trackers.automaticTrackerToggle",
+    "label": "settings-general-steamvr-trackers-tracker_toggling-label"
+  },
+  {
+    "path": "trackers.chest",
+    "label": "settings-general-steamvr-trackers-chest"
+  },
+  {
+    "path": "trackers.waist",
+    "label": "settings-general-steamvr-trackers-waist"
+  },
+  {
+    "path": "trackers.leftKnee",
+    "label": "settings-general-steamvr-trackers-left_knee"
+  },
+  {
+    "path": "trackers.rightKnee",
+    "label": "settings-general-steamvr-trackers-right_knee"
+  },
+  {
+    "path": "trackers.leftFoot",
+    "label": "settings-general-steamvr-trackers-left_foot"
+  },
+  {
+    "path": "trackers.rightFoot",
+    "label": "settings-general-steamvr-trackers-right_foot"
+  },
+  {
+    "path": "trackers.leftElbow",
+    "label": "settings-general-steamvr-trackers-left_elbow"
+  },
+  {
+    "path": "trackers.rightElbow",
+    "label": "settings-general-steamvr-trackers-right_elbow"
+  },
+  {
+    "path": "trackers.leftHand",
+    "label": "settings-general-steamvr-trackers-left_hand"
+  },
+  {
+    "path": "trackers.rightHand",
+    "label": "settings-general-steamvr-trackers-right_hand"
+  },
+  {
+    "path": "filtering.type",
+    "label": "settings-general-tracker_mechanics-filtering-type-none"
+  },
+  {
+    "path": "filtering.type",
+    "label": "settings-general-tracker_mechanics-filtering-type-smoothing"
+  },
+  {
+    "path": "filtering.type",
+    "label": "settings-general-tracker_mechanics-filtering-type-prediction"
+  },
+  {
+    "path": "filtering.amount",
+    "label": "settings-general-tracker_mechanics-filtering-amount"
+  },
+  {
+    "path": "resetsSettings.yawResetSmoothTime",
+    "label": "settings-general-tracker_mechanics-yaw-reset-smooth-time"
+  },
+  {
+    "path": "resetsSettings.saveMountingReset",
+    "label": "settings-general-tracker_mechanics-save_mounting_reset-enabled-label"
+  },
+  {
+    "path": "hidSettings.trackersOverHID",
+    "label": "settings-general-tracker_mechanics-trackers_over_usb-enabled-label"
+  },
+  {
+    "path": "toggles.skatingCorrection",
+    "label": "settings-general-fk_settings-leg_tweak-skating_correction"
+  },
+  {
+    "path": "legTweaks.correctionStrength",
+    "label": "settings-general-fk_settings-leg_tweak-skating_correction-amount"
+  },
+  {
+    "path": "toggles.floorClip",
+    "label": "settings-general-fk_settings-leg_tweak-floor_clip"
+  },
+  {
+    "path": "toggles.footPlant",
+    "label": "settings-general-fk_settings-leg_tweak-foot_plant"
+  },
+  {
+    "path": "toggles.toeSnap",
+    "label": "settings-general-fk_settings-leg_tweak-toe_snap"
+  },
+  {
+    "path": "toggles.forceArmsFromHmd",
+    "label": "settings-general-fk_settings-arm_fk-force_arms"
+  },
+  {
+    "path": "resetsSettings.resetHmdPitch",
+    "label": "settings-general-fk_settings-reset_settings-reset_hmd_pitch"
+  },
+  {
+    "path": "resetsSettings.resetMountingFeet",
+    "label": "settings-general-fk_settings-leg_fk-reset_mounting_feet-v1"
+  },
+  {
+    "path": "resetsSettings.armsMountingResetMode",
+    "label": "settings-general-fk_settings-arm_fk-back"
+  },
+  {
+    "path": "resetsSettings.armsMountingResetMode",
+    "label": "settings-general-fk_settings-arm_fk-forward"
+  },
+  {
+    "path": "resetsSettings.armsMountingResetMode",
+    "label": "settings-general-fk_settings-arm_fk-tpose_up"
+  },
+  {
+    "path": "resetsSettings.armsMountingResetMode",
+    "label": "settings-general-fk_settings-arm_fk-tpose_down"
+  },
+  {
+    "path": "toggles.enforceConstraints",
+    "label": "settings-general-fk_settings-enforce_joint_constraints-enforce_constraints"
+  },
+  {
+    "path": "toggles.usePosition",
+    "label": "settings-general-fk_settings-ik-use_position"
+  },
+  {
+    "path": "velocitySettings.sendDerivedVelocity",
+    "label": "settings-general-fk_settings-velocity_settings-send_derived_velocity"
+  },
+  {
+    "path": "toggles.extendedSpine",
+    "label": "settings-general-fk_settings-skeleton_settings-extended_spine_model"
+  },
+  {
+    "path": "toggles.extendedPelvis",
+    "label": "settings-general-fk_settings-skeleton_settings-extended_pelvis_model"
+  },
+  {
+    "path": "toggles.extendedKnee",
+    "label": "settings-general-fk_settings-skeleton_settings-extended_knees_model"
+  },
+  {
+    "path": "ratios.imputeWaistFromChestHip",
+    "label": "settings-general-fk_settings-skeleton_settings-impute_waist_from_chest_hip"
+  },
+  {
+    "path": "ratios.imputeWaistFromChestLegs",
+    "label": "settings-general-fk_settings-skeleton_settings-impute_waist_from_chest_legs"
+  },
+  {
+    "path": "ratios.imputeHipFromChestLegs",
+    "label": "settings-general-fk_settings-skeleton_settings-impute_hip_from_chest_legs"
+  },
+  {
+    "path": "ratios.imputeHipFromWaistLegs",
+    "label": "settings-general-fk_settings-skeleton_settings-impute_hip_from_waist_legs"
+  },
+  {
+    "path": "ratios.interpHipLegs",
+    "label": "settings-general-fk_settings-skeleton_settings-interp_hip_legs"
+  },
+  {
+    "path": "ratios.interpKneeTrackerAnkle",
+    "label": "settings-general-fk_settings-skeleton_settings-interp_knee_tracker_ankle"
+  },
+  {
+    "path": "ratios.interpKneeAnkle",
+    "label": "settings-general-fk_settings-skeleton_settings-interp_knee_ankle"
+  },
+  {
+    "path": "toggles.selfLocalization",
+    "label": "settings-general-fk_settings-self_localization-title"
+  },
+  {
+    "path": "tapDetection.yawResetEnabled",
+    "label": "settings-general-gesture_control-yawResetEnabled"
+  },
+  {
+    "path": "tapDetection.fullResetEnabled",
+    "label": "settings-general-gesture_control-fullResetEnabled"
+  },
+  {
+    "path": "tapDetection.mountingResetEnabled",
+    "label": "settings-general-gesture_control-mountingResetEnabled"
+  },
+  {
+    "path": "tapDetection.yawResetDelay",
+    "label": "settings-general-gesture_control-yawResetDelay"
+  },
+  {
+    "path": "tapDetection.fullResetDelay",
+    "label": "settings-general-gesture_control-fullResetDelay"
+  },
+  {
+    "path": "tapDetection.mountingResetDelay",
+    "label": "settings-general-gesture_control-mountingResetDelay"
+  },
+  {
+    "path": "tapDetection.yawResetTaps",
+    "label": "settings-general-gesture_control-yawResetTaps"
+  },
+  {
+    "path": "tapDetection.fullResetTaps",
+    "label": "settings-general-gesture_control-fullResetTaps"
+  },
+  {
+    "path": "tapDetection.mountingResetTaps",
+    "label": "settings-general-gesture_control-mountingResetTaps"
+  },
+  {
+    "path": "tapDetection.numberTrackersOverThreshold",
+    "label": "settings-general-gesture_control-numberTrackersOverThreshold"
+  },
+  {
+    "path": "notifications.watchNewDevices",
+    "label": "settings-general-interface-serial_detection-label"
+  },
+  {
+    "path": "notifications.feedbackSound",
+    "label": "settings-general-interface-feedback_sound-label"
+  },
+  {
+    "path": "notifications.feedbackSoundVolume",
+    "label": "settings-general-interface-feedback_sound-volume"
+  },
+  {
+    "path": "notifications.connectedTrackersWarning",
+    "label": "settings-general-interface-connected_trackers_warning-label"
+  },
+  {
+    "path": "behavior.useTray",
+    "label": "settings-general-interface-use_tray-label"
+  },
+  {
+    "path": "behavior.discordPresence",
+    "label": "settings-general-interface-discord_presence-label"
+  },
+  {
+    "path": "developer.enabled",
+    "label": "settings-general-interface-dev_mode-label"
+  },
+  {
+    "path": "behavior.errorTracking",
+    "label": "settings-interface-behavior-error_tracking-label"
+  },
+  {
+    "path": "vmc.oscSettings.enabled",
+    "label": "settings-osc-vmc-enable-label"
+  },
+  {
+    "path": "vmc.oscSettings.portIn",
+    "label": "settings-osc-vmc-network-port_in"
+  },
+  {
+    "path": "vmc.oscSettings.portOut",
+    "label": "settings-osc-vmc-network-port_out"
+  },
+  {
+    "path": "vmc.anchorHip",
+    "label": "settings-osc-vmc-anchor_hip-label"
+  },
+  {
+    "path": "vmc.mirrorTracking",
+    "label": "settings-osc-vmc-mirror_tracking-label"
+  },
+  {
+    "path": "vrchat.oscSettings.enabled",
+    "label": "settings-osc-vrchat-enable-label"
+  },
+  {
+    "path": "vrchat.oscqueryEnabled",
+    "label": "settings-osc-vrchat-oscqueryEnabled-label"
+  },
+  {
+    "path": "vrchat.oscSettings.portIn",
+    "label": "settings-osc-vrchat-network-port_in"
+  },
+  {
+    "path": "vrchat.oscSettings.portOut",
+    "label": "settings-osc-vrchat-network-port_out"
+  },
+  {
+    "path": "vrchat.trackers.chest",
+    "label": "settings-osc-vrchat-network-trackers-chest"
+  },
+  {
+    "path": "vrchat.trackers.waist",
+    "label": "settings-osc-vrchat-network-trackers-hip"
+  },
+  {
+    "path": "vrchat.trackers.knees",
+    "label": "settings-osc-vrchat-network-trackers-knees"
+  },
+  {
+    "path": "vrchat.trackers.feet",
+    "label": "settings-osc-vrchat-network-trackers-feet"
+  },
+  {
+    "path": "vrchat.trackers.elbows",
+    "label": "settings-osc-vrchat-network-trackers-elbows"
+  },
+  {
+    "path": "router.oscSettings.enabled",
+    "label": "settings-osc-router-enable-label"
+  },
+  {
+    "path": "router.oscSettings.portIn",
+    "label": "settings-osc-router-network-port_in"
+  },
+  {
+    "path": "router.oscSettings.portOut",
+    "label": "settings-osc-router-network-port_out"
+  },
+  {
+    "path": "stayAligned.enabled",
+    "label": "settings-stay_aligned-enabled-label"
+  },
+  {
+    "path": "stayAligned.hideYawCorrection",
+    "label": "settings-stay_aligned-hide_yaw_correction-label"
+  },
+  {
+    "path": "stayAligned.standingEnabled",
+    "label": "settings-stay_aligned-relaxed_poses-standing"
+  },
+  {
+    "path": "stayAligned.sittingEnabled",
+    "label": "settings-stay_aligned-relaxed_poses-sitting"
+  },
+  {
+    "path": "stayAligned.flatEnabled",
+    "label": "settings-stay_aligned-relaxed_poses-flat"
+  },
+  {
+    "path": "ssid",
+    "label": "onboarding-wifi_creds-ssid"
+  },
+  {
+    "path": "password",
+    "label": "onboarding-wifi_creds-password"
+  },
+  {
+    "path": "mirrorView",
+    "label": "onboarding-assign_trackers-mirror_view"
+  }
+]

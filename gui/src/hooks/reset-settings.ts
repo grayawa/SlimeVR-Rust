@@ -2,7 +2,7 @@ import {
   ChangeSettingsRequestT,
   ResetsSettingsT,
   RpcMessage,
-  SettingsResetRequestT,
+  SettingsRequestT,
   SettingsResponseT,
 } from 'solarxr-protocol';
 import { useWebsocketAPI } from './websocket-api';
@@ -39,8 +39,9 @@ export function useResetSettings() {
   const { sendRPCPacket, useRPCPacket } = useWebsocketAPI();
   const [settings, setSettings] = useState<ResetSettingsForm>(defaultResetSettings);
 
-  useEffect(() =>
-    sendRPCPacket(RpcMessage.SettingsRequest, new SettingsResetRequestT())
+  useEffect(
+    () => sendRPCPacket(RpcMessage.SettingsRequest, new SettingsRequestT()),
+    []
   );
 
   useRPCPacket(RpcMessage.SettingsResponse, (settings: SettingsResponseT) => {

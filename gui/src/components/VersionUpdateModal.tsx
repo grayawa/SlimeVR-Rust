@@ -6,11 +6,12 @@ import { Typography } from './commons/Typography';
 import semver from 'semver';
 import { GH_REPO, VersionContext } from '@/App';
 import { error } from '@/utils/logging';
-import { useElectron } from '@/hooks/electron';
+import { desktopHost } from '@/platform';
+import { useDesktop } from '@/hooks/desktop';
 import { openUrl } from '@/hooks/crossplatform';
 
 export function VersionUpdateModal() {
-  const electron = useElectron();
+  const desktop = useDesktop();
   const { l10n } = useLocalization();
   const newVersion = useContext(VersionContext);
   const [forceClose, setForceClose] = useState(false);
@@ -54,7 +55,9 @@ export function VersionUpdateModal() {
             variant="primary"
             onClick={async () => {
               const url =
-                electron.isElectron && electron.data().os.type === 'windows'
+                desktopHost?.kind !== 'tauri' &&
+                desktop.isDesktop &&
+                desktop.data().os.type === 'windows'
                   ? 'https://slimevr.dev/download'
                   : `https://github.com/${GH_REPO}/releases/latest`;
               await openUrl(url);

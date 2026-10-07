@@ -14,7 +14,14 @@
     "build": "cd gui && pnpm build",
     "update-solarxr": "cd solarxr-protocol && pnpm run build",
     "prepare": "husky && pnpm run update-solarxr",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "web": "pnpm run update-solarxr && pnpm --dir gui web:dev",
+    "tauri:dev": "pnpm run update-solarxr && pnpm --dir gui tauri:dev",
+    "tauri:build": "pnpm run update-solarxr && pnpm --dir gui tauri:build",
+    "rust:build": "cargo build --manifest-path server-rust/Cargo.toml --release --locked",
+    "tauri:rust": "pnpm tauri:rust:dev",
+    "tauri:rust:dev": "pnpm run update-solarxr && pnpm --dir gui tauri:rust:dev",
+    "tauri:rust:build": "pnpm run update-solarxr && pnpm --dir gui tauri:rust:build"
   },
   "devDependencies": {
     "husky": "^9.1.6",

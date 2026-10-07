@@ -1,0 +1,12 @@
+{
+  "bindings": [
+    {"device_key": "02:00:00:00:00:01", "sensor_id": 0, "body": "chest"},
+    {"device_key": "02:00:00:00:00:02", "sensor_id": 0, "body": "hip"},
+    {"device_key": "02:00:00:00:00:03", "sensor_id": 0, "body": "left_upper_leg"},
+    {"device_key": "02:00:00:00:00:04", "sensor_id": 0, "body": "right_upper_leg"},
+    {"device_key": "02:00:00:00:00:05", "sensor_id": 0, "body": "left_lower_leg"},
+    {"device_key": "02:00:00:00:00:06", "sensor_id": 0, "body": "right_lower_leg"}
+  ],
+  "filter": {"mode": "prediction", "amount": 0.2},
+  "yaw_reset_smooth_seconds": 0.25
+}

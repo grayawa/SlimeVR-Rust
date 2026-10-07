@@ -1,0 +1,2886 @@
+{
+  "steamvr": {
+    "icon": "Steam",
+    "source": "gui/src/components/settings/pages/GeneralSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-general-steamvr",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "text",
+        "label": "settings-general-steamvr-subtitle",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col py-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-steamvr-description"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-general-steamvr-trackers-tracker_toggling",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-4",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-steamvr-trackers-tracker_toggling-description"
+          }
+        ]
+      },
+      {
+        "kind": "control",
+        "widget": "CheckBox",
+        "name": "trackers.automaticTrackerToggle",
+        "label": "settings-general-steamvr-trackers-tracker_toggling-label",
+        "path": "/steam_vr_trackers/automaticTrackerToggle",
+        "field_type": "bool",
+        "disabled": "!steamvrSupported"
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.chest",
+            "label": "settings-general-steamvr-trackers-chest",
+            "path": "/steam_vr_trackers/chest",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported || automaticTrackerToggle"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.waist",
+            "label": "settings-general-steamvr-trackers-waist",
+            "path": "/steam_vr_trackers/waist",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported || automaticTrackerToggle"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.leftKnee",
+            "label": "settings-general-steamvr-trackers-left_knee",
+            "path": "/steam_vr_trackers/left_knee",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported || automaticTrackerToggle"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.rightKnee",
+            "label": "settings-general-steamvr-trackers-right_knee",
+            "path": "/steam_vr_trackers/right_knee",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported || automaticTrackerToggle"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.leftFoot",
+            "label": "settings-general-steamvr-trackers-left_foot",
+            "path": "/steam_vr_trackers/left_foot",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported || automaticTrackerToggle"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.rightFoot",
+            "label": "settings-general-steamvr-trackers-right_foot",
+            "path": "/steam_vr_trackers/right_foot",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported || automaticTrackerToggle"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.leftElbow",
+            "label": "settings-general-steamvr-trackers-left_elbow",
+            "path": "/steam_vr_trackers/left_elbow",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported || automaticTrackerToggle"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.rightElbow",
+            "label": "settings-general-steamvr-trackers-right_elbow",
+            "path": "/steam_vr_trackers/right_elbow",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported || automaticTrackerToggle"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.leftHand",
+            "label": "settings-general-steamvr-trackers-left_hand",
+            "path": "/steam_vr_trackers/left_hand",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "trackers.rightHand",
+            "label": "settings-general-steamvr-trackers-right_hand",
+            "path": "/steam_vr_trackers/right_hand",
+            "field_type": "bool",
+            "disabled": "!steamvrSupported"
+          }
+        ]
+      }
+    ]
+  },
+  "mechanics": {
+    "icon": "Wrench",
+    "source": "gui/src/components/settings/pages/GeneralSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-general-tracker_mechanics",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "text",
+        "label": "settings-general-tracker_mechanics-filtering",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-4",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-tracker_mechanics-filtering-description"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-general-tracker_mechanics-filtering-type",
+        "variant": "",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex md:flex-row flex-col gap-3 pt-2",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "Radio",
+            "name": "filtering.type",
+            "label": "settings-general-tracker_mechanics-filtering-type-none",
+            "path": "/filtering/type",
+            "field_type": "FilteringType",
+            "value": "FilteringType.NONE.toString()",
+            "description": "settings-general-tracker_mechanics-filtering-type-none-description"
+          },
+          {
+            "kind": "control",
+            "widget": "Radio",
+            "name": "filtering.type",
+            "label": "settings-general-tracker_mechanics-filtering-type-smoothing",
+            "path": "/filtering/type",
+            "field_type": "FilteringType",
+            "value": "FilteringType.SMOOTHING.toString()",
+            "description": "settings-general-tracker_mechanics-filtering-type-smoothing-description"
+          },
+          {
+            "kind": "control",
+            "widget": "Radio",
+            "name": "filtering.type",
+            "label": "settings-general-tracker_mechanics-filtering-type-prediction",
+            "path": "/filtering/type",
+            "field_type": "FilteringType",
+            "value": "FilteringType.PREDICTION.toString()",
+            "description": "settings-general-tracker_mechanics-filtering-type-prediction-description"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex gap-5 pt-5 md:flex-row flex-col",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "filtering.amount",
+            "label": "settings-general-tracker_mechanics-filtering-amount",
+            "path": "/filtering/amount",
+            "field_type": "float32",
+            "min": "0.1",
+            "max": "1.0",
+            "step": "0.1",
+            "unit": "percent"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex gap-5 pt-5 md:flex-row flex-col",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "resetsSettings.yawResetSmoothTime",
+            "label": "settings-general-tracker_mechanics-yaw-reset-smooth-time",
+            "path": "/resets_settings/yaw_reset_smooth_time",
+            "field_type": "float32",
+            "min": "0.0",
+            "max": "0.5",
+            "step": "0.05",
+            "unit": "seconds"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-5 pb-3",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-tracker_mechanics-save_mounting_reset",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-tracker_mechanics-save_mounting_reset-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "control",
+        "widget": "CheckBox",
+        "name": "resetsSettings.saveMountingReset",
+        "label": "settings-general-tracker_mechanics-save_mounting_reset-enabled-label",
+        "path": "/resets_settings/save_mounting_reset",
+        "field_type": "bool"
+      },
+      {
+        "kind": "action",
+        "widget": "MagnetometerToggleSetting",
+        "label": "mechanics-magnetometer",
+        "target": "",
+        "id": "mechanics-magnetometer",
+        "callback": "",
+        "disabled": ""
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-5 pb-3",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-tracker_mechanics-trackers_over_usb",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-tracker_mechanics-trackers_over_usb-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "control",
+        "widget": "CheckBox",
+        "name": "hidSettings.trackersOverHID",
+        "label": "settings-general-tracker_mechanics-trackers_over_usb-enabled-label",
+        "path": "/hid_settings/trackersOverHID",
+        "field_type": "bool",
+        "disabled": "rustBackend && !backendInfo.capabilities.includes(\"hid\")"
+      }
+    ]
+  },
+  "fksettings": {
+    "icon": "Wrench",
+    "source": "gui/src/components/settings/pages/GeneralSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-general-fk_settings",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-4 gap-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-leg_tweak-skating_correction",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-leg_tweak-skating_correction-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 gap-2 pb-4",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "toggles.skatingCorrection",
+            "label": "settings-general-fk_settings-leg_tweak-skating_correction",
+            "path": "/model_settings/toggles/skating_correction",
+            "field_type": "bool"
+          },
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "legTweaks.correctionStrength",
+            "label": "settings-general-fk_settings-leg_tweak-skating_correction-amount",
+            "path": "/model_settings/leg_tweaks/correction_strength",
+            "field_type": "float32",
+            "min": "0.1",
+            "max": "1.0",
+            "step": "0.1",
+            "unit": "percent"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-leg_fk",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 gap-3 pb-3",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-leg_tweak-floor_clip-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 gap-2 pb-3",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "toggles.floorClip",
+            "label": "settings-general-fk_settings-leg_tweak-floor_clip",
+            "path": "/model_settings/toggles/floor_clip",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-3",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-leg_tweak-foot_plant-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 gap-3 pb-3",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "toggles.footPlant",
+            "label": "settings-general-fk_settings-leg_tweak-foot_plant",
+            "path": "/model_settings/toggles/foot_plant",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-3",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-leg_tweak-toe_snap-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 gap-3 pb-3",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "toggles.toeSnap",
+            "label": "settings-general-fk_settings-leg_tweak-toe_snap",
+            "path": "/model_settings/toggles/toe_snap",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-3",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-arm_fk",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-arm_fk-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 pb-3",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "toggles.forceArmsFromHmd",
+            "label": "settings-general-fk_settings-arm_fk-force_arms",
+            "path": "/model_settings/toggles/force_arms_from_hmd",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-reset_settings",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-3",
+        "children": [
+          {
+            "kind": "container",
+            "classes": "grid grid-cols-2 gap-2",
+            "children": [
+              {
+                "kind": "container",
+                "classes": "flex flex-col gap-2",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-general-fk_settings-reset_settings-reset_hmd_pitch-description",
+                    "variant": "",
+                    "color": "",
+                    "bold": false
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "CheckBox",
+                    "name": "resetsSettings.resetHmdPitch",
+                    "label": "settings-general-fk_settings-reset_settings-reset_hmd_pitch",
+                    "path": "/resets_settings/reset_hmd_pitch",
+                    "field_type": "bool",
+                    "disabled": "!calibrationSupported"
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "flex flex-col gap-2 justify-end",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-general-fk_settings-leg_fk-reset_mounting_feet-description-v1",
+                    "variant": "",
+                    "color": "",
+                    "bold": false
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "CheckBox",
+                    "name": "resetsSettings.resetMountingFeet",
+                    "label": "settings-general-fk_settings-leg_fk-reset_mounting_feet-v1",
+                    "path": "/resets_settings/reset_mounting_feet",
+                    "field_type": "bool",
+                    "disabled": "!calibrationSupported"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-arm_fk-reset_mode-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "grid md:grid-cols-2 flex-col gap-3 pt-2 pb-3",
+            "children": [
+              {
+                "kind": "control",
+                "widget": "Radio",
+                "name": "resetsSettings.armsMountingResetMode",
+                "label": "settings-general-fk_settings-arm_fk-back",
+                "path": "/resets_settings/arms_mounting_reset_mode",
+                "field_type": "ArmsMountingResetMode",
+                "value": "0",
+                "description": "settings-general-fk_settings-arm_fk-back-description"
+              },
+              {
+                "kind": "control",
+                "widget": "Radio",
+                "name": "resetsSettings.armsMountingResetMode",
+                "label": "settings-general-fk_settings-arm_fk-forward",
+                "path": "/resets_settings/arms_mounting_reset_mode",
+                "field_type": "ArmsMountingResetMode",
+                "value": "1",
+                "description": "settings-general-fk_settings-arm_fk-forward-description"
+              },
+              {
+                "kind": "control",
+                "widget": "Radio",
+                "name": "resetsSettings.armsMountingResetMode",
+                "label": "settings-general-fk_settings-arm_fk-tpose_up",
+                "path": "/resets_settings/arms_mounting_reset_mode",
+                "field_type": "ArmsMountingResetMode",
+                "value": "2",
+                "description": "settings-general-fk_settings-arm_fk-tpose_up-description"
+              },
+              {
+                "kind": "control",
+                "widget": "Radio",
+                "name": "resetsSettings.armsMountingResetMode",
+                "label": "settings-general-fk_settings-arm_fk-tpose_down",
+                "path": "/resets_settings/arms_mounting_reset_mode",
+                "field_type": "ArmsMountingResetMode",
+                "value": "3",
+                "description": "settings-general-fk_settings-arm_fk-tpose_down-description"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-1",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-enforce_joint_constraints",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "pt-2",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-general-fk_settings-enforce_joint_constraints-enforce_constraints-description",
+                "variant": "",
+                "color": "",
+                "bold": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 pb-3",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "toggles.enforceConstraints",
+            "label": "settings-general-fk_settings-enforce_joint_constraints-enforce_constraints",
+            "path": "/model_settings/toggles/enforce_constraints",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-3",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-ik",
+            "variant": "",
+            "color": "",
+            "bold": true
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-ik-use_position-description",
+            "variant": "",
+            "color": "secondary",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 pb-3",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "toggles.usePosition",
+            "label": "settings-general-fk_settings-ik-use_position",
+            "path": "/model_settings/toggles/use_position",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-1",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-velocity_settings",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "pt-2",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-general-fk_settings-velocity_settings-description",
+                "variant": "",
+                "color": "",
+                "bold": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 pb-3",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "velocitySettings.sendDerivedVelocity",
+            "label": "settings-general-fk_settings-velocity_settings-send_derived_velocity",
+            "path": "/velocity_settings/send_derived_velocity",
+            "field_type": "bool",
+            "disabled": "!velocitySupported"
+          }
+        ]
+      },
+      {
+        "kind": "condition",
+        "guard": "config?.debug",
+        "children": [
+          {
+            "kind": "container",
+            "classes": "flex flex-col pt-2 pb-3",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-general-fk_settings-skeleton_settings-toggles",
+                "variant": "section-title",
+                "color": "",
+                "bold": false
+              },
+              {
+                "kind": "text",
+                "label": "settings-general-fk_settings-skeleton_settings-description",
+                "variant": "",
+                "color": "",
+                "bold": false
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "grid sm:grid-cols-2 gap-3 pb-3",
+            "children": [
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "toggles.extendedSpine",
+                "label": "settings-general-fk_settings-skeleton_settings-extended_spine_model",
+                "path": "/model_settings/toggles/extended_spine",
+                "field_type": "bool"
+              },
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "toggles.extendedPelvis",
+                "label": "settings-general-fk_settings-skeleton_settings-extended_pelvis_model",
+                "path": "/model_settings/toggles/extended_pelvis",
+                "field_type": "bool"
+              },
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "toggles.extendedKnee",
+                "label": "settings-general-fk_settings-skeleton_settings-extended_knees_model",
+                "path": "/model_settings/toggles/extended_knee",
+                "field_type": "bool"
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "flex flex-col",
+            "children": [
+              {
+                "kind": "container",
+                "classes": "flex flex-col pt-2 pb-3 gap-2",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-general-fk_settings-skeleton_settings-ratios",
+                    "variant": "section-title",
+                    "color": "",
+                    "bold": false
+                  },
+                  {
+                    "kind": "text",
+                    "label": "settings-general-fk_settings-skeleton_settings-ratios-description",
+                    "variant": "",
+                    "color": "",
+                    "bold": false
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "grid sm:grid-cols-2 gap-3 pb-3",
+                "children": [
+                  {
+                    "kind": "control",
+                    "widget": "NumberSelector",
+                    "name": "ratios.imputeWaistFromChestHip",
+                    "label": "settings-general-fk_settings-skeleton_settings-impute_waist_from_chest_hip",
+                    "path": "/model_settings/ratios/impute_waist_from_chest_hip",
+                    "field_type": "float32",
+                    "min": "0.0",
+                    "max": "1.0",
+                    "step": "0.05",
+                    "unit": "percent"
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "NumberSelector",
+                    "name": "ratios.imputeWaistFromChestLegs",
+                    "label": "settings-general-fk_settings-skeleton_settings-impute_waist_from_chest_legs",
+                    "path": "/model_settings/ratios/impute_waist_from_chest_legs",
+                    "field_type": "float32",
+                    "min": "0.0",
+                    "max": "1.0",
+                    "step": "0.05",
+                    "unit": "percent"
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "NumberSelector",
+                    "name": "ratios.imputeHipFromChestLegs",
+                    "label": "settings-general-fk_settings-skeleton_settings-impute_hip_from_chest_legs",
+                    "path": "/model_settings/ratios/impute_hip_from_chest_legs",
+                    "field_type": "float32",
+                    "min": "0.0",
+                    "max": "1.0",
+                    "step": "0.05",
+                    "unit": "percent"
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "NumberSelector",
+                    "name": "ratios.imputeHipFromWaistLegs",
+                    "label": "settings-general-fk_settings-skeleton_settings-impute_hip_from_waist_legs",
+                    "path": "/model_settings/ratios/impute_hip_from_waist_legs",
+                    "field_type": "float32",
+                    "min": "0.0",
+                    "max": "1.0",
+                    "step": "0.05",
+                    "unit": "percent"
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "NumberSelector",
+                    "name": "ratios.interpHipLegs",
+                    "label": "settings-general-fk_settings-skeleton_settings-interp_hip_legs",
+                    "path": "/model_settings/ratios/interp_hip_legs",
+                    "field_type": "float32",
+                    "min": "0.0",
+                    "max": "1.0",
+                    "step": "0.05",
+                    "unit": "percent"
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "NumberSelector",
+                    "name": "ratios.interpKneeTrackerAnkle",
+                    "label": "settings-general-fk_settings-skeleton_settings-interp_knee_tracker_ankle",
+                    "path": "/model_settings/ratios/interp_knee_tracker_ankle",
+                    "field_type": "float32",
+                    "min": "0.0",
+                    "max": "1.0",
+                    "step": "0.05",
+                    "unit": "percent"
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "NumberSelector",
+                    "name": "ratios.interpKneeAnkle",
+                    "label": "settings-general-fk_settings-skeleton_settings-interp_knee_ankle",
+                    "path": "/model_settings/ratios/interp_knee_ankle",
+                    "field_type": "float32",
+                    "min": "0.0",
+                    "max": "1.0",
+                    "step": "0.05",
+                    "unit": "percent"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-3",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-self_localization-title",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-fk_settings-self_localization-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 gap3 pb5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "toggles.selfLocalization",
+            "label": "settings-general-fk_settings-self_localization-title",
+            "path": "/model_settings/toggles/self_localization",
+            "field_type": "bool"
+          }
+        ]
+      }
+    ]
+  },
+  "gestureControl": {
+    "icon": "Wrench",
+    "source": "gui/src/components/settings/pages/GeneralSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-general-gesture_control",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-4 gap-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-gesture_control-subtitle",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-gesture_control-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "",
+        "children": [
+          {
+            "kind": "container",
+            "classes": "grid sm:grid-cols-3 gap-5 pb-2",
+            "children": [
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "tapDetection.yawResetEnabled",
+                "label": "settings-general-gesture_control-yawResetEnabled",
+                "path": "/tap_detection_settings/yaw_reset_enabled",
+                "field_type": "bool"
+              },
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "tapDetection.fullResetEnabled",
+                "label": "settings-general-gesture_control-fullResetEnabled",
+                "path": "/tap_detection_settings/full_reset_enabled",
+                "field_type": "bool"
+              },
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "tapDetection.mountingResetEnabled",
+                "label": "settings-general-gesture_control-mountingResetEnabled",
+                "path": "/tap_detection_settings/mounting_reset_enabled",
+                "field_type": "bool"
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "grid sm:grid-cols-3 gap-5 pb-2",
+            "children": [
+              {
+                "kind": "container",
+                "classes": "",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-general-gesture_control-yawResetTracker",
+                    "variant": "",
+                    "color": "",
+                    "bold": true
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "Dropdown",
+                    "name": "tapDetection.yawResetTracker",
+                    "label": "",
+                    "path": "/tap_detection_settings/yaw_reset_tracker",
+                    "field_type": "BodyPart"
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-general-gesture_control-fullResetTracker",
+                    "variant": "",
+                    "color": "",
+                    "bold": true
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "Dropdown",
+                    "name": "tapDetection.fullResetTracker",
+                    "label": "",
+                    "path": "/tap_detection_settings/full_reset_tracker",
+                    "field_type": "BodyPart"
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-general-gesture_control-mountingResetTracker",
+                    "variant": "",
+                    "color": "",
+                    "bold": true
+                  },
+                  {
+                    "kind": "control",
+                    "widget": "Dropdown",
+                    "name": "tapDetection.mountingResetTracker",
+                    "label": "",
+                    "path": "/tap_detection_settings/mounting_reset_tracker",
+                    "field_type": "BodyPart"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-3 gap-5 pb-2",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "tapDetection.yawResetDelay",
+            "label": "settings-general-gesture_control-yawResetDelay",
+            "path": "/tap_detection_settings/yaw_reset_delay",
+            "field_type": "float",
+            "min": "0.2",
+            "max": "3.0",
+            "step": "0.2",
+            "unit": "seconds"
+          },
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "tapDetection.fullResetDelay",
+            "label": "settings-general-gesture_control-fullResetDelay",
+            "path": "/tap_detection_settings/full_reset_delay",
+            "field_type": "float",
+            "min": "0.2",
+            "max": "3.0",
+            "step": "0.2",
+            "unit": "seconds"
+          },
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "tapDetection.mountingResetDelay",
+            "label": "settings-general-gesture_control-mountingResetDelay",
+            "path": "/tap_detection_settings/mounting_reset_delay",
+            "field_type": "float",
+            "min": "0.2",
+            "max": "3.0",
+            "step": "0.2",
+            "unit": "seconds"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-3 gap-5 pb-2",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "tapDetection.yawResetTaps",
+            "label": "settings-general-gesture_control-yawResetTaps",
+            "path": "/tap_detection_settings/yaw_reset_taps",
+            "field_type": "uint8",
+            "min": "2",
+            "max": "10",
+            "step": "1",
+            "unit": ""
+          },
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "tapDetection.fullResetTaps",
+            "label": "settings-general-gesture_control-fullResetTaps",
+            "path": "/tap_detection_settings/full_reset_taps",
+            "field_type": "uint8",
+            "min": "2",
+            "max": "10",
+            "step": "1",
+            "unit": ""
+          },
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "tapDetection.mountingResetTaps",
+            "label": "settings-general-gesture_control-mountingResetTaps",
+            "path": "/tap_detection_settings/mounting_reset_taps",
+            "field_type": "uint8",
+            "min": "2",
+            "max": "10",
+            "step": "1",
+            "unit": ""
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-1 gap-2 pt-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-gesture_control-numberTrackersOverThreshold",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-gesture_control-numberTrackersOverThreshold-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "tapDetection.numberTrackersOverThreshold",
+            "label": "settings-general-gesture_control-numberTrackersOverThreshold",
+            "path": "/tap_detection_settings/number_trackers_over_threshold",
+            "field_type": "uint8",
+            "min": "1",
+            "max": "20",
+            "step": "1",
+            "unit": ""
+          }
+        ]
+      }
+    ]
+  },
+  "stayaligned": {
+    "icon": "Wrench",
+    "source": "gui/src/components/settings/pages/components/StayAlignedSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-stay_aligned",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "mt-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-stay_aligned-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "text",
+            "label": "settings-stay_aligned-setup-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "flex mt-2",
+            "children": [
+              {
+                "kind": "action",
+                "widget": "Button",
+                "label": "settings-stay_aligned-setup-label",
+                "target": "/onboarding/stay-aligned",
+                "id": "",
+                "callback": "",
+                "disabled": ""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "mt-6",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-stay_aligned-general-label",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "grid sm:grid-cols-2 gap-3 mt-2",
+            "children": [
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "stayAligned.enabled",
+                "label": "settings-stay_aligned-enabled-label",
+                "path": "/stay_aligned/enabled",
+                "field_type": "bool",
+                "disabled": "!config.setupComplete"
+              },
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "stayAligned.hideYawCorrection",
+                "label": "settings-stay_aligned-hide_yaw_correction-label",
+                "path": "/stay_aligned/hideYawCorrection",
+                "field_type": "bool",
+                "disabled": "!config.setupComplete"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "mt-6",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-stay_aligned-relaxed_poses-label",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "mt-2",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-stay_aligned-relaxed_poses-description",
+                "variant": "",
+                "color": "",
+                "bold": false
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "grid sm:grid-cols-1 gap-3 mt-2",
+            "children": [
+              {
+                "kind": "container",
+                "classes": "flex gap-2",
+                "children": [
+                  {
+                    "kind": "control",
+                    "widget": "CheckBox",
+                    "name": "stayAligned.standingEnabled",
+                    "label": "settings-stay_aligned-relaxed_poses-standing",
+                    "path": "/stay_aligned/standingEnabled",
+                    "field_type": "bool",
+                    "disabled": "!config.setupComplete || !hasStandingPose"
+                  },
+                  {
+                    "kind": "action",
+                    "widget": "Button",
+                    "label": "settings-stay_aligned-relaxed_poses-save_pose",
+                    "target": "",
+                    "id": "",
+                    "callback": "() => openStanding[1](true)",
+                    "disabled": "!config.setupComplete"
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "flex gap-2",
+                "children": [
+                  {
+                    "kind": "control",
+                    "widget": "CheckBox",
+                    "name": "stayAligned.sittingEnabled",
+                    "label": "settings-stay_aligned-relaxed_poses-sitting",
+                    "path": "/stay_aligned/sittingEnabled",
+                    "field_type": "bool",
+                    "disabled": "!config.setupComplete || !hasSittingPose"
+                  },
+                  {
+                    "kind": "action",
+                    "widget": "Button",
+                    "label": "settings-stay_aligned-relaxed_poses-save_pose",
+                    "target": "",
+                    "id": "",
+                    "callback": "() => openSitting[1](true)",
+                    "disabled": "!config.setupComplete"
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "flex gap-2",
+                "children": [
+                  {
+                    "kind": "control",
+                    "widget": "CheckBox",
+                    "name": "stayAligned.flatEnabled",
+                    "label": "settings-stay_aligned-relaxed_poses-flat",
+                    "path": "/stay_aligned/flatEnabled",
+                    "field_type": "bool",
+                    "disabled": "!config.setupComplete || !hasFlatPose"
+                  },
+                  {
+                    "kind": "action",
+                    "widget": "Button",
+                    "label": "settings-stay_aligned-relaxed_poses-save_pose",
+                    "target": "",
+                    "id": "",
+                    "callback": "() => openFlat[1](true)",
+                    "disabled": "!config.setupComplete"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "mt-6",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-stay_aligned-debug-label",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "mt-2",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-stay_aligned-debug-description",
+                "variant": "",
+                "color": "",
+                "bold": false
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "mt-2",
+            "children": [
+              {
+                "kind": "action",
+                "widget": "CopySettingsButton",
+                "label": "",
+                "target": "",
+                "id": "",
+                "callback": "",
+                "disabled": ""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "router": {
+    "icon": "Router",
+    "source": "gui/src/components/settings/pages/OSCRouterSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-osc-router",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-4",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-router-description"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-router-enable",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-router-enable-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "router.oscSettings.enabled",
+            "label": "settings-osc-router-enable-label",
+            "path": "/osc_router/osc_settings/enabled",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-router-network",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-router-network-description"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "router.oscSettings.portIn",
+            "label": "settings-osc-router-network-port_in",
+            "path": "/osc_router/osc_settings/port_in",
+            "field_type": "uint16"
+          },
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "router.oscSettings.portOut",
+            "label": "settings-osc-router-network-port_out",
+            "path": "/osc_router/osc_settings/port_out",
+            "field_type": "uint16"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-router-network-address",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-router-network-address-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "router.oscSettings.address",
+            "label": "",
+            "path": "/osc_router/osc_settings/address",
+            "field_type": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "vrchat": {
+    "icon": "VRC",
+    "source": "gui/src/components/settings/pages/VRCOSCSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-osc-vrchat",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-4",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vrchat-description-v1"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vrchat-enable",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vrchat-enable-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vrchat.oscSettings.enabled",
+            "label": "settings-osc-vrchat-enable-label",
+            "path": "/vrc_osc/osc_settings/enabled",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vrchat-oscqueryEnabled",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vrchat-oscqueryEnabled-description"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vrchat.oscqueryEnabled",
+            "label": "settings-osc-vrchat-oscqueryEnabled-label",
+            "path": "/vrc_osc/oscquery_enabled",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vrchat-network",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vrchat-network-description-v1",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "vrchat.oscSettings.portIn",
+            "label": "settings-osc-vrchat-network-port_in",
+            "path": "/vrc_osc/osc_settings/port_in",
+            "field_type": "uint16"
+          },
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "vrchat.oscSettings.portOut",
+            "label": "settings-osc-vrchat-network-port_out",
+            "path": "/vrc_osc/osc_settings/port_out",
+            "field_type": "uint16"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vrchat-network-address",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vrchat-network-address-description-v1",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "vrchat.oscSettings.address",
+            "label": "",
+            "path": "/vrc_osc/osc_settings/address",
+            "field_type": "string"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vrchat-network-trackers",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vrchat-network-trackers-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vrchat.trackers.chest",
+            "label": "settings-osc-vrchat-network-trackers-chest",
+            "path": "/vrc_osc/trackers/chest",
+            "field_type": "bool"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vrchat.trackers.waist",
+            "label": "settings-osc-vrchat-network-trackers-hip",
+            "path": "/vrc_osc/trackers/waist",
+            "field_type": "bool"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vrchat.trackers.knees",
+            "label": "settings-osc-vrchat-network-trackers-knees",
+            "path": "/vrc_osc/trackers/knees",
+            "field_type": "bool"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vrchat.trackers.feet",
+            "label": "settings-osc-vrchat-network-trackers-feet",
+            "path": "/vrc_osc/trackers/feet",
+            "field_type": "bool"
+          },
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vrchat.trackers.elbows",
+            "label": "settings-osc-vrchat-network-trackers-elbows",
+            "path": "/vrc_osc/trackers/elbows",
+            "field_type": "bool"
+          }
+        ]
+      }
+    ]
+  },
+  "vmc": {
+    "icon": "VMC",
+    "source": "gui/src/components/settings/pages/VMCSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-osc-vmc",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-2 pb-4",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vmc-description"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vmc-enable",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vmc-enable-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vmc.oscSettings.enabled",
+            "label": "settings-osc-vmc-enable-label",
+            "path": "/vmc_osc/osc_settings/enabled",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vmc-network",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vmc-network-description"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "vmc.oscSettings.portIn",
+            "label": "settings-osc-vmc-network-port_in",
+            "path": "/vmc_osc/osc_settings/port_in",
+            "field_type": "uint16"
+          },
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "vmc.oscSettings.portOut",
+            "label": "settings-osc-vmc-network-port_out",
+            "path": "/vmc_osc/osc_settings/port_out",
+            "field_type": "uint16"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vmc-network-address",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vmc-network-address-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "Input",
+            "name": "vmc.oscSettings.address",
+            "label": "",
+            "path": "/vmc_osc/osc_settings/address",
+            "field_type": "string"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vmc-vrm",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vmc-vrm-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid gap-3 pb-5",
+        "children": [
+          {
+            "kind": "action",
+            "widget": "VMCFileUpload",
+            "label": "",
+            "target": "",
+            "id": "",
+            "callback": "",
+            "disabled": ""
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vmc-anchor_hip",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vmc-anchor_hip-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vmc.anchorHip",
+            "label": "settings-osc-vmc-anchor_hip-label",
+            "path": "/vmc_osc/anchor_hip",
+            "field_type": "bool"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-osc-vmc-mirror_tracking",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-osc-vmc-mirror_tracking-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid grid-cols-2 gap-3 pb-5",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "vmc.mirrorTracking",
+            "label": "settings-osc-vmc-mirror_tracking-label",
+            "path": "/vmc_osc/mirror_tracking",
+            "field_type": "bool"
+          }
+        ]
+      }
+    ]
+  },
+  "notifications": {
+    "icon": "Bell",
+    "source": "gui/src/components/settings/pages/InterfaceSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-interface-notifications",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "pt-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-interface-serial_detection",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-1 pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-interface-serial_detection-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-2 pb-4",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "notifications.watchNewDevices",
+            "label": "settings-general-interface-serial_detection-label",
+            "preference": "watchNewDevices"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-general-interface-feedback_sound",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-1 pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-interface-feedback_sound-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-2 pb-4",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "notifications.feedbackSound",
+            "label": "settings-general-interface-feedback_sound-label",
+            "preference": "feedbackSound"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-2 pb-4",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "NumberSelector",
+            "name": "notifications.feedbackSoundVolume",
+            "label": "settings-general-interface-feedback_sound-volume",
+            "preference": "feedbackSoundVolume",
+            "min": "0.1",
+            "max": "1.0",
+            "step": "0.1",
+            "unit": "percent"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-general-interface-connected_trackers_warning",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-1 pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-interface-connected_trackers_warning-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-2 pb-4",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "CheckBox",
+            "name": "notifications.connectedTrackersWarning",
+            "label": "settings-general-interface-connected_trackers_warning-label",
+            "preference": "connectedTrackersWarning"
+          }
+        ]
+      }
+    ]
+  },
+  "behavior": {
+    "icon": "ArrowRightLeft",
+    "source": "gui/src/components/settings/pages/InterfaceSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-interface-behavior",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "pt-2",
+        "children": [
+          {
+            "kind": "condition",
+            "guard": "desktop.isDesktop",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-general-interface-use_tray",
+                "variant": "section-title",
+                "color": "",
+                "bold": false
+              },
+              {
+                "kind": "container",
+                "classes": "flex flex-col pt-1 pb-2",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-general-interface-use_tray-description",
+                    "variant": "",
+                    "color": "",
+                    "bold": false
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "grid sm:grid-cols-2 pb-4",
+                "children": [
+                  {
+                    "kind": "control",
+                    "widget": "CheckBox",
+                    "name": "behavior.useTray",
+                    "label": "settings-general-interface-use_tray-label",
+                    "preference": "useTray"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "condition",
+            "guard": "desktop.isDesktop && desktop.capabilities.discordPresence",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-general-interface-discord_presence",
+                "variant": "section-title",
+                "color": "",
+                "bold": false
+              },
+              {
+                "kind": "container",
+                "classes": "flex flex-col pt-1 pb-2",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-general-interface-discord_presence-description",
+                    "variant": "",
+                    "color": "",
+                    "bold": false
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "grid sm:grid-cols-2 pb-4",
+                "children": [
+                  {
+                    "kind": "control",
+                    "widget": "CheckBox",
+                    "name": "behavior.discordPresence",
+                    "label": "settings-general-interface-discord_presence-label",
+                    "preference": "discordPresence"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "text",
+            "label": "settings-general-interface-dev_mode",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "flex flex-col pt-1 pb-2",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-general-interface-dev_mode-description",
+                "variant": "",
+                "color": "",
+                "bold": false
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "grid grid-cols-1 gap-2 pb-4 w-full",
+            "children": [
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "developer.enabled",
+                "label": "settings-general-interface-dev_mode-label",
+                "preference": "debug"
+              },
+              {
+                "kind": "condition",
+                "guard": "!!config?.debug",
+                "children": [
+                  {
+                    "kind": "container",
+                    "classes": "grid grid-cols-2 w-full rounded-md gap-2",
+                    "children": [
+                      {
+                        "kind": "action",
+                        "widget": "DeveloperToggles"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "text",
+            "label": "settings-interface-behavior-error_tracking",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "flex flex-col pt-1 pb-2",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-interface-behavior-error_tracking-description_v2",
+                "variant": "",
+                "color": "",
+                "bold": false
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "grid sm:grid-cols-2 pb-4",
+            "children": [
+              {
+                "kind": "control",
+                "widget": "CheckBox",
+                "name": "behavior.errorTracking",
+                "label": "settings-interface-behavior-error_tracking-label",
+                "preference": "errorTracking"
+              }
+            ]
+          },
+          {
+            "kind": "condition",
+            "guard": "desktop.isDesktop",
+            "children": [
+              {
+                "kind": "text",
+                "label": "settings-interface-behavior-bvh_directory",
+                "variant": "section-title",
+                "color": "",
+                "bold": false
+              },
+              {
+                "kind": "container",
+                "classes": "flex flex-col pt-1 pb-2",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-interface-behavior-bvh_directory-description",
+                    "variant": "",
+                    "color": "",
+                    "bold": false
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "grid gap-3 pb-5",
+                "children": [
+                  {
+                    "kind": "control",
+                    "widget": "SystemFileInput",
+                    "name": "behavior.bvhDirectory",
+                    "label": "settings-interface-behavior-bvh_directory-label",
+                    "preference": "bvhDirectory"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "appearance": {
+    "icon": "Squares",
+    "source": "gui/src/components/settings/pages/InterfaceSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-interface-appearance",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "pb-4",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-interface-theme",
+            "variant": "section-title",
+            "color": "",
+            "bold": false
+          },
+          {
+            "kind": "container",
+            "classes": "flex flex-wrap gap-3 pt-2",
+            "children": [
+              {
+                "kind": "action",
+                "widget": "ThemeSelector"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-interface-appearance-font",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-1 pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-interface-appearance-font-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-2 pb-4",
+        "children": [
+          {
+            "kind": "control",
+            "widget": "Dropdown",
+            "name": "appearance.fonts",
+            "label": "",
+            "preference": "fonts"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-interface-appearance-font_size",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-1 pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-interface-appearance-font_size-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-2 pb-4",
+        "children": [
+          {
+            "kind": "action",
+            "widget": "Range"
+          }
+        ]
+      },
+      {
+        "kind": "text",
+        "label": "settings-general-interface-lang",
+        "variant": "section-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "flex flex-col pt-1 pb-2",
+        "children": [
+          {
+            "kind": "text",
+            "label": "settings-general-interface-lang-description",
+            "variant": "",
+            "color": "",
+            "bold": false
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "classes": "grid sm:grid-cols-2 pb-4",
+        "children": [
+          {
+            "kind": "action",
+            "widget": "LangSelector"
+          }
+        ]
+      }
+    ]
+  },
+  "advanced": {
+    "icon": "Bug",
+    "source": "gui/src/components/settings/pages/AdvancedSettings.tsx",
+    "children": [
+      {
+        "kind": "text",
+        "label": "settings-utils-advanced",
+        "variant": "main-title",
+        "color": "",
+        "bold": false
+      },
+      {
+        "kind": "container",
+        "classes": "grid gap-4",
+        "children": [
+          {
+            "kind": "container",
+            "classes": "sm:grid sm:grid-cols-[1.75fr,_1fr] items-center",
+            "children": [
+              {
+                "kind": "container",
+                "classes": "",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-utils-advanced-reset-gui",
+                    "variant": "section-title",
+                    "color": "",
+                    "bold": false
+                  },
+                  {
+                    "kind": "container",
+                    "classes": "flex flex-col",
+                    "children": [
+                      {
+                        "kind": "text",
+                        "label": "settings-utils-advanced-reset-gui-description",
+                        "variant": "",
+                        "color": "",
+                        "bold": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "flex flex-col nsm:pt-2",
+                "children": [
+                  {
+                    "kind": "action",
+                    "widget": "Button",
+                    "label": "settings-utils-advanced-reset-gui-label",
+                    "target": "",
+                    "id": "",
+                    "callback": "() => setShowWarningGUI(true)",
+                    "disabled": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "sm:grid sm:grid-cols-[1.75fr,_1fr] items-center",
+            "children": [
+              {
+                "kind": "container",
+                "classes": "",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-utils-advanced-reset-server",
+                    "variant": "section-title",
+                    "color": "",
+                    "bold": false
+                  },
+                  {
+                    "kind": "container",
+                    "classes": "flex flex-col",
+                    "children": [
+                      {
+                        "kind": "text",
+                        "label": "settings-utils-advanced-reset-server-description",
+                        "variant": "",
+                        "color": "",
+                        "bold": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "flex flex-col nsm:pt-2",
+                "children": [
+                  {
+                    "kind": "action",
+                    "widget": "Button",
+                    "label": "settings-utils-advanced-reset-server-label",
+                    "target": "",
+                    "id": "",
+                    "callback": "() => setShowWarningServer(true)",
+                    "disabled": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "container",
+            "classes": "sm:grid sm:grid-cols-[1.75fr,_1fr] items-center",
+            "children": [
+              {
+                "kind": "container",
+                "classes": "",
+                "children": [
+                  {
+                    "kind": "text",
+                    "label": "settings-utils-advanced-reset-all",
+                    "variant": "section-title",
+                    "color": "",
+                    "bold": false
+                  },
+                  {
+                    "kind": "container",
+                    "classes": "flex flex-col",
+                    "children": [
+                      {
+                        "kind": "text",
+                        "label": "settings-utils-advanced-reset-all-description",
+                        "variant": "",
+                        "color": "",
+                        "bold": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "flex flex-col nsm:pt-2",
+                "children": [
+                  {
+                    "kind": "action",
+                    "widget": "Button",
+                    "label": "settings-utils-advanced-reset-all-label",
+                    "target": "",
+                    "id": "",
+                    "callback": "() => setShowWarningAll(true)",
+                    "disabled": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "condition",
+            "guard": "desktop.isDesktop",
+            "children": [
+              {
+                "kind": "container",
+                "classes": "sm:grid sm:grid-cols-[1.75fr,_1fr] items-center",
+                "children": [
+                  {
+                    "kind": "container",
+                    "classes": "",
+                    "children": [
+                      {
+                        "kind": "text",
+                        "label": "settings-utils-advanced-open_data-v1",
+                        "variant": "section-title",
+                        "color": "",
+                        "bold": false
+                      },
+                      {
+                        "kind": "container",
+                        "classes": "flex flex-col",
+                        "children": [
+                          {
+                            "kind": "text",
+                            "label": "settings-utils-advanced-open_data-description-v1",
+                            "variant": "",
+                            "color": "",
+                            "bold": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "container",
+                    "classes": "flex flex-col nsm:pt-2",
+                    "children": [
+                      {
+                        "kind": "action",
+                        "widget": "Button",
+                        "label": "settings-utils-advanced-open_data-label",
+                        "target": "",
+                        "id": "",
+                        "callback": "openConfigFolder",
+                        "disabled": ""
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "container",
+                "classes": "sm:grid sm:grid-cols-[1.75fr,_1fr] items-center",
+                "children": [
+                  {
+                    "kind": "container",
+                    "classes": "",
+                    "children": [
+                      {
+                        "kind": "text",
+                        "label": "settings-utils-advanced-open_logs",
+                        "variant": "section-title",
+                        "color": "",
+                        "bold": false
+                      },
+                      {
+                        "kind": "container",
+                        "classes": "flex flex-col",
+                        "children": [
+                          {
+                            "kind": "text",
+                            "label": "settings-utils-advanced-open_logs-description",
+                            "variant": "",
+                            "color": "",
+                            "bold": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "container",
+                    "classes": "flex flex-col nsm:pt-2",
+                    "children": [
+                      {
+                        "kind": "action",
+                        "widget": "Button",
+                        "label": "settings-utils-advanced-open_logs-label",
+                        "target": "",
+                        "id": "",
+                        "callback": "openLogsFolder",
+                        "disabled": ""
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "__languages": [
+    {
+      "key": "ar",
+      "name": "عربى"
+    },
+    {
+      "key": "cs",
+      "name": "Čeština"
+    },
+    {
+      "key": "da",
+      "name": "Dansk"
+    },
+    {
+      "key": "de",
+      "name": "Deutsch"
+    },
+    {
+      "key": "en",
+      "name": "English"
+    },
+    {
+      "key": "es-419",
+      "name": "Español Latinoamericano"
+    },
+    {
+      "key": "es-ES",
+      "name": "Español España"
+    },
+    {
+      "key": "et",
+      "name": "Eesti"
+    },
+    {
+      "key": "fi",
+      "name": "Suomi"
+    },
+    {
+      "key": "fr",
+      "name": "Français"
+    },
+    {
+      "key": "it",
+      "name": "Italiano"
+    },
+    {
+      "key": "ja",
+      "name": "日本語"
+    },
+    {
+      "key": "ko",
+      "name": "한국어"
+    },
+    {
+      "key": "nb-NO",
+      "name": "Norsk bokmål"
+    },
+    {
+      "key": "nl",
+      "name": "Nederlands"
+    },
+    {
+      "key": "pl",
+      "name": "Polski"
+    },
+    {
+      "key": "pt-BR",
+      "name": "Português Brasileiro"
+    },
+    {
+      "key": "ru",
+      "name": "Русский"
+    },
+    {
+      "key": "sv-SE",
+      "name": "Svenska (Sverige)"
+    },
+    {
+      "key": "uk",
+      "name": "Українська"
+    },
+    {
+      "key": "th",
+      "name": "ไทย"
+    },
+    {
+      "key": "vi",
+      "name": "Tiếng Việt"
+    },
+    {
+      "key": "zh-Hans",
+      "name": "简体中文"
+    },
+    {
+      "key": "zh-Hant",
+      "name": "繁體中文"
+    },
+    {
+      "key": "en-x-owo",
+      "name": "Engwish~ OwO"
+    }
+  ]
+}

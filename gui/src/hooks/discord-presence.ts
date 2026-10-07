@@ -3,11 +3,10 @@ import { useConfig } from './config';
 import { useLocalization } from '@fluent/react';
 import { connectedIMUTrackersAtom } from '@/store/app-store';
 import { useAtomValue } from 'jotai';
-import { useElectron } from './electron';
+import { useDesktop } from './desktop';
 
 export function useDiscordPresence() {
-  const electron = useElectron();
-  if (!electron.isElectron) return;
+  const desktop = useDesktop();
 
   const { config } = useConfig();
   const { l10n } = useLocalization();
@@ -15,12 +14,13 @@ export function useDiscordPresence() {
   const imuTrackersCount = useMemo(() => imuTrackers.length, [imuTrackers.length]);
 
   useEffect(() => {
+    if (!desktop.isDesktop || !desktop.capabilities.discordPresence) return;
     if (config?.discordPresence === false) {
-      electron.api.setPresence({ enable: false });
+      desktop.api.setPresence?.({ enable: false });
       return;
     }
 
-    electron.api.setPresence({
+    desktop.api.setPresence?.({
       enable: true,
       activity: l10n.getString('settings-general-interface-discord_presence-message', {
         amount: imuTrackersCount,

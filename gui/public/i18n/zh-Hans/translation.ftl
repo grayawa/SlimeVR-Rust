@@ -9,9 +9,9 @@
 
 websocket-connecting = 正在连接到服务器
 websocket-connection_lost = 与服务器的连接丢失，正在尝试重新连接...
-websocket-connection_lost-desc = 看起来 SlimeVR 服务器崩溃了。检查日志并重新启动程序
+websocket-connection_lost-desc = 界面与 SlimeVR 服务器的连接已中断。如果无法自动恢复，请检查日志中的断开原因并重新启动程序。
 websocket-timedout = 无法连接到服务器
-websocket-timedout-desc = 看起来 SlimeVR 服务器崩溃或超时了。检查日志并重新启动程序
+websocket-timedout-desc = SlimeVR 服务器未在规定时间内响应。请检查日志、服务器是否已启动，以及连接地址和端口。
 websocket-error-close = 退出 SlimeVR
 websocket-error-logs = 打开日志文件夹
 
@@ -1695,3 +1695,11 @@ toolbar-mounting_calibration-fingers = 手指
 toolbar-drift_reset = 漂移重置
 toolbar-assigned_trackers = { $count } 个已分配的追踪器
 toolbar-unassigned_trackers = { $count } 个未分配的追踪器
+
+backend-operation-failed = 操作未完成
+backend-error-dismiss = 关闭
+steamvr-existing-driver-title = 使用已有的 SlimeVR 驱动
+steamvr-existing-driver-description = 检测到已有的 SlimeVR 驱动，已保留现有安装并跳过自动注册。
+
+bvh-saved-title = BVH 录制已保存
+bvh-saved-description = 已保存 { $frames } 帧，文件位于运行服务端的电脑上：

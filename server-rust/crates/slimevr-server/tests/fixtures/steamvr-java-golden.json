@@ -1,0 +1,86 @@
+{
+  "source_sha256": "911899f3f6859ff7cc2dbd379eb06cf961865dac83655e0c8bdef77cd961428a",
+  "protobuf_java_sha256": "d60dfe7c68a0d38a248cca96924f289dc7e1966a887ee7cae397701af08575ae",
+  "samples": [
+    {
+      "name": "version",
+      "hex": "32020802"
+    },
+    {
+      "name": "added0",
+      "hex": "1a1812084f70656e56522f301a03484d4420132a0556616c7665"
+    },
+    {
+      "name": "pose0",
+      "hex": "0a2515000000001d9a99d93f2500000000450000803f480355000000005d000080be650000003f"
+    },
+    {
+      "name": "added1",
+      "hex": "1a21080112084f70656e56522f311a0a436f6e74726f6c6c6572200d2a0556616c7665"
+    },
+    {
+      "name": "pose1",
+      "hex": "0a270801159a9999be1dcdcc8c3f25cdccccbe450000803f480355000000005d000080be650000003f"
+    },
+    {
+      "name": "added2",
+      "hex": "1a21080212084f70656e56522f321a0a436f6e74726f6c6c6572200e2a0556616c7665"
+    },
+    {
+      "name": "pose2",
+      "hex": "0a270802159a99993e1dcdcc8c3f25cdccccbe450000803f480355000000005d000080be650000003f"
+    },
+    {
+      "name": "rotation_only",
+      "hex": "0a05450000803f"
+    },
+    {
+      "name": "status_DISCONNECTED",
+      "hex": "22040801200a"
+    },
+    {
+      "name": "status_OK",
+      "hex": "220608011001200a"
+    },
+    {
+      "name": "status_BUSY",
+      "hex": "220608011002200a"
+    },
+    {
+      "name": "status_ERROR",
+      "hex": "220608011003200a"
+    },
+    {
+      "name": "status_OCCLUDED",
+      "hex": "220608011004200a"
+    },
+    {
+      "name": "battery",
+      "hex": "2a090802156666263f1801"
+    },
+    {
+      "name": "reset",
+      "hex": "121d0a05726573657412140a06736f75726365120a636f6e74726f6c6c6572"
+    },
+    {
+      "name": "fast_reset",
+      "hex": "12220a0a666173745f726573657412140a06736f75726365120a636f6e74726f6c6c6572"
+    },
+    {
+      "name": "mounting_reset",
+      "hex": "12260a0e6d6f756e74696e675f726573657412140a06736f75726365120a636f6e74726f6c6c6572"
+    },
+    {
+      "name": "feet_mounting_reset",
+      "hex": "122b0a13666565745f6d6f756e74696e675f726573657412140a06736f75726365120a636f6e74726f6c6c6572"
+    },
+    {
+      "name": "pause_tracking",
+      "hex": "12260a0e70617573655f747261636b696e6712140a06736f75726365120a636f6e74726f6c6c6572"
+    },
+    {
+      "name": "empty",
+      "hex": ""
+    }
+  ]
+}

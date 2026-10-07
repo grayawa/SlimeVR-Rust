@@ -28,7 +28,7 @@ export function MainLayout({
   full?: boolean;
 }) {
   const { completion } = useTrackingChecklist();
-  const { sendRPCPacket } = useWebsocketAPI();
+  const { sendRPCPacket, isConnected } = useWebsocketAPI();
   const [ProportionsLastPageOpen, setProportionsLastPageOpen] = useState(true);
 
   useEffect(() => {
@@ -38,10 +38,11 @@ export function MainLayout({
   function usePageChanged(callback: () => void) {
     useEffect(() => {
       callback();
-    }, [location.pathname]);
+    }, [location.pathname, isConnected]);
   }
 
   usePageChanged(() => {
+    if (!isConnected) return;
     if (location.pathname.includes('body-proportions')) {
       const tempSettings = new LegTweaksTmpChangeT();
       tempSettings.skatingCorrection = false;

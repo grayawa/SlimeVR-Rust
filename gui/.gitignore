@@ -39,3 +39,9 @@ electron.vite.config.*.mjs
 
 # electron
 out/
+
+# Tauri / Rust
+/src-tauri/target/
+/src-tauri/gen/schemas/
+
+/scripts/__pycache__/

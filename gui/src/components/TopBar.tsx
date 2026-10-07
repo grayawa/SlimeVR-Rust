@@ -24,7 +24,7 @@ import { useConfig } from '@/hooks/config';
 import { TrayOrExitModal } from './TrayOrExitModal';
 import { useAtomValue } from 'jotai';
 import { connectedIMUTrackersAtom } from '@/store/app-store';
-import { useElectron } from '@/hooks/electron';
+import { useDesktop } from '@/hooks/desktop';
 import { openUrl } from '@/hooks/crossplatform';
 
 export function VersionTag() {
@@ -51,7 +51,7 @@ export function TopBar({
   children?: ReactNode;
   progress?: number;
 }) {
-  const electron = useElectron();
+  const desktop = useDesktop();
   const { isMobile } = useBreakpoint('mobile');
   const { useRPCPacket, sendRPCPacket } = useWebsocketAPI();
   const connectedIMUTrackers = useAtomValue(connectedIMUTrackersAtom);
@@ -66,14 +66,14 @@ export function TopBar({
   });
 
   const closeApp = async () => {
-    if (!electron.isElectron) throw 'no electron';
+    if (!desktop.isDesktop) throw 'desktop host required';
 
     await saveConfig();
-    electron.api.close();
+    desktop.api.close();
   };
 
   const tryCloseApp = async (dontTray = false) => {
-    if (!electron.isElectron) throw 'no electron';
+    if (!desktop.isDesktop) throw 'desktop host required';
 
     if (config?.useTray === null) {
       setShowTrayOrExitModal(true);
@@ -81,7 +81,7 @@ export function TopBar({
     }
 
     if (config?.useTray && !dontTray) {
-      electron.api.hide();
+      desktop.api.hide();
     } else if (
       config?.connectedTrackersWarning &&
       connectedIMUTrackers.filter(
@@ -95,7 +95,7 @@ export function TopBar({
   };
 
   // useEffect(() => {
-  //   if (!electron.isElectron) return;
+  //   if (!desktop.isDesktop) return;
 
   //   const unlistenTrayClose = listen('try-close', async () => {
   //     const window = getCurrentWindow();
@@ -154,7 +154,7 @@ export function TopBar({
               {!isMobile && (
                 <div
                   className={classNames('flex justify-around flex-col')}
-                  data-electron-drag-region
+                  data-desktop-drag-region
                 >
                   <Typography>SlimeVR</Typography>
                 </div>
@@ -171,12 +171,12 @@ export function TopBar({
                 </div>
               )}
 
-              {version && electron.isElectron && (
+              {version && desktop.isDesktop && (
                 <div
                   className="cursor-pointer"
                   onClick={() => {
                     const url =
-                      electron.data().os.type === 'windows'
+                      desktop.data().os.type === 'windows'
                         ? 'https://slimevr.dev/download'
                         : `https://github.com/${GH_REPO}/releases/latest`;
                     openUrl(url);
@@ -189,13 +189,13 @@ export function TopBar({
           </div>
           <div
             className="flex flex-grow items-center h-full justify-center z-50"
-            data-electron-drag-region
+            data-desktop-drag-region
           >
             {!isMobile && (
               <>
                 <div
                   className="flex max-w-xl h-full items-center w-full"
-                  data-electron-drag-region
+                  data-desktop-drag-region
                 >
                   {progress !== undefined && (
                     <ProgressBar progress={progress} height={3} parts={3} />
@@ -224,17 +224,17 @@ export function TopBar({
                 <QuestionIcon />
               </div>
             )}
-            {electron.isElectron && (
+            {desktop.isDesktop && (
               <>
                 <div
                   className="flex items-center justify-center hover:bg-background-60 rounded-full w-7 h-7"
-                  onClick={() => electron.api.minimize()}
+                  onClick={() => desktop.api.minimize()}
                 >
                   <MinimiseIcon />
                 </div>
                 <div
                   className="flex items-center justify-center hover:bg-background-60 rounded-full w-7 h-7"
-                  onClick={() => electron.api.toggleMaximize()}
+                  onClick={() => desktop.api.toggleMaximize()}
                 >
                   <MaximiseIcon />
                 </div>
@@ -254,7 +254,7 @@ export function TopBar({
           </div>
         )}
       </div>
-      {electron.isElectron && (
+      {desktop.isDesktop && (
         <TrayOrExitModal
           isOpen={showTrayOrExitModal}
           accept={async (useTray) => {
@@ -263,7 +263,7 @@ export function TopBar({
 
             // Doing this in here just in case config doesn't get updated in time
             if (useTray) {
-              electron.api.minimize();
+              desktop.api.minimize();
               // await invoke('update_tray_text');
             } else if (
               config?.connectedTrackersWarning &&

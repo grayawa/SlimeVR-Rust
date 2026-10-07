@@ -7,7 +7,7 @@ import {
   UseControllerProps,
 } from 'react-hook-form';
 import { FileInputContentBlank, FileInputContentFile } from './FileInput';
-import { useElectron } from '@/hooks/electron';
+import { useDesktop } from '@/hooks/desktop';
 
 export function InnerSystemFileInput({
   label,
@@ -22,13 +22,13 @@ export function InnerSystemFileInput({
   directory: boolean;
   refCallback: RefCallBack;
 }) {
-  const electron = useElectron();
+  const desktop = useDesktop();
 
   const handleClick = async () => {
-    if (!electron.isElectron) return;
+    if (!desktop.isDesktop) return;
 
-    const open = await electron.api.openDialog({
-      properties: ['openDirectory'],
+    const open = await desktop.api.openDialog({
+      properties: [directory ? 'openDirectory' : 'openFile'],
     });
     if (open.canceled) {
       onChange(null);

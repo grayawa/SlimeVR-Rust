@@ -30,7 +30,8 @@ export function MagnetometerToggleSetting({
   id?: string;
 }) {
   const { l10n } = useLocalization();
-  const { sendRPCPacket, useRPCPacket } = useWebsocketAPI();
+  const { sendRPCPacket, useRPCPacket, backendInfo, backendError } =
+    useWebsocketAPI();
   const originalValue = useRef<boolean | null>(null);
   // used to disable the tracker specific toggle if false
   const [globalToggle, setGlobalToggle] = useState(false);
@@ -65,6 +66,11 @@ export function MagnetometerToggleSetting({
   }, []);
 
   useEffect(() => {
+    if (
+      backendInfo?.backend === 'rust' &&
+      !backendInfo.capabilities.includes('magnetometer_control')
+    )
+      return;
     const req = new MagToggleRequestT();
     if (trackerNum !== undefined) {
       const id = new TrackerIdT(
@@ -75,7 +81,7 @@ export function MagnetometerToggleSetting({
       sendRPCPacket(RpcMessage.MagToggleRequest, new MagToggleRequestT());
     }
     sendRPCPacket(RpcMessage.MagToggleRequest, req);
-  }, [trackerNum, deviceId]);
+  }, [trackerNum, deviceId, backendInfo?.backend]);
 
   useRPCPacket(RpcMessage.MagToggleResponse, (mag: MagToggleResponseT) => {
     if (trackerNum !== undefined && mag.trackerId?.trackerNum === undefined) {
@@ -92,6 +98,15 @@ export function MagnetometerToggleSetting({
     reset({ magToggle: mag.enable });
   });
 
+  useEffect(() => {
+    if (backendError) setWaitingMag(false);
+  }, [backendError]);
+
+  if (
+    backendInfo?.backend === 'rust' &&
+    !backendInfo.capabilities.includes('magnetometer_control')
+  )
+    return null;
   return settingType === 'general' ? (
     <>
       <div

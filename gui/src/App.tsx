@@ -40,6 +40,9 @@ import { error, log } from './utils/logging';
 import { FirmwareToolSettings } from './components/firmware-tool/FirmwareTool';
 import { AppLayout } from './AppLayout';
 import { Preload } from './components/Preload';
+import { BackendError } from './components/BackendError';
+import { BackendNotice } from './components/BackendNotice';
+import { BVHSaved } from './components/BVHSaved';
 import { UnknownDeviceModal } from './components/UnknownDeviceModal';
 import { useDiscordPresence } from './hooks/discord-presence';
 import { withSentryReactRouterV6Routing } from '@sentry/react';
@@ -56,12 +59,14 @@ import { QuizSlimeSetQuestion } from './components/onboarding/pages/quiz/SlimeSe
 import { QuizUsageQuestion } from './components/onboarding/pages/quiz/UsageQuestion';
 import { QuizRuntimeQuestion } from './components/onboarding/pages/quiz/RuntimeQuestion';
 import { QuizMocapPosQuestion } from './components/onboarding/pages/quiz/MocapPreferencesQuestions';
-import { ElectronContextC, provideElectron } from './hooks/electron';
+import { DesktopContextC, useDesktopProvider } from './hooks/desktop';
 import { AppLocalizationProvider } from './i18n/config';
 import { openUrl } from './hooks/crossplatform';
+import { desktopHost } from './platform';
 import { UdevRulesModal } from './components/onboarding/UdevRulesModal';
 
-export const GH_REPO = 'SlimeVR/SlimeVR-Server';
+export const GH_REPO =
+  import.meta.env.VITE_RELEASE_REPOSITORY || 'SlimeVR/SlimeVR-Server';
 export const VersionContext = createContext('');
 export const DOCS_SITE = 'https://docs.slimevr.dev';
 export const SLIMEVR_DISCORD = 'https://discord.gg/slimevr';
@@ -77,6 +82,9 @@ function Layout() {
       <SerialDetectionModal />
       <VersionUpdateModal />
       <UnknownDeviceModal />
+      <BackendError />
+      <BackendNotice />
+      <BVHSaved />
       <UdevRulesModal />
       <SentryRoutes>
         <Route element={<AppLayout />}>
@@ -195,7 +203,7 @@ function Layout() {
 export default function App() {
   const websocketAPI = useProvideWebsocketApi();
   const [updateFound, setUpdateFound] = useState('');
-  const electron = provideElectron();
+  const desktop = useDesktopProvider();
 
   useEffect(() => {
     const onKeydown: (arg0: KeyboardEvent) => void = function (event) {
@@ -216,6 +224,11 @@ export default function App() {
   useEffect(() => {
     // don't show update stuff when on android
     if (window.__ANDROID__?.isThere()) return;
+    if (
+      desktopHost?.kind === 'tauri' &&
+      !import.meta.env.VITE_RELEASE_REPOSITORY
+    )
+      return;
 
     if (!semver.valid(__VERSION_TAG__)) {
       log(
@@ -231,9 +244,13 @@ export default function App() {
       )
         .then((res) => res.json())
         .catch(() => null)
-        .then((json: any[]) => json.filter((rl) => rl?.prerelease === false));
+        .then((json: any[]) =>
+          Array.isArray(json)
+            ? json.filter((rl) => rl?.prerelease === false && !rl?.draft)
+            : null
+        );
 
-      if (!releases) return;
+      if (!releases?.length) return;
 
       if (typeof releases[0].tag_name !== 'string') return;
 
@@ -246,44 +263,32 @@ export default function App() {
     fetchReleases().catch((e) => error(e, 'failed to fetch releases'));
   }, []);
 
-  if (electron.isElectron) {
-    useEffect(() => {
-      const unlisten = electron.api.onServerStatus(({ type, message }) => {
-        if (type === 'stderr') {
-          // This strange invocation is what lets us lose the line information in the console
-          // See more here: https://stackoverflow.com/a/48994308
-          // These two are fine to keep with console.log, they are server logs
-          setTimeout(
-            console.log.bind(
-              console,
-              `%c[SERVER] %c${message}`,
-              'color:cyan',
-              'color:red'
-            )
-          );
-        } else if (type === 'stdout') {
-          setTimeout(
-            console.log.bind(
-              console,
-              `%c[SERVER] %c${message}`,
-              'color:cyan',
-              'color:green'
-            )
-          );
-        } else if (type === 'error') {
-          error('Error: %s', message);
-        } else if (type === 'terminated') {
-          error('Server Process Terminated: %s', message);
-        } else if (type === 'other') {
-          log('Other process event: %s', message);
-        }
-      });
+  useEffect(() => {
+    if (!desktop.isDesktop) return;
+    const unlisten = desktop.api.onServerStatus(({ type, message, level }) => {
+      if (type === 'stdout' || type === 'stderr') {
+        // Native host already persisted this entry; mirror its severity in DevTools.
+        const severity = level ?? (type === 'stderr' ? 'warn' : 'info');
+        const output = severity === 'trace' ? 'debug' : severity;
+        console[output]('[SERVER] %s', message);
+      } else if (type === 'error') {
+        if (desktopHost?.kind === 'tauri') console.error('Error: %s', message);
+        else error('Error: %s', message);
+      } else if (type === 'terminated') {
+        if (desktopHost?.kind === 'tauri')
+          console.error('Server Process Terminated: %s', message);
+        else error('Server Process Terminated: %s', message);
+      } else if (type === 'other') {
+        if (desktopHost?.kind === 'tauri')
+          console.info('Other process event: %s', message);
+        else log('Other process event: %s', message);
+      }
+    });
 
-      return () => {
-        unlisten();
-      };
-    }, []);
-  }
+    return () => {
+      unlisten();
+    };
+  }, []);
 
   useEffect(() => {
     function onKeyboard(ev: KeyboardEvent) {
@@ -297,7 +302,7 @@ export default function App() {
   }, []);
 
   return (
-    <ElectronContextC.Provider value={electron}>
+    <DesktopContextC.Provider value={desktop}>
       <AppLocalizationProvider>
         <Router>
           <ConfigContextProvider>
@@ -319,6 +324,6 @@ export default function App() {
           </ConfigContextProvider>
         </Router>
       </AppLocalizationProvider>
-    </ElectronContextC.Provider>
+    </DesktopContextC.Provider>
   );
 }

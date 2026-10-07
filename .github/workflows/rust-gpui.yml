@@ -1,0 +1,47 @@
+name: GPUI native frontend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      CARGO_INCREMENTAL: '0'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: lukka/get-cmake@latest
+      - name: Communication and state checks
+        run: |
+          cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked
+          cargo clippy --manifest-path gui-gpui/Cargo.toml --all-targets --locked -- -D warnings
+      - name: Build native Windows frontend
+        run: |
+          cargo build --manifest-path server-rust/Cargo.toml --release --locked --bin slimevr-server
+          cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --bin slimevr-gpui --bin slimevr-gpui-components
+          cargo build --manifest-path gui-gpui/Cargo.toml --release --no-default-features --locked --bin slimevr-gpui-probe
+          python gui-gpui/scripts/audit-windows-shaders.py gui-gpui/target/release/slimevr-gpui.exe
+          python gui-gpui/scripts/audit-windows-shaders.py gui-gpui/target/release/slimevr-gpui-components.exe
+      - name: Real backend loopback checks
+        shell: pwsh
+        run: |
+          $env:SLIMEVR_TEST_BACKEND = "$PWD/server-rust/target/release/slimevr-server.exe"
+          cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --test backend --locked -- --ignored
+      - uses: actions/upload-artifact@v7
+        with:
+          name: slimevr-gpui-windows-x64
+          path: |
+            gui-gpui/target/release/slimevr-gpui.exe
+            gui-gpui/target/release/slimevr-gpui-components.exe
+            docs/rust-gpui-components.zh-CN.md
+            gui-gpui/target/release/slimevr-gpui-probe.exe
+            gui-gpui/README.zh-CN.md
+            server-rust/target/release/slimevr-server.exe
+            docs/rust-gpui-functional-parity.zh-CN.md
+          if-no-files-found: error

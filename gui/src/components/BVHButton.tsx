@@ -2,6 +2,7 @@ import { Localized, useLocalization } from '@fluent/react';
 import { useEffect, useState } from 'react';
 import {
   RecordBVHRequestT,
+  RecordBVHStatusRequestT,
   RecordBVHStatusT,
   RpcMessage,
 } from 'solarxr-protocol';
@@ -10,29 +11,32 @@ import { BigButton } from './commons/BigButton';
 import { RecordIcon } from './commons/icon/RecordIcon';
 import classNames from 'classnames';
 import { useConfig } from '@/hooks/config';
-import { useElectron } from '@/hooks/electron';
+import { useDesktop } from '@/hooks/desktop';
 
 export function BVHButton(props: React.HTMLAttributes<HTMLButtonElement>) {
-  const electron = useElectron();
+  const desktop = useDesktop();
   const { config } = useConfig();
-  const { useRPCPacket, sendRPCPacket } = useWebsocketAPI();
+  const { useRPCPacket, sendRPCPacket, backendInfo } = useWebsocketAPI();
   const [recording, setRecording] = useState(false);
   const [saving, setSaving] = useState(false);
   const { l10n } = useLocalization();
 
   useEffect(() => {
-    sendRPCPacket(RpcMessage.RecordBVHStatusRequest, new RecordBVHRequestT());
+    sendRPCPacket(
+      RpcMessage.RecordBVHStatusRequest,
+      new RecordBVHStatusRequestT()
+    );
   }, []);
 
   const toggleBVH = async () => {
     const record = new RecordBVHRequestT(recording);
 
-    if (electron.isElectron && !recording) {
+    if (desktop.isDesktop && !recording) {
       if (config?.bvhDirectory) {
         record.path = config.bvhDirectory;
       } else {
         setSaving(true);
-        const save = await electron.api.saveDialog({
+        const save = await desktop.api.saveDialog({
           title: l10n.getString('bvh-save_title'),
           filters: [
             {
@@ -42,8 +46,9 @@ export function BVHButton(props: React.HTMLAttributes<HTMLButtonElement>) {
           ],
           defaultPath: 'bvh-recording.bvh',
         });
-        record.path = save.filePath;
+        record.path = save.filePath ?? null;
         setSaving(false);
+        if (save.canceled) return;
       }
     }
 
@@ -59,7 +64,11 @@ export function BVHButton(props: React.HTMLAttributes<HTMLButtonElement>) {
       <BigButton
         icon={<RecordIcon width={20} />}
         onClick={toggleBVH}
-        disabled={saving}
+        disabled={
+          saving ||
+          (backendInfo?.backend === 'rust' &&
+            !backendInfo.capabilities.includes('bvh'))
+        }
         className={classNames(
           props.className,
           'border',

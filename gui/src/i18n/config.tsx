@@ -15,7 +15,7 @@ import {
 } from 'react';
 import { error } from '@/utils/logging';
 import { langs } from './names';
-import { useElectron } from '@/hooks/electron';
+import { useDesktop } from '@/hooks/desktop';
 
 export const defaultNS = 'translation';
 export const DEFAULT_LOCALE = 'en';
@@ -60,7 +60,7 @@ const TRAY_MENU_KEYS = ['tray_menu-show', 'tray_menu-hide', 'tray_menu-quit'];
 
 export const LangContext = createContext<i18n>(undefined as never);
 export function AppLocalizationProvider(props: AppLocalizationProviderProps) {
-  const electron = useElectron();
+  const desktop = useDesktop();
   const [currentLocales, setCurrentLocales] = useState([DEFAULT_LOCALE]);
   const [l10n, setL10n] = useState<ReactLocalization | null>(null);
 
@@ -73,7 +73,7 @@ export function AppLocalizationProvider(props: AppLocalizationProviderProps) {
     setCurrentLocales([currentLocale]);
 
     const overrideFile =
-      electron.isElectron && (await electron.api.i18nOverride());
+      desktop.isDesktop && (await desktop.api.i18nOverride());
 
     const currentLocaleFile: [string, string] = overrideFile
       ? [currentLocale, overrideFile]
@@ -102,13 +102,13 @@ export function AppLocalizationProvider(props: AppLocalizationProviderProps) {
   }, []);
 
   useEffect(() => {
-    if (l10n === null || !electron.isElectron) return;
+    if (l10n === null || !desktop.isDesktop) return;
 
     const newI18n: Record<string, string> = {};
     TRAY_MENU_KEYS.forEach((key) => {
       newI18n[key] = l10n.getString(key);
     });
-    electron.api.setTranslations(newI18n);
+    desktop.api.setTranslations(newI18n);
   }, [l10n]);
 
   if (l10n === null) {

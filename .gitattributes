@@ -3,3 +3,8 @@
 *.png binary
 *.webp binary
 *.gif binary
+
+# Preserve verbatim upstream licenses and copied/generated reference assets.
+gui-gpui/assets/fonts/*-OFL.txt whitespace=-blank-at-eol
+gui-gpui/assets/icons/*.svg whitespace=-blank-at-eol
+server-rust/crates/slimevr-server/proto/ProtobufMessages.proto whitespace=-blank-at-eol

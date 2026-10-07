@@ -1,10 +1,11 @@
+import { desktopHost } from '@/platform';
 import { createContext, useContext, useState } from 'react';
 import { error } from '@/utils/logging';
 import { useDebouncedEffect } from './timeout';
 import { waitUntil } from '@/utils/a11y';
 import { v4 as uuidv4 } from 'uuid';
-import { useElectron } from './electron';
-import { CrossStorage } from 'electron/preload/interface';
+import { useDesktop } from './desktop';
+import { CrossStorage } from '@/platform/types';
 
 export interface WindowConfig {
   width: number;
@@ -109,8 +110,8 @@ const localStore: CrossStorage = {
   },
 };
 
-const store: CrossStorage = window.electronAPI
-  ? await window.electronAPI.getStorage('settings')
+const store: CrossStorage = desktopHost?.api
+  ? await desktopHost?.api.getStorage('settings')
   : localStore;
 
 function fallbackToDefaults(loadedConfig: any): Config {
@@ -141,7 +142,7 @@ export function useConfigProvider(initialConfig: Config | null): ConfigContext {
   const [currConfig, set] = useState<Config | null>(
     initialConfig || (defaultConfig as Config)
   );
-  const electron = useElectron();
+  const desktop = useDesktop();
 
   useDebouncedEffect(
     () => {
@@ -162,7 +163,7 @@ export function useConfigProvider(initialConfig: Config | null): ConfigContext {
           } as Config)
         : null
     );
-    if (electron.isElectron) {
+    if (desktop.isDesktop) {
       await waitUntil(
         async () => {
           const newConfig: Partial<Config> = JSON.parse(
@@ -199,7 +200,7 @@ export function useConfigProvider(initialConfig: Config | null): ConfigContext {
     config: currConfig,
     setConfig,
     saveConfig: async () => {
-      if (!electron.isElectron) return;
+      if (!desktop.isDesktop) return;
       await store.save();
     },
   };

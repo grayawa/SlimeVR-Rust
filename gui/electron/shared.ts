@@ -29,7 +29,10 @@ export interface IpcInvokeMap {
   [IPC_CHANNELS.WINDOW_ACTIONS]: (
     action: 'close' | 'minimize' | 'toggle-maximize' | 'hide'
   ) => void;
-  [IPC_CHANNELS.LOG]: (type: 'info' | 'error' | 'warn', ...args: unknown[]) => void;
+  [IPC_CHANNELS.LOG]: (
+    type: 'info' | 'error' | 'warn' | 'debug' | 'trace',
+    ...args: unknown[]
+  ) => void;
   [IPC_CHANNELS.OPEN_DIALOG]: (
     options: OpenDialogOptions
   ) => Promise<OpenDialogReturnValue>;

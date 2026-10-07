@@ -107,7 +107,7 @@ export function useProvideAutobone(): AutoboneContext {
               setHasRecording(
                 data.success ? ProcessStatus.FULFILLED : ProcessStatus.REJECTED
               );
-              startProcessing();
+              if (data.success) startProcessing();
               break;
 
             case AutoBoneProcessType.PROCESS:

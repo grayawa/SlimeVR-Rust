@@ -1,0 +1,29 @@
+[package]
+name = "slimevr-gui"
+version = "0.1.0"
+description = "Tauri host for the SlimeVR web interface"
+authors = ["SlimeVR Team"]
+license = "MIT OR Apache-2.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-store = "2"
+tauri-plugin-window-state = "2"
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+clap = { version = "4", features = ["derive"] }
+
+tokio = { version = "1", features = ["net", "io-util", "sync", "time", "macros"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

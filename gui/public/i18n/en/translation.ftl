@@ -6,10 +6,10 @@
 
 ## Websocket (server) status
 websocket-connecting = Loading...
-websocket-connection_lost = The server crashed!
-websocket-connection_lost-desc = It looks like the SlimeVR server crashed. Check the logs and restart the program.
+websocket-connection_lost = Connection lost, reconnecting...
+websocket-connection_lost-desc = The connection to the SlimeVR server was interrupted. If it does not recover automatically, check the logs for the disconnect reason and restart the program.
 websocket-timedout = Could not connect to the server
-websocket-timedout-desc = It looks like the SlimeVR server crashed or timed out. Check the logs and restart the program.
+websocket-timedout-desc = The SlimeVR server did not respond in time. Check the logs, whether the server is running, and the connection address and port.
 websocket-error-close = Exit SlimeVR
 websocket-error-logs = Open the logs Folder
 
@@ -1712,3 +1712,11 @@ toolbar-mounting_calibration-fingers = Fingers
 toolbar-drift_reset = Drift Reset
 toolbar-assigned_trackers = {$count} trackers assigned
 toolbar-unassigned_trackers = {$count} trackers unassigned
+
+backend-operation-failed = Could not complete the operation
+backend-error-dismiss = Close
+steamvr-existing-driver-title = Using the existing SlimeVR driver
+steamvr-existing-driver-description = An existing SlimeVR driver was detected. Your installation has been preserved and automatic registration was skipped.
+
+bvh-saved-title = BVH recording saved
+bvh-saved-description = Saved { $frames } frames to this file on the computer running the server:

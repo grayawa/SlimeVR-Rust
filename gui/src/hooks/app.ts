@@ -1,3 +1,4 @@
+import { desktopHost } from '@/platform';
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react';
 import {
   DataFeedMessage,
@@ -16,7 +17,7 @@ import { getSentryOrCompute, updateSentryContext } from '@/utils/sentry';
 import { fetchCurrentFirmwareRelease, FirmwareRelease } from './firmware-update';
 import { DEFAULT_LOCALE, LangContext } from '@/i18n/config';
 
-const isSteam = window.electronAPI ? await window.electronAPI.isSteam() : false;
+const isSteam = desktopHost?.api ? await desktopHost?.api.isSteam() : false;
 
 export interface AppContext {
   currentFirmwareRelease: FirmwareRelease | null;

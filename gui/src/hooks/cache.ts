@@ -1,4 +1,5 @@
-import { CrossStorage } from 'electron/preload/interface';
+import { desktopHost } from '@/platform';
+import { CrossStorage } from '@/platform/types';
 
 const localStore: CrossStorage = {
   get: async <T>(key: string) =>
@@ -12,8 +13,8 @@ const localStore: CrossStorage = {
   save: async () => true,
 };
 
-const store: CrossStorage = window.electronAPI
-  ? await window.electronAPI.getStorage('cache')
+const store: CrossStorage = desktopHost?.api
+  ? await desktopHost?.api.getStorage('cache')
   : localStore;
 
 export async function cacheGet(key: string): Promise<string | null> {

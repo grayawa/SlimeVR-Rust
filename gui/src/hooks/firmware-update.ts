@@ -1,3 +1,4 @@
+import { desktopHost } from '@/platform';
 import { BoardType, DeviceDataT } from 'solarxr-protocol';
 import { cacheWrap } from './cache';
 import semver from 'semver';
@@ -28,7 +29,7 @@ const checkUserCanUpdate = async (uuid: string, url: string, fwVersion: string) 
       `firmware-${fwVersion}-deploy`,
       async () =>
         JSON.stringify(
-          await window.electronAPI.ghGet({ type: 'asset', url }).catch(() => null)
+          await desktopHost?.api.ghGet({ type: 'asset', url }).catch(() => null)
         ),
       60 * 60 * 1000
     )) || 'null'
@@ -61,14 +62,14 @@ const checkUserCanUpdate = async (uuid: string, url: string, fwVersion: string) 
 export async function fetchCurrentFirmwareRelease(
   uuid: string
 ): Promise<FirmwareRelease | null> {
-  if (!window.electronAPI) return null;
+  if (!desktopHost?.api) return null;
 
   const releases: any[] | null = JSON.parse(
     (await cacheWrap(
       'firmware-releases',
       async () =>
         JSON.stringify(
-          await window.electronAPI.ghGet({ type: 'fw-releases' }).catch(() => null)
+          await desktopHost?.api.ghGet({ type: 'fw-releases' }).catch(() => null)
         ),
       60 * 60 * 1000
     )) || 'null'

@@ -219,7 +219,14 @@ export function GeneralSettings() {
     maximumFractionDigits: 2,
   });
 
-  const { sendRPCPacket, useRPCPacket } = useWebsocketAPI();
+  const { sendRPCPacket, useRPCPacket, backendInfo } = useWebsocketAPI();
+  const rustBackend = backendInfo?.backend === 'rust';
+  const steamvrSupported =
+    !rustBackend || backendInfo.capabilities.includes('steamvr');
+  const calibrationSupported =
+    !rustBackend || backendInfo.capabilities.includes('extended_calibration');
+  const velocitySupported =
+    !rustBackend || backendInfo.capabilities.includes('derived_velocity');
   const { reset, control, watch, handleSubmit, getValues, setValue } =
     useForm<SettingsForm>({
       defaultValues,
@@ -558,6 +565,7 @@ export function GeneralSettings() {
               variant="toggle"
               outlined
               control={control}
+              disabled={!steamvrSupported}
               name="trackers.automaticTrackerToggle"
               label={l10n.getString(
                 'settings-general-steamvr-trackers-tracker_toggling-label'
@@ -568,7 +576,7 @@ export function GeneralSettings() {
               <CheckBox
                 variant="toggle"
                 outlined
-                disabled={automaticTrackerToggle}
+                disabled={!steamvrSupported || automaticTrackerToggle}
                 control={control}
                 name="trackers.chest"
                 label={l10n.getString(
@@ -578,7 +586,7 @@ export function GeneralSettings() {
               <CheckBox
                 variant="toggle"
                 outlined
-                disabled={automaticTrackerToggle}
+                disabled={!steamvrSupported || automaticTrackerToggle}
                 control={control}
                 name="trackers.waist"
                 label={l10n.getString(
@@ -588,7 +596,7 @@ export function GeneralSettings() {
               <CheckBox
                 variant="toggle"
                 outlined
-                disabled={automaticTrackerToggle}
+                disabled={!steamvrSupported || automaticTrackerToggle}
                 control={control}
                 name="trackers.leftKnee"
                 label={l10n.getString(
@@ -598,7 +606,7 @@ export function GeneralSettings() {
               <CheckBox
                 variant="toggle"
                 outlined
-                disabled={automaticTrackerToggle}
+                disabled={!steamvrSupported || automaticTrackerToggle}
                 control={control}
                 name="trackers.rightKnee"
                 label={l10n.getString(
@@ -608,7 +616,7 @@ export function GeneralSettings() {
               <CheckBox
                 variant="toggle"
                 outlined
-                disabled={automaticTrackerToggle}
+                disabled={!steamvrSupported || automaticTrackerToggle}
                 control={control}
                 name="trackers.leftFoot"
                 label={l10n.getString(
@@ -618,7 +626,7 @@ export function GeneralSettings() {
               <CheckBox
                 variant="toggle"
                 outlined
-                disabled={automaticTrackerToggle}
+                disabled={!steamvrSupported || automaticTrackerToggle}
                 control={control}
                 name="trackers.rightFoot"
                 label={l10n.getString(
@@ -628,7 +636,7 @@ export function GeneralSettings() {
               <CheckBox
                 variant="toggle"
                 outlined
-                disabled={automaticTrackerToggle}
+                disabled={!steamvrSupported || automaticTrackerToggle}
                 control={control}
                 name="trackers.leftElbow"
                 label={l10n.getString(
@@ -638,7 +646,7 @@ export function GeneralSettings() {
               <CheckBox
                 variant="toggle"
                 outlined
-                disabled={automaticTrackerToggle}
+                disabled={!steamvrSupported || automaticTrackerToggle}
                 control={control}
                 name="trackers.rightElbow"
                 label={l10n.getString(
@@ -649,6 +657,7 @@ export function GeneralSettings() {
                 variant="toggle"
                 outlined
                 control={control}
+                disabled={!steamvrSupported}
                 name="trackers.leftHand"
                 label={l10n.getString(
                   'settings-general-steamvr-trackers-left_hand'
@@ -658,6 +667,7 @@ export function GeneralSettings() {
                 variant="toggle"
                 outlined
                 control={control}
+                disabled={!steamvrSupported}
                 name="trackers.rightHand"
                 label={l10n.getString(
                   'settings-general-steamvr-trackers-right_hand'
@@ -794,6 +804,7 @@ export function GeneralSettings() {
               variant="toggle"
               outlined
               control={control}
+              disabled={rustBackend && !backendInfo.capabilities.includes("hid")}
               name="hidSettings.trackersOverHID"
               label={l10n.getString(
                 'settings-general-tracker_mechanics-trackers_over_usb-enabled-label'
@@ -940,6 +951,7 @@ export function GeneralSettings() {
                     variant="toggle"
                     outlined
                     control={control}
+                    disabled={!calibrationSupported}
                     name="resetsSettings.resetHmdPitch"
                     label={l10n.getString(
                       'settings-general-fk_settings-reset_settings-reset_hmd_pitch'
@@ -956,6 +968,7 @@ export function GeneralSettings() {
                     variant="toggle"
                     outlined
                     control={control}
+                    disabled={!calibrationSupported}
                     name="resetsSettings.resetMountingFeet"
                     label={l10n.getString(
                       'settings-general-fk_settings-leg_fk-reset_mounting_feet-v1'
@@ -1087,6 +1100,7 @@ export function GeneralSettings() {
                 outlined
                 control={control}
                 name="velocitySettings.sendDerivedVelocity"
+                disabled={!velocitySupported}
                 label={l10n.getString(
                   'settings-general-fk_settings-velocity_settings-send_derived_velocity'
                 )}

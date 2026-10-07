@@ -1,30 +1,36 @@
 import { useLocalization } from '@fluent/react';
 import { useEffect, useState } from 'react';
-import { RecordBVHRequestT, RecordBVHStatusT, RpcMessage } from 'solarxr-protocol';
+import {
+  RecordBVHRequestT,
+  RecordBVHStatusRequestT,
+  RecordBVHStatusT,
+  RpcMessage,
+} from 'solarxr-protocol';
 import { useWebsocketAPI } from './websocket-api';
 import { useConfig } from './config';
-import { useElectron } from './electron';
+import { useDesktop } from './desktop';
 
 export function useBHV() {
-  const electron = useElectron();
+  const desktop = useDesktop();
   const { config } = useConfig();
-  const { useRPCPacket, sendRPCPacket } = useWebsocketAPI();
+  const { useRPCPacket, sendRPCPacket, backendInfo } = useWebsocketAPI();
   const [state, setState] = useState<'idle' | 'recording' | 'saving'>('idle');
   const { l10n } = useLocalization();
 
   useEffect(() => {
-    sendRPCPacket(RpcMessage.RecordBVHStatusRequest, new RecordBVHRequestT());
+    sendRPCPacket(RpcMessage.RecordBVHStatusRequest, new RecordBVHStatusRequestT());
   }, []);
 
   const toggle = async () => {
+    if (state === 'saving') return;
     const record = new RecordBVHRequestT(state === 'recording');
 
-    if (electron.isElectron && state === 'idle') {
+    if (desktop.isDesktop && state === 'idle') {
       if (config?.bvhDirectory) {
         record.path = config.bvhDirectory;
       } else {
         setState('saving');
-        const open = await electron.api.saveDialog({
+        const open = await desktop.api.saveDialog({
           title: l10n.getString('bvh-save_title'),
           filters: [
             {
@@ -34,8 +40,9 @@ export function useBHV() {
           ],
           defaultPath: 'bvh-recording.bvh',
         });
-        record.path = open.filePath;
+        record.path = open.filePath ?? null;
         setState('idle');
+        if (open.canceled) return;
       }
     }
 
@@ -48,7 +55,8 @@ export function useBHV() {
 
   return {
     available:
-      typeof window.__ANDROID__ === 'undefined' || !window.__ANDROID__?.isThere(),
+      (backendInfo?.backend !== 'rust' || backendInfo.capabilities.includes('bvh')) &&
+      (typeof window.__ANDROID__ === 'undefined' || !window.__ANDROID__?.isThere()),
     state,
     toggle,
   };

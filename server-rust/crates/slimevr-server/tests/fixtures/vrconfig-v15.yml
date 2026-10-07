@@ -1,0 +1,115 @@
+version: '15'
+server:
+  trackerPort: 7001
+  useMagnetometerOnAllTrackers: true
+knownDevices:
+  - 02:00:00:00:00:01
+  - 02:00:00:00:00:02
+trackers:
+  udp://02:00:00:00:00:01/0:
+    designation: body:chest
+    customName: Chest sensor
+    mountingOrientation: {w: 1.0, x: 0.0, y: 0.0, z: 0.0}
+    mountingResetOrientation: {w: 0.9238795, x: 0.3826834, y: 0.0, z: 0.0}
+    hide: true
+    allowDriftCompensation: false
+    shouldHaveMagEnabled: true
+    customProperty: [a, b, 3]
+  udp://02:00:00:00:00:02/1:
+    designation: body:left_lower_leg
+    customName: Extension sensor
+  HMD:
+    designation: body:head
+    customName: Headset
+    adjustment: {w: 1.0, x: 0.0, y: 0.0, z: 0.0}
+  hid://device/0:
+    designation: body:right_hand
+skeleton:
+  hmdHeight: 2.2
+  floorHeight: 0.5
+  offsets:
+    hipsWidth: 0.31
+    chestLength: 0.18
+    upperLegLength: 0.44
+    handDistanceZ: 0.12
+    customOffset: 0.27
+  toggles:
+    extendedSpine: false
+    forceArmsFromHMD: false
+    floorClip: false
+    toeSnap: true
+    selfLocalization: true
+    correctConstraints: true
+    usePosition: true
+    customToggle: true
+  values:
+    hipLegsAveraging: 0.34
+    kneeTrackerAnkleAveraging: 0.75
+legTweaks:
+  correctionStrength: 0.4
+  alwaysUseFloorclip: true
+filters:
+  type: smoothing
+  amount: 0.35
+resetsConfig:
+  mode: TPOSE_UP
+  fullResetDelay: 2.25
+  mountingResetDelay: 1.5
+  yawResetSmoothTime: 0.3
+  saveMountingReset: true
+  resetMountingFeet: true
+  resetHmdPitch: true
+  lastMountingMethod: AUTOMATIC
+tapDetection:
+  yawResetEnabled: true
+  fullResetEnabled: false
+  mountingResetEnabled: true
+  yawResetTracker: CHEST
+  fullResetTracker: LEFT_UPPER_LEG
+  mountingResetTracker: RIGHT_UPPER_LEG
+  yawResetDelay: 0.45
+  fullResetDelay: 1.2
+  yawResetTaps: 4
+  numberTrackersOverThreshold: 2
+stayAlignedConfig:
+  enabled: true
+  setupComplete: true
+  standingRelaxedPose:
+    enabled: true
+    upperLegAngleInDeg: 12.0
+    lowerLegAngleInDeg: 8.0
+    footAngleInDeg: 4.0
+    extra: preserved
+autoBone:
+  numEpochs: 12
+  cursorIncrement: 3
+  sampleCount: 1200
+  sampleRateMs: 24
+  useFrameFiltering: true
+  randomizeFrameOrder: false
+  randSeed: -17
+  maxFinalError: 0.04
+  printEveryNumEpochs: 5
+bridges:
+  steamvr:
+    trackers: {waist: true, feet: true}
+oscRouter:
+  enabled: true
+  portIn: 9002
+  customRoute: {destination: localhost, path: /avatar/parameters/Foo}
+vrcOSC:
+  enabled: true
+  address: 127.0.0.1
+vmc:
+  enabled: true
+hidConfig:
+  trackersOverHID: true
+keybindings:
+  fullResetBinding: CTRL+ALT+R
+trackingChecklist:
+  ignoredStepsIds: [1, 10]
+custom:
+  description: Leave this alone
+  nested:
+    42: integer map key
+    hello: [false, null, 1.2]

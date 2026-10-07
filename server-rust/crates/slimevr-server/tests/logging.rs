@@ -1,0 +1,185 @@
+//! Verify real UDP + machine journal behavior under live diagnostic filtering.
+use serde_json::Value;
+use std::{
+    io::{BufRead, BufReader, Read},
+    net::UdpSocket,
+    process::{Child, Command, Stdio},
+    time::Duration,
+};
+struct Running(Child);
+impl Drop for Running {
+    fn drop(&mut self) {
+        let _ = self.0.kill();
+        let _ = self.0.wait();
+    }
+}
+fn wire(id: u32, seq: i64, payload: &[u8]) -> Vec<u8> {
+    [
+        id.to_be_bytes().as_slice(),
+        seq.to_be_bytes().as_slice(),
+        payload,
+    ]
+    .concat()
+}
+fn handshake() -> Vec<u8> {
+    let mut body: Vec<_> = [9u32, 13, 1, 0, 0, 0, 22]
+        .iter()
+        .flat_map(|v| v.to_be_bytes())
+        .collect();
+    body.extend(b"\x05good\0");
+    body.extend([2, 0, 0, 0, 0, 1]);
+    wire(3, 0, &body)
+}
+fn capture(level: Option<&str>, events: bool) -> Vec<Value> {
+    let dir = tempfile::tempdir().unwrap();
+    let config = dir.path().join("pose.json");
+    std::fs::write(&config, "{}").unwrap();
+    let journal = dir.path().join("receiver.jsonl");
+    let mut command = Command::new(env!("CARGO_BIN_EXE_slimevr-server"));
+    command
+        .env_remove("SLIMEVR_LOG_LEVEL")
+        .args([
+            "listen",
+            "--bind",
+            "127.0.0.1:0",
+            "--no-discovery",
+            "--accept-new-devices",
+            "--run-for",
+            "1",
+            "--summary-ms",
+            "100",
+            "--pose-output-ms",
+            "100",
+            "--pose-config",
+        ])
+        .arg(&config)
+        .arg("--record")
+        .arg(&journal);
+    if let Some(level) = level {
+        command.args(["--log-level", level]);
+    }
+    if events {
+        command.arg("--events");
+    }
+    let mut child = Running(
+        command
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap(),
+    );
+    let mut stdout = BufReader::new(child.0.stdout.take().unwrap());
+    let mut first = String::new();
+    stdout.read_line(&mut first).unwrap();
+    let listening: Value = serde_json::from_str(&first).unwrap();
+    assert_eq!(listening["type"], "listening");
+    let reader = std::thread::spawn(move || {
+        let mut out = first;
+        stdout.read_to_string(&mut out).unwrap();
+        out
+    });
+    let mut stderr = child.0.stderr.take().unwrap();
+    let errors = std::thread::spawn(move || {
+        let mut out = String::new();
+        stderr.read_to_string(&mut out).unwrap();
+        out
+    });
+    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    socket.connect(listening["bind"].as_str().unwrap()).unwrap();
+    socket
+        .set_read_timeout(Some(Duration::from_secs(1)))
+        .unwrap();
+    socket.send(&handshake()).unwrap();
+    let mut buffer = [0; 1500];
+    socket.recv(&mut buffer).unwrap();
+    socket.recv(&mut buffer).unwrap();
+    socket.send(&wire(15, 1, &[0, 1, 13])).unwrap();
+    socket.recv(&mut buffer).unwrap();
+    let mut rotation = vec![0, 1];
+    for n in [0f32, 0., 0., 1.] {
+        rotation.extend(n.to_be_bytes());
+    }
+    rotation.push(3);
+    socket.send(&wire(17, 2, &rotation)).unwrap();
+    socket.send(&[0, 0, 0]).unwrap(); // malformed datagram remains a warning at default verbosity
+    assert!(child.0.wait().unwrap().success());
+    let out = reader.join().unwrap();
+    let err = errors.join().unwrap();
+    let warnings: Vec<Value> = err
+        .lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+    assert!(warnings
+        .iter()
+        .any(|v| v["type"] == "rejected" && v["level"] == "warn"));
+    let replay = slimevr_server::recording::replay(&journal, |_| {}).unwrap();
+    assert_eq!(
+        replay.receiver.snapshot(replay.at_ms)["counters"]["samples"],
+        1
+    );
+    assert_eq!(
+        replay.receiver.snapshot(replay.at_ms)["counters"]["malformed"],
+        1
+    );
+    assert!(replay.verified_replies > 0);
+    out.lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect()
+}
+#[test]
+fn default_info_preserves_connections_and_recordings_without_full_snapshots() {
+    let records = capture(None, false);
+    assert!(records.iter().any(|v| v["type"] == "device_connected"));
+    assert!(records.iter().any(|v| v["type"] == "stopped"));
+    assert!(records.iter().all(|v| v["level"] == "info"));
+    assert!(!records.iter().any(|v| matches!(
+        v["type"].as_str(),
+        Some("snapshot" | "pose_snapshot" | "sample")
+    )));
+}
+#[test]
+fn debug_restores_full_snapshots_while_trace_and_legacy_events_restore_samples() {
+    let debug = capture(Some("debug"), false);
+    assert!(debug
+        .iter()
+        .any(|v| v["type"] == "pose_snapshot" && v["level"] == "debug"));
+    assert!(debug
+        .iter()
+        .any(|v| v["type"] == "snapshot" && v["level"] == "debug"));
+    assert!(!debug.iter().any(|v| v["type"] == "sample"));
+    for (level, events) in [(Some("trace"), false), (None, true)] {
+        let trace = capture(level, events);
+        assert!(trace
+            .iter()
+            .any(|v| v["type"] == "sample" && v["level"] == "trace"));
+    }
+}
+#[test]
+fn environment_overrides_default_cli_overrides_environment_and_invalid_values_fail() {
+    let run = |env: &str, args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_slimevr-server"))
+            .env("SLIMEVR_LOG_LEVEL", env)
+            .args([
+                "listen",
+                "--bind",
+                "127.0.0.1:0",
+                "--no-discovery",
+                "--run-for",
+                "1",
+            ])
+            .args(args)
+            .output()
+            .unwrap()
+    };
+    let quiet = run("error", &[]);
+    assert!(quiet.status.success());
+    assert!(quiet.stdout.is_empty());
+    let explicit = run("invalid", &["--log-level", "info"]);
+    assert!(explicit.status.success());
+    assert!(!explicit.stdout.is_empty());
+    let invalid = run("invalid", &[]);
+    assert!(!invalid.status.success());
+    let failure: Value = serde_json::from_slice(&invalid.stderr).unwrap();
+    assert_eq!(failure["level"], "error");
+    assert_eq!(failure["type"], "backend_fatal_error");
+}

@@ -1,0 +1,71 @@
+[package]
+name = "slimevr-gpui"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.92"
+license = "MIT OR Apache-2.0"
+description = "Native SlimeVR frontend using GPUI Kit"
+
+[features]
+default = ["desktop"]
+desktop = ["dep:gpui-kit", "dep:gpui-windows", "dep:smol", "dep:rodio"]
+
+[dependencies]
+image = { version = "0.25", default-features = false, features = ["png", "webp"] }
+gpui-kit = { version = "=0.7.1", optional = true }
+smol = { version = "2", optional = true }
+rodio = { version = "0.20", default-features = false, features = ["vorbis"], optional = true }
+solarxr_protocol = { path = "../solarxr-protocol/protocol/rust" }
+tokio = { version = "1", features = ["rt", "net", "time", "sync", "macros", "io-util"] }
+tokio-tungstenite = "0.28"
+futures-util = { version = "0.3", features = ["sink"] }
+fluent-bundle = "0.16"
+unic-langid = "0.9"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive", "rc"] }
+serde_json = "1"
+fs2 = "0.4"
+uuid = { version = "1", features = ["v4"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "blocking"] }
+semver = "1"
+sha2 = "0.10"
+chrono = "0.4"
+raw-window-handle = "0.6"
+
+[target.'cfg(windows)'.dependencies]
+gpui-windows = { package = "gpui-pre-windows", version = "=0.3.8", default-features = false, features = ["runtime-shaders"], optional = true }
+tray-icon = { version = "0.21", default-features = false }
+windows-sys = { version = "0.61", features = ["Win32_UI_WindowsAndMessaging"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[target.'cfg(windows)'.dev-dependencies]
+windows = { version = "0.62", features = ["Win32_Graphics_Direct3D_Fxc"] }
+
+[[bin]]
+name = "slimevr-gpui"
+path = "src/main.rs"
+required-features = ["desktop"]
+
+[[bin]]
+name = "slimevr-gpui-probe"
+path = "src/bin/probe.rs"
+
+[[bin]]
+name = "slimevr-gpui-components"
+path = "src/bin/components.rs"
+required-features = ["desktop"]
+
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.release]
+debug = 0
+strip = true
+
+
+[patch.crates-io]
+# Embed HLSL and compile from memory; never read the build host's absolute paths.
+gpui-pre-windows = { path = "vendor/gpui-pre-windows" }

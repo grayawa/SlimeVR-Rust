@@ -5,8 +5,10 @@ import * as ReactDOMClient from 'react-dom/client';
 import Modal from 'react-modal';
 import App from './App';
 import './index.scss';
+import { installWindowDragging } from './platform/drag';
 
 Modal.setAppElement('#root');
+installWindowDragging();
 
 const container = document.getElementById('root');
 

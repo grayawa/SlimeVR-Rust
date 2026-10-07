@@ -17,7 +17,7 @@ import {
 } from '@/hooks/config';
 import { RpcMessage, SettingsResetRequestT } from 'solarxr-protocol';
 import { useWebsocketAPI } from '@/hooks/websocket-api';
-import { useElectron } from '@/hooks/electron';
+import { useDesktop } from '@/hooks/desktop';
 
 function guiDefaults() {
   // Destructure the properties to exclude "lang"
@@ -30,7 +30,7 @@ function guiDefaults() {
 }
 
 export function AdvancedSettings() {
-  const electron = useElectron();
+  const desktop = useDesktop();
   const { l10n } = useLocalization();
   const { setConfig } = useConfig();
 
@@ -40,18 +40,18 @@ export function AdvancedSettings() {
   const { sendRPCPacket } = useWebsocketAPI();
 
   const openConfigFolder = async () => {
-    if (!electron.isElectron) throw 'invalid state - no electron';
+    if (!desktop.isDesktop) throw 'invalid state - desktop host required';
     try {
-      await electron.api.openConfigFolder();
+      await desktop.api.openConfigFolder();
     } catch (err) {
       error('Failed to open config folder:', err);
     }
   };
 
   const openLogsFolder = async () => {
-    if (!electron.isElectron) throw 'invalid state - no electron';
+    if (!desktop.isDesktop) throw 'invalid state - desktop host required';
     try {
-      await electron.api.openLogsFolder();
+      await desktop.api.openLogsFolder();
     } catch (err) {
       error('Failed to open config folder:', err);
     }
@@ -171,7 +171,7 @@ export function AdvancedSettings() {
                   />
                 </div>
               </div>
-              {electron.isElectron && (
+              {desktop.isDesktop && (
                 <>
                   <div className="sm:grid sm:grid-cols-[1.75fr,_1fr] items-center">
                     <div>

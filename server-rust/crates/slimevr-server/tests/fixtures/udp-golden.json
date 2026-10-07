@@ -1,0 +1,639 @@
+{
+  "reference_commit": "83941fd38e91cc91ca6b360deab5c2ae986dd1b6",
+  "scope": "Actual Kotlin UDPProtocolParser, UDPPacket and ktmath; TrackerPosition lookup and unused UDPDevice compile stubs. Synthetic inputs, not hardware recordings.",
+  "source_sha256": {
+    "server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPProtocolParser.kt": "c84c66de31913a68ca3690b5ac8963c7f1d3c13689d8ccbbf334c1a7fa46a998",
+    "server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPPacket.kt": "889f1f8c392e9de2ae86805ea3934567e48ad61c5eb35264b6f45c19d3f435c4",
+    "server/core/src/main/java/dev/slimevr/tracking/trackers/udp/FirmwareConstants.kt": "26e053a5fa603b9288330ba5db77a48b52dd7c154d734d6c30a43a06b85d8614",
+    "server/core/src/main/java/dev/slimevr/tracking/trackers/udp/FeatureFlags.kt": "3737b668498179ab7b941cc67979c8934bf0f2336e9272ca2dfd51d7a0c46793",
+    "server/core/src/main/java/dev/slimevr/tracking/trackers/udp/SensorTap.kt": "f4ae777f6de8f3ea6e2e115459fb351b6bb9f55b85033598ce01f4f204650749",
+    "server/core/src/main/java/dev/slimevr/tracking/trackers/TrackerStatus.kt": "10f0b0ef1fa0f5893b41c2dc9f764a628b1433284439ea691f05d6672b5d0bf6",
+    "server/core/src/main/java/io/github/axisangles/ktmath/EulerAngles.kt": "3d39b19d592455904467432123f42ad1fa60fb8f93f3ce3a7ae22b6cfec4627a",
+    "server/core/src/main/java/io/github/axisangles/ktmath/Matrix3.kt": "87eeb8cfaadc6ae3e3536f6032c29627261f0d4dbe33061d661dbc8436446167",
+    "server/core/src/main/java/io/github/axisangles/ktmath/Quaternion.kt": "0ba2c879b76486fb08e6b2304a34da7a86c2e0432ca32cb5840b50ef8855d5ef",
+    "server/core/src/main/java/io/github/axisangles/ktmath/Transform.kt": "0116d3d2bbc94050bc4573b5de3509a4c93004b6d6a30b50cc3131e9cdb5b6db",
+    "server/core/src/main/java/io/github/axisangles/ktmath/Vector3.kt": "f9e8ae23f429dd9d423b0a01dcb4d6ee1cba4f7bde40ba43fcdd97f3c12b6a3a",
+    "server-rust/tools/reference/Oracle.kt": "3ee8b1f9efaed0747bd4c91e4ee356db4752e33f7f335179136f5e278cd466b7",
+    "server-rust/tools/reference/TrackerPositionStub.kt": "e105df89cd6064fc0294d2e55997334353fe42fa34f3c04473c23e546dae94fb",
+    "server-rust/tools/reference/UDPDeviceStub.kt": "3b7019b02538025545329f751d9122b19cf5baefe24a0b28766ffd090f1d382e"
+  },
+  "replies": {
+    "handshake": "03486579204f5652203d442035000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "sensor_info": "0000000f0101",
+    "features": "00000016000000000000000003"
+  },
+  "cases": [
+    {
+      "name": "vendor_good_protocol22",
+      "hex": "000000030000000000000001000000090000000d000000010000000000000000000000000000001605676f6f6400020000000001",
+      "packets": [
+        {
+          "type": "handshake",
+          "info": {
+            "board_type": 9,
+            "imu_type": 13,
+            "mcu_type": 1,
+            "protocol_version": 22,
+            "firmware": "good",
+            "mac": "02:00:00:00:00:01"
+          }
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "legacy_empty_handshake",
+      "hex": "000000030000000000000001",
+      "packets": [
+        {
+          "type": "handshake",
+          "info": {
+            "board_type": 0,
+            "imu_type": 0,
+            "mcu_type": 0,
+            "protocol_version": 0,
+            "firmware": null,
+            "mac": null
+          }
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "sensor_info_full",
+      "hex": "0000000f000000000000000101010d0003010700",
+      "packets": [
+        {
+          "type": "sensor_info",
+          "info": {
+            "sensor_id": 1,
+            "status": 1,
+            "imu_type": 13,
+            "config": 3,
+            "rest_calibrated": true,
+            "body_position": 7,
+            "data_type": 0
+          }
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "sensor_info_optional",
+      "hex": "0000000f00000000000000010001",
+      "packets": [
+        {
+          "type": "sensor_info",
+          "info": {
+            "sensor_id": 0,
+            "status": 1,
+            "imu_type": 0,
+            "config": null,
+            "rest_calibrated": null,
+            "body_position": null,
+            "data_type": 0
+          }
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "rotation_float_17",
+      "hex": "00000011000000000000000100013dcccccdbe4ccccd3e99999a3f66666603",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 0,
+          "rotation": {
+            "w": 0.9,
+            "x": 0.1,
+            "y": -0.2,
+            "z": 0.3
+          },
+          "data_type": 1,
+          "calibration": 3,
+          "acceleration": null
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.7071067,
+          "x": -0.5656854,
+          "y": 0.070710674,
+          "z": 0.3535534
+        }
+      ],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "rotation_correction_17",
+      "hex": "00000011000000000000000100023dcccccdbe4ccccd3e99999a3f66666603",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 0,
+          "rotation": {
+            "w": 0.9,
+            "x": 0.1,
+            "y": -0.2,
+            "z": 0.3
+          },
+          "data_type": 2,
+          "calibration": 3,
+          "acceleration": null
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.7071067,
+          "x": -0.5656854,
+          "y": 0.070710674,
+          "z": 0.3535534
+        }
+      ],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "rotation_legacy_1",
+      "hex": "0000000100000000000000013dcccccdbe4ccccd3e99999a3f666666",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 0,
+          "rotation": {
+            "w": 0.9,
+            "x": 0.1,
+            "y": -0.2,
+            "z": 0.3
+          },
+          "data_type": 1,
+          "calibration": null,
+          "acceleration": null
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.7071067,
+          "x": -0.5656854,
+          "y": 0.070710674,
+          "z": 0.3535534
+        }
+      ],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "rotation_extension_16",
+      "hex": "0000001000000000000000010000000000000000000000003f800000",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 1,
+          "rotation": {
+            "w": 1.0,
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "data_type": 1,
+          "calibration": null,
+          "acceleration": null
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.70710677,
+          "x": -0.70710677,
+          "y": 0.0,
+          "z": 0.0
+        }
+      ],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "rotation_compact_q15_accel_q7",
+      "hex": "00000017000000000000000101e000400010006978ff800100fe80",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 1,
+          "rotation": {
+            "w": 0.8210817,
+            "x": -0.24912226,
+            "y": 0.49824452,
+            "z": 0.12456113
+          },
+          "data_type": 1,
+          "calibration": null,
+          "acceleration": {
+            "x": -1.0,
+            "y": 2.0,
+            "z": -3.0
+          }
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.4044364,
+          "x": -0.7567485,
+          "y": 0.4403901,
+          "z": -0.26423407
+        }
+      ],
+      "legacy_accelerations": [
+        {
+          "x": 2.0,
+          "y": 1.0,
+          "z": -3.0
+        }
+      ]
+    },
+    {
+      "name": "zero_float_identity_fallback",
+      "hex": "00000011000000000000000100010000000000000000000000000000000003",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 0,
+          "rotation": {
+            "w": 1.0,
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "data_type": 1,
+          "calibration": 3,
+          "acceleration": null
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.70710677,
+          "x": -0.70710677,
+          "y": 0.0,
+          "z": 0.0
+        }
+      ],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "nan_float_identity_fallback",
+      "hex": "00000011000000000000000100017fc0000000000000000000003f80000003",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 0,
+          "rotation": {
+            "w": 1.0,
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "data_type": 1,
+          "calibration": 3,
+          "acceleration": null
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.70710677,
+          "x": -0.70710677,
+          "y": 0.0,
+          "z": 0.0
+        }
+      ],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "acceleration_sensor_1",
+      "hex": "0000000400000000000000013f800000c00000004040000001",
+      "packets": [
+        {
+          "type": "acceleration",
+          "sensor_id": 1,
+          "acceleration": {
+            "x": 1.0,
+            "y": -2.0,
+            "z": 3.0
+          }
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": [
+        {
+          "x": -2.0,
+          "y": -1.0,
+          "z": 3.0
+        }
+      ]
+    },
+    {
+      "name": "acceleration_legacy_optional_id",
+      "hex": "0000000400000000000000013f800000c000000040400000",
+      "packets": [
+        {
+          "type": "acceleration",
+          "sensor_id": 0,
+          "acceleration": {
+            "x": 1.0,
+            "y": -2.0,
+            "z": 3.0
+          }
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": [
+        {
+          "x": -2.0,
+          "y": -1.0,
+          "z": 3.0
+        }
+      ]
+    },
+    {
+      "name": "nan_acceleration_zero_fallback",
+      "hex": "0000000400000000000000017fc000003f80000040000000",
+      "packets": [
+        {
+          "type": "acceleration",
+          "sensor_id": 0,
+          "acceleration": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 2.0
+          }
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": [
+        {
+          "x": 1.0,
+          "y": 0.0,
+          "z": 2.0
+        }
+      ]
+    },
+    {
+      "name": "battery_voltage_and_fraction",
+      "hex": "0000000c0000000000000001407666663f400000",
+      "packets": [
+        {
+          "type": "battery",
+          "voltage": 3.85,
+          "fraction": 0.75
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "battery_fraction_only",
+      "hex": "0000000c00000000000000013f000000",
+      "packets": [
+        {
+          "type": "battery",
+          "voltage": null,
+          "fraction": 0.5
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "rssi_signed",
+      "hex": "00000013000000000000000100b9",
+      "packets": [
+        {
+          "type": "signal",
+          "sensor_id": 0,
+          "rssi": -71
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "temperature",
+      "hex": "0000001400000000000000010042120000",
+      "packets": [
+        {
+          "type": "temperature",
+          "sensor_id": 0,
+          "temperature": 36.5
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "ping_signed",
+      "hex": "0000000a0000000000000001fffffb2e",
+      "packets": [
+        {
+          "type": "ping",
+          "id": -1234
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "user_action",
+      "hex": "00000015000000000000000103",
+      "packets": [
+        {
+          "type": "user_action",
+          "action": 3
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "tap",
+      "hex": "0000000d00000000000000010140",
+      "packets": [
+        {
+          "type": "tap",
+          "sensor_id": 1,
+          "tap": 64
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "sensor_error",
+      "hex": "0000000e00000000000000010102",
+      "packets": [
+        {
+          "type": "error",
+          "sensor_id": 1,
+          "code": 2
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "config_ack",
+      "hex": "00000018000000000000000101012c",
+      "packets": [
+        {
+          "type": "config_ack",
+          "sensor_id": 1,
+          "config_type": 300
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "flex",
+      "hex": "0000001a0000000000000001013f19999a",
+      "packets": [
+        {
+          "type": "flex",
+          "sensor_id": 1,
+          "value": 0.6
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "position",
+      "hex": "0000001b0000000000000001003f8000004000000040400000",
+      "packets": [
+        {
+          "type": "position",
+          "sensor_id": 0,
+          "position": {
+            "x": 1.0,
+            "y": 2.0,
+            "z": 3.0
+          }
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "protocol_change",
+      "hex": "000000c800000000000000010102",
+      "packets": [
+        {
+          "type": "protocol_change",
+          "protocol": 1,
+          "version": 2
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "heartbeat",
+      "hex": "000000000000000000000001",
+      "packets": [
+        {
+          "type": "heartbeat"
+        }
+      ],
+      "server_rotations": [],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "bundle_normal",
+      "hex": "00000064000000000000000100170000001100013dcccccdbe4ccccd3e99999a3f666666030009000000140142120000",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 0,
+          "rotation": {
+            "w": 0.9,
+            "x": 0.1,
+            "y": -0.2,
+            "z": 0.3
+          },
+          "data_type": 1,
+          "calibration": 3,
+          "acceleration": null
+        },
+        {
+          "type": "temperature",
+          "sensor_id": 1,
+          "temperature": 36.5
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.7071067,
+          "x": -0.5656854,
+          "y": 0.070710674,
+          "z": 0.3535534
+        }
+      ],
+      "legacy_accelerations": []
+    },
+    {
+      "name": "bundle_compact",
+      "hex": "00000065000000000000000100101701e000400010006978ff800100fe80141100013dcccccdbe4ccccd3e99999a3f66666603",
+      "packets": [
+        {
+          "type": "rotation",
+          "sensor_id": 1,
+          "rotation": {
+            "w": 0.8210817,
+            "x": -0.24912226,
+            "y": 0.49824452,
+            "z": 0.12456113
+          },
+          "data_type": 1,
+          "calibration": null,
+          "acceleration": {
+            "x": -1.0,
+            "y": 2.0,
+            "z": -3.0
+          }
+        },
+        {
+          "type": "rotation",
+          "sensor_id": 0,
+          "rotation": {
+            "w": 0.9,
+            "x": 0.1,
+            "y": -0.2,
+            "z": 0.3
+          },
+          "data_type": 1,
+          "calibration": 3,
+          "acceleration": null
+        }
+      ],
+      "server_rotations": [
+        {
+          "w": 0.4044364,
+          "x": -0.7567485,
+          "y": 0.4403901,
+          "z": -0.26423407
+        },
+        {
+          "w": 0.7071067,
+          "x": -0.5656854,
+          "y": 0.070710674,
+          "z": 0.3535534
+        }
+      ],
+      "legacy_accelerations": [
+        {
+          "x": 2.0,
+          "y": 1.0,
+          "z": -3.0
+        }
+      ]
+    }
+  ]
+}

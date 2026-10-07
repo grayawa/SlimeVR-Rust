@@ -26,6 +26,12 @@ native-warning = Warning
 native-close-menu = Close
 native-unavailable = Unavailable
 native-skeleton = Skeleton preview
+native-dashboard-title = SlimeVR Dashboard
+native-dashboard-nodes = Tracker information
+native-dashboard-resetting = Reset in progress
+native-dashboard-reset-hint = Hold the calibration pose until the reset finishes.
+native-dashboard-demo = Sample data · reset buttons do not operate a backend
+native-dashboard-exit = Exit panel
 
 # Generated field fallback labels
 native-field-vrc_osc-trackers-head = Head

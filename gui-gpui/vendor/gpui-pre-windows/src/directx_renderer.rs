@@ -54,6 +54,8 @@ pub(crate) struct DirectXRenderer {
     /// In that case we want to discard the first frame that we draw as we got reset in the middle of a frame
     /// meaning we lost all the allocated gpu textures and scene resources.
     skip_draws: bool,
+    #[cfg(feature = "overlay-output")]
+    overlay_texture: Option<ID3D11Texture2D>,
 }
 
 /// Direct3D objects
@@ -183,6 +185,8 @@ impl DirectXRenderer {
         };
 
         Ok(DirectXRenderer {
+            #[cfg(feature = "overlay-output")]
+            overlay_texture: None,
             hwnd,
             atlas,
             devices: Some(devices),
@@ -261,6 +265,8 @@ impl DirectXRenderer {
     }
 
     fn handle_device_lost_impl(&mut self, directx_devices: &DirectXDevices) -> Result<()> {
+        #[cfg(feature = "overlay-output")]
+        { self.overlay_texture = None; }
         let disable_direct_composition = self.direct_composition.is_none();
 
         unsafe {
@@ -337,8 +343,45 @@ impl DirectXRenderer {
             // and so likely do not have the textures anymore that are required for drawing
             return Ok(());
         }
+        #[cfg(feature = "overlay-output")]
+        if let Some((active, mirror)) = crate::overlay_output::mode(self.hwnd) {
+            if !active && !mirror { return Ok(()); }
+            self.render(scene, background_appearance)?;
+            if active { self.submit_overlay_texture()?; }
+            return if mirror { self.present() } else { Ok(()) };
+        }
         self.render(scene, background_appearance)?;
         self.present()
+    }
+
+    #[cfg(feature = "overlay-output")]
+    fn submit_overlay_texture(&mut self) -> Result<()> {
+        let devices = self.devices.as_ref().context("Overlay GPU device unavailable")?;
+        let source = self.resources.as_ref().and_then(|r| r.render_target.as_ref()).context("Overlay render target unavailable")?;
+        let mut desc = D3D11_TEXTURE2D_DESC::default();
+        unsafe { source.GetDesc(&mut desc) };
+        let recreate = self.overlay_texture.as_ref().is_none_or(|texture| {
+            let mut old = D3D11_TEXTURE2D_DESC::default();
+            unsafe { texture.GetDesc(&mut old) };
+            old.Width != desc.Width || old.Height != desc.Height
+        });
+        if recreate {
+            desc.Usage = D3D11_USAGE_DEFAULT;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE.0 as u32;
+            desc.CPUAccessFlags = 0;
+            desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED.0 as u32;
+            let mut texture = None;
+            unsafe { devices.device.CreateTexture2D(&desc, None, Some(&mut texture))? };
+            self.overlay_texture = texture;
+        }
+        let texture = self.overlay_texture.as_ref().context("Creating overlay texture failed")?;
+        // GPU copy into a stable shareable texture; no staging resource or Map.
+        unsafe {
+            devices.device_context.CopyResource(texture, source);
+            devices.device_context.Flush();
+        }
+        crate::overlay_output::submit(self.hwnd, texture, desc.Width, desc.Height);
+        Ok(())
     }
 
     /// Clear the render target for `background_appearance` and encode every

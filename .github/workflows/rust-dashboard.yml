@@ -1,0 +1,57 @@
+name: SteamVR dashboard Windows bundle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      CARGO_INCREMENTAL: '0'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: lukka/get-cmake@latest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            gui-gpui -> target
+            server-rust -> target
+          key: windows-dashboard
+      - name: Protocol and dashboard input tests
+        run: |
+          cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked
+          cargo test --manifest-path gui-gpui/overlay-runtime/Cargo.toml
+      - name: Check dashboard
+        run: cargo clippy --manifest-path gui-gpui/Cargo.toml --features vr-dashboard --bin slimevr-gpui-overlay --release --locked -- -D warnings
+      - name: Build Windows dashboard and test backend
+        run: |
+          cargo build --manifest-path gui-gpui/Cargo.toml --features vr-dashboard --bin slimevr-gpui-overlay --release --locked
+          cargo build --manifest-path server-rust/Cargo.toml --bin slimevr-server --release --locked
+      - name: Real backend loopback tests
+        shell: pwsh
+        run: |
+          $env:SLIMEVR_TEST_BACKEND = "$PWD/server-rust/target/release/slimevr-server.exe"
+          cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --test backend --locked -- --ignored
+      - name: Fetch licensed Microsoft runtime and package
+        run: |
+          python gui/scripts/fetch-vc-runtime.py --output dist/vc-runtime
+          python gui-gpui/scripts/package-overlay-windows.py --overlay-exe gui-gpui/target/release/slimevr-gpui-overlay.exe --vc-runtime-dir dist/vc-runtime --output dist/SlimeVR-Overlay-Windows-x64-dashboard-test1.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SlimeVR-Overlay-Windows-x64
+          path: |
+            dist/SlimeVR-Overlay-Windows-x64-dashboard-test1.zip
+            dist/SlimeVR-Overlay-Windows-x64-dashboard-test1.zip.sha256
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error

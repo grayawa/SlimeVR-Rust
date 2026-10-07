@@ -37,6 +37,8 @@ zed-rev = "279fe070bb389b79652e52065b2f001edcc0b11b"
 [features]
 # Compile embedded HLSL in memory without requiring a build-host filesystem.
 runtime-shaders = []
+# UI-thread texture export for an explicitly registered OpenVR host window.
+overlay-output = []
 default = ["gpui/default"]
 screen-capture = [
     "gpui/screen-capture",

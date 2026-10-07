@@ -20,6 +20,8 @@ mod system_settings;
 mod util;
 mod vsync;
 mod window;
+#[cfg(feature = "overlay-output")]
+pub mod overlay_output;
 mod wrapper;
 
 pub(crate) use clipboard::*;

@@ -112,6 +112,21 @@ fn get_adapter(
     ID3D11DeviceContext,
     D3D_FEATURE_LEVEL,
 )> {
+    #[cfg(feature = "overlay-output")]
+    if let Some(index) = crate::overlay_output::preferred_adapter() {
+        let adapter: IDXGIAdapter1 = unsafe { dxgi_factory.EnumAdapters(index)?.cast()? };
+        let mut context = None;
+        let mut level = D3D_FEATURE_LEVEL::default();
+        let device = get_device(
+            &adapter,
+            Some(&mut context),
+            Some(&mut level),
+            debug_layer_available,
+        )
+        .context("SteamVR compositor GPU does not support the required Direct3D features")?;
+        log::info!("Using SteamVR compositor DXGI adapter {index}");
+        return Ok((adapter, device, context.unwrap(), level));
+    }
     for adapter_index in 0.. {
         let adapter: IDXGIAdapter1 = unsafe { dxgi_factory.EnumAdapters(adapter_index)?.cast()? };
         if let Ok(desc) = unsafe { adapter.GetDesc1() } {

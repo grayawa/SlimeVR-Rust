@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Get tags
@@ -33,7 +33,7 @@ jobs:
       - name: Setup PNPM
         uses: pnpm/action-setup@v6
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.node-version'
           cache: 'pnpm'
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Get tags
@@ -53,7 +53,7 @@ jobs:
       - name: Setup PNPM
         uses: pnpm/action-setup@v6
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: '.node-version'
           cache: 'pnpm'

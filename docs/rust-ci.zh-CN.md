@@ -1,6 +1,6 @@
 # Rust 分支的 GitHub Actions 检查
 
-Rust / Tauri、GPUI 和 SteamVR Dashboard 工作流支持手动构建，也会在相关 PR 中自动运行。PR 按修改路径触发，避免翻译或 Java 工作流的更新重复构建所有 Rust 界面。
+Rust / Tauri、GPUI 和 SteamVR Dashboard 工作流支持手动构建，也会在相关 PR 中自动运行。PR 按修改路径触发，避免翻译或无关工作流的更新重复构建所有 Rust 界面。
 
 | 工作流 | PR 检查范围 | 手动构建 |
 | --- | --- | --- |

@@ -8,6 +8,7 @@ on:
       - 'gui-gpui/**'
       - 'server-rust/**'
       - 'bindings-provider/**'
+      - 'solarxr-protocol'
       - 'solarxr-protocol/**'
       - '.gitmodules'
 

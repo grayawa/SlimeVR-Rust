@@ -5,7 +5,7 @@ import { createInterface } from 'node:readline';
 import { createSocket } from 'node:dgram';
 import { createConnection } from 'node:net';
 import { createServer } from 'node:http';
-import { mkdtemp, readFile, writeFile, rm, mkdir } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm, mkdir, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { once } from 'node:events';
@@ -980,7 +980,11 @@ test(
       await delay(60);
       assert.equal((await record(observer, true)).recording, false);
       const saved = await client.wait((p) => p?.type === 'backend_file_saved');
-      assert.equal(saved.file.path, join(dir, 'recordings', 'BVH-Recording1.bvh'));
+      // Windows can report a canonical long path while TEMP uses an 8.3 alias.
+      assert.equal(
+        await realpath(saved.file.path),
+        await realpath(join(dir, 'recordings', 'BVH-Recording1.bvh'))
+      );
       await assertClip(saved.file.path, saved.file.frames);
       await client.wait(
         (p) =>

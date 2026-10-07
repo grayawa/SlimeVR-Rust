@@ -95,6 +95,7 @@ def main():
         shutil.copy2(ROOT / 'bindings-provider/openvr/LICENSE', bindings.parent / 'OPENVR-LICENSE')
         licenses = base / 'licenses'
         licenses.mkdir()
+        shutil.copytree(ROOT / 'server-rust/licenses', licenses / 'rust-backend')
         shutil.copy2(args.vc_runtime_dir / 'VC-Runtime-LICENSE.rtf', licenses / 'VC-Runtime-LICENSE.rtf')
         shutil.copy2(args.vc_runtime_dir / 'SOURCE.json', licenses / 'VC-Runtime-SOURCE.json')
         for name in VC_DLLS:

@@ -4,6 +4,8 @@
 
 Tauri 和 Electron 自动启动 Rust 可执行文件，沿用 `vrconfig.yml` / `.yaml`、SolarXR 和既有 GUI 设置。`--rust-server` 指定可执行文件，`--path` 指定所在目录，`--no-server` 只连接已经运行的服务。Tauri 的 `--backend auto` / `rust` 保留；Java JAR / JVM 的启动选项和打包配置已移除。关闭自己启动的后端时先关闭 stdin，让录制和 journal 正常完成；超时后终止进程。
 
+移植数学代码的 ktmath / jMonkeyEngine 许可证保留在 `server-rust/licenses/`，并随 Tauri、Electron、GPUI 和 Overlay 构建包分发。
+
 GPUI、Overlay、共享 React 页面、翻译、OpenVR helper 和 SteamVR 驱动资源保留。WebView2 需求仍取决于是否使用 Tauri。旧 Java / Android 构建任务已从 CI 移除，当前工作流见 [CI 说明](rust-ci.zh-CN.md)。
 
 Rust 算法测试继续使用已有 golden fixtures，普通构建和测试无需 Java。用于重新生成参考数据的 Kotlin 适配器仅在 `server-rust/tools/` 中使用；SolarXR 子模块保留其上游生成的各种语言协议。

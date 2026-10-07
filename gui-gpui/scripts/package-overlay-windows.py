@@ -60,6 +60,7 @@ def main():
         shutil.copy2(args.openvr_dll, base / 'openvr_api.dll')
         for name in ['LICENSE-MIT', 'LICENSE-APACHE']:
             shutil.copy2(ROOT / name, base / name)
+        shutil.copytree(ROOT / 'server-rust/licenses', licenses / 'rust-backend', dirs_exist_ok=True)
         shutil.copy2(ROOT / 'bindings-provider/openvr/LICENSE', licenses / 'OpenVR-LICENSE')
         shutil.copy2(ROOT / 'gui-gpui/assets/GPUI-Kit-LICENSE-APACHE', licenses)
         vendor = ROOT / 'gui-gpui/vendor/gpui-pre-windows'

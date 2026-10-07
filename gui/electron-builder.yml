@@ -8,6 +8,8 @@ directories:
 
 asar: true
 extraResources:
+  - from: "../server-rust/licenses"
+    to: "licenses/rust-backend"
   - from: "src-tauri/resources/drivers"
     to: "drivers"
   - from: "src-tauri/resources/bindings"

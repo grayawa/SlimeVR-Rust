@@ -30,15 +30,12 @@
     "targets": "all",
     "category": "Utility",
     "shortDescription": "SlimeVR full-body tracking interface",
-    "icon": [
-      "icons/128x128.png",
-      "icons/icon.ico",
-      "icons/icon.icns"
-    ],
+    "icon": ["icons/128x128.png", "icons/icon.ico", "icons/icon.icns"],
     "resources": {
       "resources/69-slimevr-devices.rules": "69-slimevr-devices.rules",
       "../../LICENSE-MIT": "LICENSE-MIT",
       "../../LICENSE-APACHE": "LICENSE-APACHE",
+      "../../server-rust/licenses/": "licenses/rust-backend/",
       "resources/drivers/": "drivers/",
       "resources/bindings/": "bindings/"
     }

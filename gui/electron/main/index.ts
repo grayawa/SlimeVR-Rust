@@ -435,7 +435,7 @@ const spawnServer = async () => {
   });
 
   serverProcess.on('error', (err) => {
-    logger.info({ err }, 'Error launching the Rust backend');
+    logger.error({ err }, 'Error launching the Rust backend');
     if (!isQuitting) app.quit();
   });
 
@@ -496,7 +496,15 @@ app.whenReady().then(async () => {
   }
 
   stores = await initStores();
-  const server = await spawnServer();
+  let server: Awaited<ReturnType<typeof spawnServer>>;
+  try {
+    server = await spawnServer();
+  } catch (err) {
+    logger.error({ err }, 'Failed to start the Rust backend');
+    dialog.showErrorBox('SlimeVR', String(err));
+    app.quit();
+    return;
+  }
 
   createWindow();
 

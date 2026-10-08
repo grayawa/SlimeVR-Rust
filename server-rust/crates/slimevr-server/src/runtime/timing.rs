@@ -121,6 +121,14 @@ pub(super) struct Report {
     pub tick_jitter_ms: Option<Percentiles>,
     pub tick_work_ms: Option<Percentiles>,
     pub runtime_stall: Stalls,
+    pub udp_datagrams: u64,
+    pub udp_batches: u64,
+    pub udp_budget_yields: u64,
+    pub udp_coalesced: u64,
+    pub udp_dropped_poses: u64,
+    pub udp_dropped_controls: u64,
+    pub udp_queue_delay_ms: Option<Percentiles>,
+    pub udp_batch_work_ms: Option<Percentiles>,
 }
 
 pub(super) struct Timing {
@@ -132,6 +140,10 @@ pub(super) struct Timing {
     jitter: Histogram,
     work: Histogram,
     stalls: Stalls,
+    udp_delay: Histogram,
+    udp_work: Histogram,
+    udp_yields: u64,
+    udp_loss: [u64; 3],
 }
 impl Timing {
     pub fn new(start: Instant, period: Duration, window: Duration, pose: bool) -> Self {
@@ -144,6 +156,10 @@ impl Timing {
             jitter: Histogram::new(),
             work: Histogram::new(),
             stalls: Stalls::default(),
+            udp_delay: Histogram::new(),
+            udp_work: Histogram::new(),
+            udp_yields: 0,
+            udp_loss: [0; 3],
         }
     }
     pub fn begin_tick(&mut self, now: Instant) {
@@ -156,6 +172,22 @@ impl Timing {
     }
     pub fn end_tick(&mut self, elapsed: Duration) {
         self.work.record(elapsed);
+    }
+    pub fn udp_received(&mut self, queue_delay: Duration) {
+        self.udp_delay.record(queue_delay);
+    }
+    pub fn udp_batch(&mut self, elapsed: Duration, yielded: bool) {
+        self.udp_work.record(elapsed);
+        self.udp_yields += u64::from(yielded);
+    }
+    pub fn ingress_counts(&mut self, coalesced: u64, dropped_poses: u64, dropped_controls: u64) {
+        for (total, count) in
+            self.udp_loss
+                .iter_mut()
+                .zip([coalesced, dropped_poses, dropped_controls])
+        {
+            *total += count;
+        }
     }
     pub fn report(&mut self, now: Instant, at_ms: u64, force: bool) -> Option<Report> {
         if self.work.count == 0 || (!force && now.duration_since(self.window_start) < self.window) {
@@ -172,9 +204,20 @@ impl Timing {
             tick_jitter_ms: self.jitter.percentiles(),
             tick_work_ms: self.work.percentiles(),
             runtime_stall: std::mem::take(&mut self.stalls),
+            udp_datagrams: self.udp_delay.count,
+            udp_batches: self.udp_work.count,
+            udp_budget_yields: std::mem::take(&mut self.udp_yields),
+            udp_coalesced: self.udp_loss[0],
+            udp_dropped_poses: self.udp_loss[1],
+            udp_dropped_controls: self.udp_loss[2],
+            udp_queue_delay_ms: self.udp_delay.percentiles(),
+            udp_batch_work_ms: self.udp_work.percentiles(),
         };
         self.jitter.clear();
         self.work.clear();
+        self.udp_delay.clear();
+        self.udp_work.clear();
+        self.udp_loss = [0; 3];
         self.window_start = now;
         // Keep previous: a stall crossing a reporting boundary must still count.
         Some(report)
@@ -184,6 +227,47 @@ impl Timing {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn udp_wait_work_and_capacity_counts_report_separately_without_changing_tick_jitter() {
+        let start = Instant::now();
+        let mut timing = Timing::new(
+            start,
+            Duration::from_millis(4),
+            Duration::from_secs(1),
+            true,
+        );
+        timing.begin_tick(start);
+        timing.end_tick(Duration::from_micros(100));
+        timing.udp_received(Duration::from_millis(100));
+        timing.udp_batch(Duration::from_millis(2), true);
+        timing.ingress_counts(12, 1, 2);
+        let report = timing
+            .report(start + Duration::from_secs(1), 1000, false)
+            .unwrap();
+        assert_eq!(report.udp_datagrams, 1);
+        assert_eq!(report.udp_batches, 1);
+        assert_eq!(report.udp_budget_yields, 1);
+        assert_eq!(report.udp_queue_delay_ms.unwrap().max, 100.);
+        assert_eq!(report.udp_batch_work_ms.unwrap().max, 2.);
+        assert_eq!(
+            [
+                report.udp_coalesced,
+                report.udp_dropped_poses,
+                report.udp_dropped_controls
+            ],
+            [12, 1, 2]
+        );
+        assert!(report.tick_jitter_ms.is_none());
+        timing.begin_tick(start + Duration::from_millis(1004));
+        timing.end_tick(Duration::from_micros(100));
+        let report = timing
+            .report(start + Duration::from_secs(2), 2000, false)
+            .unwrap();
+        assert_eq!(report.udp_datagrams, 0);
+        assert_eq!(report.udp_budget_yields, 0);
+        assert!(report.udp_queue_delay_ms.is_none());
+        assert_eq!(report.udp_coalesced, 0);
+    }
     #[test]
     fn fractional_excess_keeps_clock_precision_at_thresholds() {
         let mut stalls = Stalls::default();

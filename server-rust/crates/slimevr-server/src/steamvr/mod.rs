@@ -367,6 +367,7 @@ impl Session {
                                         session: self.session,
                                         packet_sequence: at as i64,
                                         received_at_ms: at,
+                                        socket_received_at_ms: None,
                                         sensor_timestamp_us: None,
                                         packet_rotation: Some(rotation),
                                         server_rotation: Some(rotation),

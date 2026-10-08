@@ -89,6 +89,7 @@ impl Service {
         }
     }
     pub fn after_tick(&mut self, engine: &PoseEngine, receiver: &Receiver, at: u64) {
+        self.sync_pose_config(engine);
         self.update_tap_setup(receiver, at);
         if at >= self.next_diagnostics {
             self.next_diagnostics = at.saturating_add(1000);
@@ -159,7 +160,6 @@ impl Service {
                 }
             }
         }
-        self.config.pose = engine.export_config();
         let p = engine.snapshot();
         if p.reset_count != self.last_reset && (p.mounting_completed || p.feet_mounting_completed) {
             if let Err(e) = crate::config::put(

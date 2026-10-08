@@ -19,23 +19,24 @@ type Field = (u8, u8); // Sensor ID + rotation / acceleration / position / flex.
 pub(super) struct Datagram {
     pub from: SocketAddr,
     pub bytes: Vec<u8>,
+    pub received: Instant,
+    pub parsed: Result<protocol::Datagram, protocol::ParseError>,
 }
 struct Pending {
     datagram: Datagram,
     fields: Option<BTreeSet<Field>>,
     sequence: i64,
-    received: Instant,
 }
 impl Pending {
     fn new(from: SocketAddr, bytes: Vec<u8>, received: Instant) -> Self {
-        let parsed = protocol::parse(&bytes).ok();
+        let parsed = protocol::parse(&bytes);
         let sequence = parsed.as_ref().map_or(0, |p| p.sequence);
-        let fields = parsed.and_then(|p| {
+        let fields = parsed.as_ref().ok().and_then(|p| {
             if !p.warnings.is_empty() || p.packets.is_empty() {
                 return None;
             }
             let mut fields = BTreeSet::new();
-            for packet in p.packets {
+            for packet in &p.packets {
                 match packet {
                     Packet::Rotation {
                         sensor_id,
@@ -43,19 +44,19 @@ impl Pending {
                         acceleration,
                         ..
                     } => {
-                        fields.insert((sensor_id, 0));
+                        fields.insert((*sensor_id, 0));
                         if acceleration.is_some() {
-                            fields.insert((sensor_id, 1));
+                            fields.insert((*sensor_id, 1));
                         }
                     }
                     Packet::Acceleration { sensor_id, .. } => {
-                        fields.insert((sensor_id, 1));
+                        fields.insert((*sensor_id, 1));
                     }
                     Packet::Position { sensor_id, .. } => {
-                        fields.insert((sensor_id, 2));
+                        fields.insert((*sensor_id, 2));
                     }
                     Packet::Flex { sensor_id, .. } => {
-                        fields.insert((sensor_id, 3));
+                        fields.insert((*sensor_id, 3));
                     }
                     // Mixed bundles, errors, telemetry, handshakes and malformed data
                     // remain whole ordered messages; never partially rewrite packets.
@@ -65,10 +66,14 @@ impl Pending {
             Some(fields)
         });
         Self {
-            datagram: Datagram { from, bytes },
+            datagram: Datagram {
+                from,
+                bytes,
+                received,
+                parsed,
+            },
             fields,
             sequence,
-            received,
         }
     }
 }
@@ -149,19 +154,28 @@ impl Queue {
             retained
         });
     }
-    fn drain(&mut self, now: Instant, period: Duration, stats: &Stats) -> Vec<Datagram> {
+    fn prepare(&mut self, now: Instant, period: Duration, stats: &Stats) {
         // Under light load deliver every sample to the filter. Once delivery is
         // later than one pose tick, keep latest fields within each control boundary.
-        if self
-            .pending
-            .iter()
-            .any(|p| p.fields.is_some() && now.saturating_duration_since(p.received) > period)
-        {
+        if self.pending.iter().any(|p| {
+            p.fields.is_some() && now.saturating_duration_since(p.datagram.received) > period
+        }) {
             self.compact(stats);
         }
-        self.poses = 0;
-        self.controls = 0;
-        self.pending.drain(..).map(|p| p.datagram).collect()
+    }
+    fn pop(&mut self) -> Option<Datagram> {
+        let packet = self.pending.pop_front()?;
+        if packet.fields.is_some() {
+            self.poses -= 1;
+        } else {
+            self.controls -= 1;
+        }
+        Some(packet.datagram)
+    }
+    #[cfg(test)]
+    fn drain(&mut self, now: Instant, period: Duration, stats: &Stats) -> Vec<Datagram> {
+        self.prepare(now, period, stats);
+        std::iter::from_fn(|| self.pop()).collect()
     }
 }
 #[derive(Default)]
@@ -194,7 +208,8 @@ impl Ingress {
             loop {
                 match socket.recv_from(&mut buffer).await {
                     Ok((length, from)) => {
-                        let packet = Pending::new(from, buffer[..length].to_vec(), Instant::now());
+                        let received = Instant::now();
+                        let packet = Pending::new(from, buffer[..length].to_vec(), received);
                         let Ok(mut queue) = incoming.queue.lock() else {
                             break;
                         };
@@ -220,19 +235,30 @@ impl Ingress {
     pub fn stats(&self) -> &Stats {
         &self.shared.stats
     }
-    pub async fn recv(&self) -> io::Result<Vec<Datagram>> {
+    pub fn try_recv(&self) -> io::Result<Option<Datagram>> {
+        Ok(self
+            .shared
+            .queue
+            .lock()
+            .map_err(|_| io::Error::other("UDP ingress queue poisoned"))?
+            .pop())
+    }
+    pub async fn recv(&self) -> io::Result<Datagram> {
         loop {
             let notified = self.shared.ready.notified();
             tokio::pin!(notified);
             notified.as_mut().enable();
-            let batch = self
-                .shared
-                .queue
-                .lock()
-                .map_err(|_| io::Error::other("UDP ingress queue poisoned"))?
-                .drain(Instant::now(), self.period, &self.shared.stats);
-            if !batch.is_empty() {
-                return Ok(batch);
+            let packet = {
+                let mut queue = self
+                    .shared
+                    .queue
+                    .lock()
+                    .map_err(|_| io::Error::other("UDP ingress queue poisoned"))?;
+                queue.prepare(Instant::now(), self.period, &self.shared.stats);
+                queue.pop()
+            };
+            if let Some(packet) = packet {
+                return Ok(packet);
             }
             if self.shared.closed.load(Ordering::Acquire) {
                 return Err(self
@@ -254,12 +280,16 @@ impl Drop for Ingress {
 }
 
 #[cfg(test)]
+#[path = "ingress_bench.rs"]
+mod bench;
+
+#[cfg(test)]
 mod tests {
     use super::*;
-    fn peer(port: u16) -> SocketAddr {
+    pub(super) fn peer(port: u16) -> SocketAddr {
         ([127, 0, 0, 1], port).into()
     }
-    fn wire(id: u32, sequence: i64, payload: &[u8]) -> Vec<u8> {
+    pub(super) fn wire(id: u32, sequence: i64, payload: &[u8]) -> Vec<u8> {
         [
             id.to_be_bytes().as_slice(),
             sequence.to_be_bytes().as_slice(),
@@ -267,7 +297,7 @@ mod tests {
         ]
         .concat()
     }
-    fn rotation(sensor: u8, sequence: i64) -> Vec<u8> {
+    pub(super) fn rotation(sensor: u8, sequence: i64) -> Vec<u8> {
         let mut body = vec![sensor, 1];
         for value in [sequence as f32 / 1000., 0., 0., 1.] {
             body.extend(value.to_be_bytes());
@@ -283,7 +313,7 @@ mod tests {
         body.push(sensor);
         wire(4, sequence, &body)
     }
-    fn handshake() -> Vec<u8> {
+    pub(super) fn handshake() -> Vec<u8> {
         let mut body = Vec::new();
         for value in [9u32, 13, 1, 0, 0, 0, 22] {
             body.extend(value.to_be_bytes());
@@ -292,7 +322,7 @@ mod tests {
         body.extend([2, 0, 0, 0, 0, 1]);
         wire(3, 0, &body)
     }
-    fn bundle(sequence: i64, compact: bool, packets: &[Vec<u8>]) -> Vec<u8> {
+    pub(super) fn bundle(sequence: i64, compact: bool, packets: &[Vec<u8>]) -> Vec<u8> {
         let mut body = Vec::new();
         for packet in packets {
             let mut inner = if compact {
@@ -545,6 +575,88 @@ mod tests {
         );
     }
     #[test]
+    fn budget_remainder_stays_in_bounded_queue_and_new_poses_replace_it_without_overtaking_controls(
+    ) {
+        let start = Instant::now();
+        let stats = Stats::default();
+        let mut queue = Queue::default();
+        for sequence in 1..=128 {
+            push(
+                &mut queue,
+                &stats,
+                start,
+                peer(1),
+                wire(24, sequence, &[0, 0, 1]),
+            );
+        }
+        for sequence in 1..=1000 {
+            push(
+                &mut queue,
+                &stats,
+                start,
+                peer(2),
+                rotation((sequence % 2) as u8, sequence),
+            );
+        }
+        queue.prepare(
+            start + Duration::from_millis(100),
+            Duration::from_millis(4),
+            &stats,
+        );
+        for sequence in 1..=16 {
+            assert_eq!(queue.pop().unwrap().parsed.unwrap().sequence, sequence);
+        }
+        for sequence in 1001..=1002 {
+            push(
+                &mut queue,
+                &stats,
+                start,
+                peer(2),
+                rotation((sequence % 2) as u8, sequence),
+            );
+        }
+        let batch = queue.drain(
+            start + Duration::from_millis(101),
+            Duration::from_millis(4),
+            &stats,
+        );
+        let mut expected: Vec<_> = (17..=128).collect();
+        expected.extend([1001, 1002]);
+        assert_eq!(sequences(&batch), expected);
+        assert_eq!(queue.controls, 0);
+        assert_eq!(queue.poses, 0);
+        assert_eq!(stats.coalesced.load(Ordering::Relaxed), 1000);
+    }
+    #[test]
+    fn cached_parse_preserves_warnings_mixed_controls_and_malformed_rejection() {
+        let config = crate::receiver::ReceiverConfig {
+            accept_new_devices: true,
+            ..Default::default()
+        };
+        let mut raw = crate::receiver::Receiver::new(config.clone()).unwrap();
+        let mut cached = crate::receiver::Receiver::new(config).unwrap();
+        let mut invalid_float = rotation(0, 2);
+        invalid_float[14..18].copy_from_slice(&f32::NAN.to_be_bytes());
+        let packets = [
+            handshake(),
+            wire(15, 1, &[0, 1, 13]),
+            invalid_float,
+            bundle(3, true, &[rotation(0, 0), wire(21, 0, &[3])]),
+            wire(17, 4, &[0]),
+            wire(99, 5, &[1, 2, 3]),
+        ];
+        for (at, bytes) in packets.into_iter().enumerate() {
+            let packet = Pending::new(peer(1), bytes, Instant::now());
+            assert!(packet.fields.is_none());
+            let a = raw.receive_timed(peer(1), &packet.datagram.bytes, at as u64, Some(0));
+            let b = cached.receive_parsed(peer(1), packet.datagram.parsed, at as u64, Some(0));
+            assert_eq!(a.outbound, b.outbound);
+            assert_eq!(a.events, b.events);
+        }
+        assert_eq!(raw.snapshot(10), cached.snapshot(10));
+        assert_eq!(raw.counters.malformed, 1);
+    }
+    #[test]
     fn retained_original_datagrams_replay_with_same_receiver_state_and_control_replies() {
         use crate::{
             receiver::{Receiver, ReceiverConfig},
@@ -582,6 +694,7 @@ mod tests {
             let at = index as u64;
             recorder
                 .write(&Record::Receive {
+                    received_at_ms: None,
                     at_ms: at,
                     from: packet.from,
                     hex: crate::recording::encode_hex(&packet.bytes),
@@ -642,7 +755,11 @@ mod tests {
             std::thread::sleep(Duration::from_millis(1));
         }
         std::thread::sleep(Duration::from_millis(10));
-        let batch = ingress.recv().await.unwrap();
+        let first = ingress.recv().await.unwrap();
+        let mut batch = vec![first];
+        while let Some(packet) = ingress.try_recv().unwrap() {
+            batch.push(packet);
+        }
         assert_eq!(sequences(&batch), [79, 80]);
         assert_eq!(ingress.stats().coalesced.load(Ordering::Relaxed), 78);
         drop(ingress);

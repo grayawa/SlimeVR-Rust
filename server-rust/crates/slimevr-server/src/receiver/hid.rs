@@ -324,6 +324,7 @@ impl Receiver {
                                     session: d.session,
                                     packet_sequence: d.last_sequence,
                                     received_at_ms: at,
+                                    socket_received_at_ms: None,
                                     sensor_timestamp_us: None,
                                     packet_rotation: None,
                                     server_rotation: Some(rotation),

@@ -144,6 +144,10 @@ pub struct TrackerPose {
     pub acceleration_world: Option<Timed<V>>,
     pub pose_age_ms: Option<u64>,
     pub pose_stale: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pose_processing_age_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pose_queue_delay_ms: Option<u64>,
     pub calibration: Calibration,
     pub filter_impact_radians: f32,
 }
@@ -184,6 +188,7 @@ struct TrackerState {
     session: u64,
     status: SensorStatus,
     raw: Option<Timed<Q>>,
+    socket_received_at_ms: Option<u64>,
     acceleration: Option<Timed<V>>,
     calibration: Calibration,
     filter: QuaternionFilter,
@@ -197,6 +202,7 @@ impl TrackerState {
             session: 0,
             status: SensorStatus::Disconnected,
             raw: None,
+            socket_received_at_ms: None,
             acceleration: None,
             calibration,
             filter: QuaternionFilter::new(config, Q::IDENTITY),
@@ -246,6 +252,7 @@ impl TrackerState {
 
 pub struct PoseEngine {
     config: PoseConfig,
+    config_revision: u64,
     trackers: BTreeMap<(String, u8), TrackerState>,
     capabilities: BTreeMap<(String, u8), crate::TrackerCapabilities>,
     head: Option<HeadPose>,
@@ -298,6 +305,7 @@ impl PoseEngine {
         let alignment = crate::alignment::StayAligned::new(config.alignment);
         Ok(Self {
             config,
+            config_revision: 0,
             positions: BTreeMap::new(),
             controllers: BTreeMap::new(),
             legs,
@@ -367,6 +375,9 @@ impl PoseEngine {
                 let key = (device_key.clone(), *sensor_id);
                 self.capabilities.insert(key.clone(), *capabilities);
                 if let Some(state) = self.trackers.get_mut(&key) {
+                    if state.capabilities != *capabilities {
+                        self.config_revision = self.config_revision.wrapping_add(1);
+                    }
                     state.set_capabilities(*capabilities);
                     let q = state
                         .raw
@@ -385,8 +396,10 @@ impl PoseEngine {
                 preserve_calibration,
                 ..
             } => {
+                let mut changed = false;
                 for ((key, _), s) in &mut self.trackers {
                     if key == device_key && s.session != *session {
+                        changed = true;
                         let calibration = (*preserve_calibration && s.session != 0)
                             .then(|| s.calibration.clone());
                         let binding = s.binding.clone();
@@ -417,6 +430,9 @@ impl PoseEngine {
                         self.legs.reset_at(event.at_ms, false);
                         self.velocities.clear();
                     }
+                }
+                if changed {
+                    self.config_revision = self.config_revision.wrapping_add(1);
                 }
                 Ok(())
             }
@@ -453,6 +469,10 @@ impl PoseEngine {
             } => {
                 if let Some(s) = self.trackers.get(&(device_key.clone(), *sensor_id)) {
                     let body = s.binding.body;
+                    let changed = self.config.imu_types.get(&body) != Some(imu_type)
+                        || self.config.magnetometers.contains(&body) != *magnetometer_enabled
+                        || self.config.flex_resistance.contains(&body) != (*data_type == 1)
+                        || self.config.flex_angles.contains(&body) != (*data_type == 2);
                     self.config.imu_types.insert(body, *imu_type);
                     if *magnetometer_enabled {
                         self.config.magnetometers.insert(body);
@@ -474,6 +494,9 @@ impl PoseEngine {
                             self.flex_sensors.remove(&body);
                             self.flex_rotations.remove(&body);
                         }
+                    }
+                    if changed {
+                        self.config_revision = self.config_revision.wrapping_add(1);
                     }
                 }
                 Ok(())
@@ -542,6 +565,7 @@ impl PoseEngine {
                 value: q,
                 received_at_ms: sample.received_at_ms,
             });
+            s.socket_received_at_ms = sample.socket_received_at_ms;
             s.status = match s.status {
                 SensorStatus::Disconnected | SensorStatus::TimedOut => SensorStatus::Ok,
                 status => status,
@@ -651,6 +675,7 @@ impl PoseEngine {
         self.advance(at)?;
         self.config.skeleton = skeleton;
         self.config.hmd_height = Some(height);
+        self.config_revision = self.config_revision.wrapping_add(1);
         self.skeleton = Skeleton::new(skeleton);
         self.legs.reset_at(at, true);
         self.localizer.reset();
@@ -806,6 +831,7 @@ impl PoseEngine {
                 .any(|b| matches!(b, BodyPosition::LeftFoot | BodyPosition::RightFoot));
         }
         self.reset_count += 1;
+        self.config_revision = self.config_revision.wrapping_add(1);
         self.velocities.clear();
         Ok(())
     }
@@ -880,7 +906,10 @@ impl PoseEngine {
                     inputs.insert(s.binding.body, q);
                 }
             }
-            let age = s.raw.as_ref().map(|q| at.saturating_sub(q.received_at_ms));
+            let age = s
+                .raw
+                .as_ref()
+                .map(|q| at.saturating_sub(s.socket_received_at_ms.unwrap_or(q.received_at_ms)));
             let acceleration_world = if let (Some(raw), Some(a)) = (&s.raw, &s.acceleration) {
                 Some(Timed {
                     value: raw.value.rotate(a.value),
@@ -909,6 +938,14 @@ impl PoseEngine {
                 acceleration_world,
                 pose_age_ms: age,
                 pose_stale: age.map(|x| x > 2000),
+                pose_processing_age_ms: s
+                    .socket_received_at_ms
+                    .and_then(|_| s.raw.as_ref().map(|q| at.saturating_sub(q.received_at_ms))),
+                pose_queue_delay_ms: s.socket_received_at_ms.and_then(|received| {
+                    s.raw
+                        .as_ref()
+                        .map(|q| q.received_at_ms.saturating_sub(received))
+                }),
                 calibration: s.calibration.clone(),
                 filter_impact_radians: s.filter.impact,
             });
@@ -1121,6 +1158,10 @@ impl PoseEngine {
         };
         Ok(&self.last_snapshot)
     }
+    /// Changes only when exported configuration may change, never on ordinary samples/ticks.
+    pub fn config_revision(&self) -> u64 {
+        self.config_revision
+    }
     /// Export explicit configuration and optionally persist automatically measured mounting.
     pub fn export_config(&self) -> PoseConfig {
         let mut c = self.config.clone();
@@ -1279,6 +1320,7 @@ impl PoseEngine {
         }
         self.legs.set_localizer(config.localizer.enabled);
         self.config = config;
+        self.config_revision = self.config_revision.wrapping_add(1);
         self.apply_leg_overrides();
         Ok(())
     }
@@ -1320,6 +1362,7 @@ impl PoseEngine {
             }
         }
         self.config.saved_mounting_resets.clear();
+        self.config_revision = self.config_revision.wrapping_add(1);
         self.mounting_completed = false;
         self.feet_mounting_completed = false;
         self.legs.reset_at(at, false);

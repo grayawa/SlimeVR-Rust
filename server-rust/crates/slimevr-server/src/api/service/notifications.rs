@@ -6,8 +6,10 @@ use slimevr_core::pose::PoseSnapshot;
 
 impl Service {
     pub fn steamvr_auto_share(&mut self, pose: &PoseSnapshot) -> Result<(), String> {
-        let mut config = self.config.clone();
-        if config.steam_vr.update_automatic(pose) {
+        let mut sharing = self.config.steam_vr.clone();
+        if sharing.update_automatic(pose) {
+            let mut config = self.config.clone();
+            config.steam_vr = sharing;
             config.save(self.state_path.as_deref())?;
             self.config = config;
             self.broadcast(settings::frame(0, &self.config));

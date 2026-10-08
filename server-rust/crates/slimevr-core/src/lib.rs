@@ -77,7 +77,11 @@ pub struct TrackerSample {
     pub sensor_id: u8,
     pub session: u64,
     pub packet_sequence: i64,
+    /// Logical processing clock; retained for filters, state transitions and replay.
     pub received_at_ms: u64,
+    /// Socket receive clock, diagnostic only. Older recordings and other transports omit it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub socket_received_at_ms: Option<u64>,
     pub sensor_timestamp_us: Option<u64>,
     /// Device-fused quaternion, exactly after wire decoding and before AXES_OFFSET.
     pub packet_rotation: Option<Quaternion>,

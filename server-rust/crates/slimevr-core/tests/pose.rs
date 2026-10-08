@@ -30,6 +30,7 @@ fn sample(at: u64, q: Q, session: u64) -> TrackerSample {
         session,
         packet_sequence: at as i64,
         received_at_ms: at,
+        socket_received_at_ms: None,
         sensor_timestamp_us: None,
         packet_rotation: None,
         server_rotation: Some(q),
@@ -38,6 +39,80 @@ fn sample(at: u64, q: Q, session: u64) -> TrackerSample {
         position: None,
         compatibility_fallback: false,
     }
+}
+
+#[test]
+fn delayed_udp_arrival_changes_diagnostics_without_rewinding_filter_or_state_clock() {
+    let mut engine = PoseEngine::new(config()).unwrap();
+    engine.tick(190).unwrap();
+    let mut delayed = sample(200, Q::rotation_x(0.3), 1);
+    delayed.socket_received_at_ms = Some(100);
+    engine.sample(&delayed).unwrap();
+    let p = &engine.tick(220).unwrap().trackers[0];
+    assert_eq!(p.raw.as_ref().unwrap().received_at_ms, 200);
+    assert_eq!(p.pose_age_ms, Some(120));
+    assert_eq!(p.pose_processing_age_ms, Some(20));
+    assert_eq!(p.pose_queue_delay_ms, Some(100));
+    assert!(p.usable());
+    let mut acceleration = delayed.clone();
+    acceleration.received_at_ms = 230;
+    acceleration.socket_received_at_ms = Some(210);
+    acceleration.server_rotation = None;
+    acceleration.server_acceleration = Some(V::ZERO);
+    engine.sample(&acceleration).unwrap();
+    let p = &engine.tick(2500).unwrap().trackers[0];
+    assert_eq!(p.pose_age_ms, Some(2400));
+    assert_eq!(p.pose_queue_delay_ms, Some(100));
+    assert_eq!(p.pose_stale, Some(true));
+    assert!(p.usable()); // Diagnostic age never disables upstream cached IMU poses.
+}
+
+#[test]
+fn configuration_revision_tracks_metadata_height_mounting_and_live_settings_not_pose_ticks() {
+    let mut engine = PoseEngine::new(config()).unwrap();
+    let initial = engine.config_revision();
+    for at in 0..=10 {
+        engine.sample(&sample(at, Q::IDENTITY, 1)).unwrap();
+        engine.tick(at).unwrap();
+    }
+    assert_eq!(engine.config_revision(), initial);
+    let metadata = InputEvent {
+        at_ms: 11,
+        kind: EventKind::SensorMetadata {
+            device_key: "device".into(),
+            sensor_id: 0,
+            imu_type: 13,
+            data_type: 1,
+            magnetometer_enabled: true,
+        },
+    };
+    engine.ingest(&metadata).unwrap();
+    let revision = engine.config_revision();
+    assert!(revision > initial);
+    let c = engine.export_config();
+    assert_eq!(c.imu_types[&BodyPosition::Chest], 13);
+    assert!(c.flex_resistance.contains(&BodyPosition::Chest));
+    assert!(c.magnetometers.contains(&BodyPosition::Chest));
+    engine.ingest(&metadata).unwrap();
+    assert_eq!(engine.config_revision(), revision);
+    engine.apply_height(12, 1.7).unwrap();
+    assert!(engine.config_revision() > revision);
+    assert_eq!(engine.export_config().hmd_height, Some(1.7));
+    let revision = engine.config_revision();
+    engine.reset(13, ResetKind::Mounting).unwrap();
+    assert!(engine.config_revision() > revision);
+    let revision = engine.config_revision();
+    engine.clear_mounting(14).unwrap();
+    assert!(engine.config_revision() > revision);
+    assert!(engine.export_config().saved_mounting_resets.is_empty());
+    let revision = engine.config_revision();
+    let mut c = engine.export_config();
+    c.filter.amount = 0.5;
+    engine.configure(15, c).unwrap();
+    assert!(engine.config_revision() > revision);
+    let revision = engine.config_revision();
+    assert!(engine.apply_height(16, f32::NAN).is_err());
+    assert_eq!(engine.config_revision(), revision);
 }
 
 #[test]

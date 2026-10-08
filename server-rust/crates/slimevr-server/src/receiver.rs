@@ -85,6 +85,8 @@ pub struct SensorState {
     pub status: SensorStatus,
     pub last_alive_ms: u64,
     pub rotation: Option<Timed<Quaternion>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub udp_rotation_timing: Option<ReceiveTiming>,
     pub acceleration: Option<Timed<Vector3>>,
     pub position: Option<Timed<Vector3>>,
     pub temperature: Option<Timed<f32>>,
@@ -92,6 +94,12 @@ pub struct SensorState {
     pub calibration: Option<u8>,
     pub error_code: Option<Timed<u8>>,
     pub samples: u64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+pub struct ReceiveTiming {
+    pub received_at_ms: u64,
+    pub processed_at_ms: u64,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -260,9 +268,27 @@ impl Receiver {
         self.addresses.retain(|_, device| device != key);
     }
     pub fn receive(&mut self, from: SocketAddr, bytes: &[u8], at_ms: u64) -> Effects {
+        self.receive_parsed(from, protocol::parse(bytes), at_ms, None)
+    }
+    pub fn receive_timed(
+        &mut self,
+        from: SocketAddr,
+        bytes: &[u8],
+        at_ms: u64,
+        received_at_ms: Option<u64>,
+    ) -> Effects {
+        self.receive_parsed(from, protocol::parse(bytes), at_ms, received_at_ms)
+    }
+    pub(crate) fn receive_parsed(
+        &mut self,
+        from: SocketAddr,
+        parsed: Result<protocol::Datagram, protocol::ParseError>,
+        at_ms: u64,
+        received_at_ms: Option<u64>,
+    ) -> Effects {
         let mut fx = Effects::default();
         self.counters.received += 1;
-        let datagram = match protocol::parse(bytes) {
+        let datagram = match parsed {
             Ok(p) => p,
             Err(e) => {
                 self.counters.malformed += 1;
@@ -354,6 +380,7 @@ impl Receiver {
                 packet,
                 datagram.sequence,
                 at_ms,
+                received_at_ms,
                 &mut fx,
                 &mut self.counters,
             );
@@ -591,12 +618,20 @@ impl Receiver {
             .values()
             .flat_map(|d| {
                 d.sensors.values().map(move |s| {
-                    let age = s
+                    let processed_age = s
                         .rotation
                         .as_ref()
                         .map(|q| at_ms.saturating_sub(q.received_at_ms));
-                    serde_json::json!({"device_key": d.key, "sensor_id": s.info.sensor_id,
-                "pose_age_ms": age, "pose_stale": age.map(|a| a > self.config.sensor_timeout_ms)})
+                    let age = s.udp_rotation_timing.map(|t| at_ms.saturating_sub(t.received_at_ms)).or(processed_age);
+                    let mut value = serde_json::json!({"device_key": d.key, "sensor_id": s.info.sensor_id,
+                        "pose_age_ms": age, "pose_stale": age.map(|a| a > self.config.sensor_timeout_ms)});
+                    if let Some(t) = s.udp_rotation_timing {
+                        value["received_at_ms"] = t.received_at_ms.into();
+                        value["processed_at_ms"] = t.processed_at_ms.into();
+                        value["pose_processing_age_ms"] = processed_age.into();
+                        value["pose_queue_delay_ms"] = t.processed_at_ms.saturating_sub(t.received_at_ms).into();
+                    }
+                    value
                 })
             })
             .collect();
@@ -654,6 +689,7 @@ fn register_sensor(device: &mut DeviceState, info: SensorInfo, at_ms: u64, fx: &
                 status,
                 last_alive_ms: at_ms,
                 rotation: None,
+                udp_rotation_timing: None,
                 acceleration: None,
                 position: None,
                 temperature: None,
@@ -671,6 +707,7 @@ fn process_packet(
     p: Packet,
     sequence: i64,
     at: u64,
+    received_at_ms: Option<u64>,
     fx: &mut Effects,
     counters: &mut Counters,
 ) {
@@ -681,6 +718,7 @@ fn process_packet(
         session: d.session,
         packet_sequence: sequence,
         received_at_ms: at,
+        socket_received_at_ms: received_at_ms,
         sensor_timestamp_us: None,
         packet_rotation: None,
         server_rotation: None,
@@ -724,6 +762,10 @@ fn process_packet(
                 s.rotation = Some(Timed {
                     value: server,
                     received_at_ms: at,
+                });
+                s.udp_rotation_timing = received_at_ms.map(|received_at_ms| ReceiveTiming {
+                    received_at_ms,
+                    processed_at_ms: at,
                 });
                 s.calibration = calibration;
                 s.samples += 1;

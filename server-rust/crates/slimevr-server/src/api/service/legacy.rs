@@ -71,7 +71,7 @@ impl Service {
                     _ => return Ok(Vec::new()),
                 };
                 self.steamvr_input(input, engine)?;
-                self.config.pose = engine.export_config();
+                self.sync_pose_config(engine);
                 self.config.save(self.state_path.as_deref())?;
                 Ok(Vec::new())
             }

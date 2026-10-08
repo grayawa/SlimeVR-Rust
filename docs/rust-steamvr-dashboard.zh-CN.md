@@ -41,7 +41,7 @@ cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --features vr
 
 Windows 建议 Rust 1.92+、MSVC 和 Windows SDK。程序位于 `gui-gpui/target/release/slimevr-gpui-overlay.exe`，将固定版本 SDK 的 `bindings-provider/openvr/bin/win64/openvr_api.dll` 放在程序旁边，或用 `--openvr-dll` 指定。附加包包含它和原始 OpenVR 许可证。
 
-GitHub Actions：打开仓库 **Actions → SteamVR dashboard Windows bundle → Run workflow**。成功后在该次运行的 **Artifacts** 下载 `SlimeVR-Overlay-Windows-x64`，解压外层 artifact ZIP，再解压里面的附加包。它包含 EXE、OpenVR DLL、微软运行库、启动脚本、许可证和测试说明；源码与微软运行库来源均在工作流中构建 / 校验，不依赖本地旧压缩包。Artifact 默认保留 30 天。
+GitHub Actions：打开仓库 **Actions → SlimeVR AIO → Run workflow**。成功后在该次运行的 **Artifacts** 下载 `SlimeVR-Overlay-Windows-x64`，解压外层 artifact ZIP，再解压里面的附加包。它包含 EXE、OpenVR DLL、微软运行库、启动脚本、许可证和测试说明；源码与微软运行库来源均在工作流中构建 / 校验，不依赖本地旧压缩包。Artifact 默认保留 30 天。
 
 `vr-dashboard` 是可选功能，正常桌面构建不启用 GPU 输出补丁。注册的窗口以 GPU copy 更新共享 D3D11 纹理并提交给 OpenVR，不做逐帧 CPU 回读。隐藏窗口通过异步帧消息绘制；未注册的桌面窗口保持交换链显示行为。
 
@@ -72,3 +72,11 @@ GitHub Actions：打开仓库 **Actions → SteamVR dashboard Windows bundle →
 实机检查：打开并快速开关面板；对照桌面节点和骨架；分别做三个重置并确认点击只执行一次；断联重连不重放操作；旋转和缩放骨架、滚动节点列表；关闭 Overlay 后追踪继续；重启 SteamVR 后重新打开面板。
 
 应用清单注册、SteamVR 自动启动及手腕 / 游戏内常驻面板留作后续功能。本版为手动启动的仪表盘附加程序。
+
+## 重置反馈与刷新调整
+
+通用“正在等待后端确认操作”提示已移除。按钮仍依据真实请求状态禁用，倒计时与完成提示保留。
+
+Overlay 不重复播放桌面程序的重置音效。GPUI 桌面音效现在从通信线程收到 ResetResponse 后直接排入音频线程，独立于界面刷新；素材在音频线程启动时预解码为 PCM，保留重复回包去重和原版音效顺序。显示面板时，状态重绘合并到约 30 Hz，隐藏或暂时节流的最后一次变化不会丢失；没有新数据时不克隆整个状态。
+
+UI 定时器若延迟超过 100 ms，日志会记录 `overlay-frame-delay`，每秒最多一条；音效队列满时记录 `audio` 警告。自动测试覆盖 UI 不读取状态时两种重置的完整音效序列、重复回包、重绘节流及隐藏恢复。实际音频输出、SteamVR 卡顿改善需要新包复测。

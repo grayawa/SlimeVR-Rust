@@ -159,7 +159,7 @@ impl SlimeView {
             .cloned()
             .unwrap_or(Value::Null);
         if build["status"] != "DONE" {
-            self.ui_error = Some(self.text("native-operation-pending"));
+            self.ui_error = Some(self.text("native-firmware-build-not-ready"));
             cx.notify();
             return;
         }

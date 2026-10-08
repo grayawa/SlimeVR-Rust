@@ -27,4 +27,4 @@ Electron 可执行文件、运行时和打包器不再安装。锁文件中的 `
 
 GPUI：参见 [原生界面说明](../gui-gpui/README.zh-CN.md)。Tauri：使用 `pnpm gui` 或 `pnpm tauri:rust:build`，参见 [Tauri 指南](../gui/README.tauri.md)。浏览器开发仍使用 `pnpm web`，另外运行后端。
 
-CI 保留网页检查和三套 Rust 分发包工作流，见 [Actions 说明](rust-ci.zh-CN.md)。历史设计文档中的 Electron / Java 描述是当时的迁移背景，当前入口以根目录 README 和各组件指南为准。删除的上游源码可从 Git 历史查询，不复制到现用工作区。
+CI 使用统一 AIO 工作流，保留网页检查和三套 Rust 分发包，见 [Actions 说明](rust-ci.zh-CN.md)。历史设计文档中的 Electron / Java 描述是当时的迁移背景，当前入口以根目录 README 和各组件指南为准。删除的上游源码可从 Git 历史查询，不复制到现用工作区。

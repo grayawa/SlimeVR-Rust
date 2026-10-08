@@ -23,6 +23,9 @@ class ReferenceSourcesTests(unittest.TestCase):
                  "commit", "-qm", "Reference snapshot"], cwd=root, check=True,
             )
             revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+            # Archive export must preserve blob bytes even with Windows EOL settings.
+            subprocess.run(["git", "config", "core.autocrlf", "true"], cwd=root, check=True)
+            subprocess.run(["git", "config", "core.eol", "crlf"], cwd=root, check=True)
             shutil.rmtree(root / "server")
             with mock.patch.object(reference_sources, "REFERENCE_COMMIT", revision), \
                  mock.patch.object(reference_sources.tempfile, "gettempdir", return_value=directory), \

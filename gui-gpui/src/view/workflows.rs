@@ -88,15 +88,6 @@ impl SlimeView {
                                 .insert("mounting-step".into(), next.to_string());
                         }
                     }
-                    for cue in self.sounds.reset(
-                        event.session,
-                        event.tx,
-                        event.value["reset_type"].as_u64().unwrap_or(255) as u8,
-                        event.value["status"] == 1,
-                        event.value["progress"].as_i64().unwrap_or(0) as i32,
-                    ) {
-                        self.audio.play(cue, volume);
-                    }
                 }
                 "WifiProvisioningStatusResponse"
                     if self.in_onboarding()
@@ -772,7 +763,7 @@ impl SlimeView {
                         "native-warning"
                     }
                 } else {
-                    "native-operation-pending"
+                    "native-processing"
                 })
             ));
         }

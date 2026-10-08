@@ -69,6 +69,8 @@ pub struct Snapshot {
     pub event_sequence: u64,
 }
 
+type ResetListener = Arc<dyn Fn(u64, &ResetProgress) + Send + Sync>;
+
 struct Shared {
     state: Mutex<Snapshot>,
     level: LogLevel,
@@ -77,6 +79,7 @@ struct Shared {
     bone_ms: AtomicU16,
     bones_enabled: AtomicBool,
     events_overflow: AtomicBool,
+    reset_listener: Mutex<Option<ResetListener>>,
 }
 impl Shared {
     fn update(&self, f: impl FnOnce(&mut Snapshot)) {
@@ -99,6 +102,7 @@ impl Shared {
         });
     }
     fn apply(&self, updates: Vec<Update>) {
+        let mut resets = Vec::new();
         self.update(|s| {
             for update in updates {
                 match update {
@@ -115,6 +119,7 @@ impl Shared {
                         let matches = s.pending.as_ref().is_some_and(|p| matches!(p.command, Command::Reset(kind) if p.tx == reset.tx && kind.wire().0 == reset.kind));
                         if matches || s.pending.is_none() {
                             if matches && reset.done { s.pending = None; }
+                            resets.push((s.session, reset.clone()));
                             s.reset = Some(reset);
                         }
                     }
@@ -134,6 +139,18 @@ impl Shared {
                 }
             }
         });
+        // Deliver audio feedback on the receive thread, outside the snapshot lock.
+        // A slow/minimized GUI must not delay or coalesce countdown cues.
+        let listener = self
+            .reset_listener
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone();
+        if let Some(listener) = listener {
+            for (session, reset) in resets {
+                listener(session, &reset);
+            }
+        }
     }
     fn rpc(&self, messages: Vec<(String, u32, serde_json::Value)>) {
         self.rpc_files(messages, Vec::new());
@@ -273,6 +290,7 @@ impl Client {
             bone_ms: AtomicU16::new(25),
             bones_enabled: AtomicBool::new(true),
             events_overflow: AtomicBool::new(false),
+            reset_listener: Mutex::new(None),
         });
         let (sender, receiver) = mpsc::channel(16);
         let (stop, stopping) = watch::channel(false);
@@ -297,12 +315,26 @@ impl Client {
             thread: Some(thread),
         })
     }
+    /// Register a nonblocking observer for accepted reset packets. It runs on
+    /// the receive thread; dispatch playback without doing audio I/O here.
+    pub fn on_reset(&self, listener: impl Fn(u64, &ResetProgress) + Send + Sync + 'static) {
+        *self
+            .shared
+            .reset_listener
+            .lock()
+            .unwrap_or_else(|p| p.into_inner()) = Some(Arc::new(listener));
+    }
     pub fn snapshot(&self) -> Snapshot {
         self.shared
             .state
             .lock()
             .unwrap_or_else(|p| p.into_inner())
             .clone()
+    }
+    /// Avoid cloning a full UI snapshot when no packets have changed it.
+    pub fn snapshot_after(&self, revision: u64) -> Option<Snapshot> {
+        let state = self.shared.state.lock().unwrap_or_else(|p| p.into_inner());
+        (state.revision != revision).then(|| state.clone())
     }
     pub fn drain_events(&self) -> Vec<Event> {
         self.shared
@@ -621,6 +653,7 @@ mod serial_state_tests {
             bone_ms: AtomicU16::new(25),
             bones_enabled: AtomicBool::new(false),
             events_overflow: AtomicBool::new(false),
+            reset_listener: Mutex::new(None),
         };
         shared.rpc(vec![
             (
@@ -656,6 +689,7 @@ mod serial_state_tests {
             bone_ms: AtomicU16::new(25),
             bones_enabled: AtomicBool::new(false),
             events_overflow: AtomicBool::new(false),
+            reset_listener: Mutex::new(None),
         };
         let update = |value| shared.rpc(vec![("SerialUpdateResponse".into(), 1, value)]);
         update(
@@ -695,5 +729,68 @@ mod serial_state_tests {
         );
         shared.disconnect("connection lost".into());
         assert!(shared.state.lock().unwrap().serial_device.is_none());
+    }
+    #[test]
+    fn reset_feedback_survives_no_ui_polling_and_releases_state_lock() {
+        let shared = Arc::new(Shared {
+            state: Mutex::new(Snapshot {
+                session: 8,
+                ..Default::default()
+            }),
+            level: LogLevel::Error,
+            events: Mutex::new(VecDeque::new()),
+            telemetry_ms: AtomicU16::new(100),
+            bone_ms: AtomicU16::new(25),
+            bones_enabled: AtomicBool::new(false),
+            events_overflow: AtomicBool::new(false),
+            reset_listener: Mutex::new(None),
+        });
+        let recorded = Arc::new(Mutex::new((
+            crate::sounds::Sequencer::default(),
+            Vec::new(),
+        )));
+        let output = recorded.clone();
+        let weak = Arc::downgrade(&shared);
+        *shared.reset_listener.lock().unwrap() = Some(Arc::new(move |session, reset| {
+            assert!(weak.upgrade().unwrap().state.try_lock().is_ok());
+            let mut sound = output.lock().unwrap();
+            let cues = sound
+                .0
+                .reset(session, reset.tx, reset.kind, reset.done, reset.progress_ms);
+            sound.1.extend(cues);
+        }));
+        for kind in [1, 2] {
+            for (progress_ms, done) in [
+                (0, false),
+                (1000, false),
+                (1000, false),
+                (2000, false),
+                (3000, true),
+                (3000, true),
+            ] {
+                shared.apply(vec![Update::Reset(ResetProgress {
+                    tx: u32::from(kind),
+                    kind,
+                    done,
+                    progress_ms,
+                    duration_ms: 3000,
+                })]);
+            }
+        }
+        use crate::sounds::Cue;
+        assert_eq!(
+            recorded.lock().unwrap().1,
+            vec![
+                Cue::Initial(1),
+                Cue::Tick(1, 1),
+                Cue::Tick(1, 2),
+                Cue::Finished(1),
+                Cue::Initial(2),
+                Cue::Tick(2, 1),
+                Cue::Tick(2, 2),
+                Cue::Finished(2)
+            ]
+        );
+        assert!(shared.state.lock().unwrap().reset.as_ref().unwrap().done);
     }
 }

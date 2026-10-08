@@ -4,7 +4,6 @@ native-disconnected = 已断开，正在重连
 native-waiting = 正在等待后端数据…
 native-no-trackers = 尚未检测到追踪器。请检查后端是否运行、追踪器是否已开机。
 native-back = 返回
-native-operation-pending = 正在等待后端确认操作…
 native-reset-finished = 重置完成
 native-vrchat-unsupported = 此系统暂时无法读取 VRChat 配置。
 native-assign-description = 为每个追踪器选择身体部位，后端会将更改保存到原有 YAML 配置。
@@ -297,3 +296,6 @@ native-advanced-settings = 附加设置
 
 native-serial-pause-scroll = 暂停滚动
 native-serial-resume-scroll = 继续滚动
+
+native-processing = 处理中…
+native-firmware-build-not-ready = 固件尚未构建完成。

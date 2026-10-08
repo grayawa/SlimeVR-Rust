@@ -73,7 +73,7 @@ pub struct SlimeView {
     http: HashMap<String, serde_json::Value>,
     http_pending: std::collections::BTreeSet<String>,
     firmware_status: HashMap<String, serde_json::Value>,
-    audio: slimevr_gpui::sounds::Player,
+    audio: std::sync::Arc<slimevr_gpui::sounds::Player>,
     sounds: slimevr_gpui::sounds::Sequencer,
     tray: Option<slimevr_gpui::tray::Tray>,
     exit_confirm: bool,
@@ -112,6 +112,10 @@ impl SlimeView {
             l10n.text("tray_menu-quit"),
         ])
         .ok();
+        let audio = std::sync::Arc::new(slimevr_gpui::sounds::Player::new());
+        audio.configure_feedback(&preferences.value);
+        let reset_audio = audio.clone();
+        client.on_reset(move |session, reset| reset_audio.reset(session, reset));
         let snapshot = client.snapshot();
         let refresh = cx.spawn(async move |this, cx| {
             loop {
@@ -128,6 +132,7 @@ impl SlimeView {
                         let fast=this.preferences.value["debug"]==true&&this.preferences.value["devSettings"]["fastDataFeed"]==true;
                         let profile=(if !visible{500}else if fast{11}else{100},if fast{11}else{25},visible&&(this.navigation.page==Page::Proportions || this.in_onboarding() && matches!(this.onboarding.step,slimevr_gpui::onboarding::Step::Mounting|slimevr_gpui::onboarding::Step::Height) || this.preferences.value["skeletonPreview"]!=false&&matches!(this.navigation.page,Page::Home|Page::VrMode)));
                         if this.feed_profile!=Some(profile){let _=this.client.configure_feed(profile.0,profile.1,profile.2);this.feed_profile=Some(profile);}
+                        this.audio.configure_feedback(&this.preferences.value);
                         let snapshot = this.client.snapshot();
                         if snapshot.session != this.snapshot.session || snapshot.connection != Connection::Connected {
                             this.tracker_motion = Default::default();
@@ -246,7 +251,7 @@ impl SlimeView {
             http: HashMap::new(),
             http_pending: Default::default(),
             firmware_status: HashMap::new(),
-            audio: Default::default(),
+            audio,
             sounds: Default::default(),
             tray,
             exit_confirm: false,
@@ -752,9 +757,6 @@ impl Render for SlimeView {
                     .bg(rgb(0x3d2228))
                     .child(error.clone()),
             );
-        }
-        if self.snapshot.pending.is_some() {
-            content = content.child(self.text("native-operation-pending"));
         }
         if current != Page::Home
             && let Some(reset) = &self.snapshot.reset

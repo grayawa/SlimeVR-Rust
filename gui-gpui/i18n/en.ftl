@@ -4,7 +4,6 @@ native-disconnected = Disconnected — reconnecting
 native-waiting = Waiting for backend data…
 native-no-trackers = No trackers detected. Check that the backend is running and your trackers are powered on.
 native-back = Back
-native-operation-pending = Waiting for the backend to confirm the operation…
 native-reset-finished = Reset completed
 native-vrchat-unsupported = VRChat configuration is not available on this system.
 native-assign-description = Select a body position for each tracker. Changes are saved by the backend to your existing YAML configuration.
@@ -297,3 +296,6 @@ native-advanced-settings = Additional settings
 
 native-serial-pause-scroll = Pause scrolling
 native-serial-resume-scroll = Resume scrolling
+
+native-processing = Processing…
+native-firmware-build-not-ready = Firmware has not finished building.

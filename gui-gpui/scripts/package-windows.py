@@ -69,7 +69,7 @@ def main():
    files.append(entry)
   if portable.pe_info(base/'SlimeVR.exe')['subsystem']!=2:raise ValueError('Expected a Windows GUI executable')
   manifest={'app_version':'0.1.0','build_revision':args.build_revision,'frontend':'GPUI Kit 0.7.1','shaders':shaders,'component_preview_shaders':preview_shaders,'target':'Windows 11 x64','built_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'build_host':platform.system(),'webview2_required':False,'windows_native_execution_tested':False,'backend_source':('Updated Rust backend executable; baseline fix5 drivers and dependencies reused' if args.server_exe else 'Existing Rust backend; baseline fix5 components reused when selected'),'baseline_sha256':hashlib.sha256(args.baseline.read_bytes()).hexdigest()if args.baseline else None,'files':files}
-  (base/'BUILD-MANIFEST.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
+  (base/'BUILD-MANIFEST.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
   args.output.parent.mkdir(parents=True,exist_ok=True)
   with zipfile.ZipFile(args.output,'w',zipfile.ZIP_DEFLATED,compresslevel=9)as archive:
    for path in sorted(base.rglob('*')):

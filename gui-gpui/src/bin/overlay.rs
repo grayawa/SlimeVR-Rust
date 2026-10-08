@@ -64,6 +64,7 @@ struct Panel {
     #[cfg(windows)]
     preview: bool,
     feed_visible: bool,
+    frames: dashboard::FrameThrottle,
     error: Option<String>,
     host_error: Option<String>,
     paths: Paths,
@@ -407,8 +408,6 @@ impl Render for Panel {
                     (reset.duration_ms.saturating_sub(reset.progress_ms)).max(0) as f32 / 1000.
                 )
             }
-        } else if self.snapshot.pending.is_some() {
-            self.text("native-operation-pending")
         } else {
             self.text("native-dashboard-reset-hint")
         };
@@ -894,6 +893,7 @@ fn run() -> Result<(), String> {
                         #[cfg(windows)]
                         preview,
                         feed_visible: preview,
+                        frames: Default::default(),
                         error: None,
                         host_error: None,
                         preferences_stamp: preferences_stamp(&preferences.path),
@@ -910,8 +910,23 @@ fn run() -> Result<(), String> {
                             let entity = entity.downgrade();
                             async move |cx| {
                                 let mut delay = 16;
+                                let mut last_delay_log: Option<Instant> = None;
                                 loop {
-                                    smol::Timer::after(Duration::from_millis(delay)).await;
+                                    let due = Instant::now() + Duration::from_millis(delay);
+                                    smol::Timer::at(due).await;
+                                    let late = Instant::now().saturating_duration_since(due);
+                                    if late >= Duration::from_millis(100)
+                                        && last_delay_log.is_none_or(|last| {
+                                            last.elapsed() >= Duration::from_secs(1)
+                                        })
+                                    {
+                                        slimevr_gpui::logging::write(
+                                            LogLevel::Warn,
+                                            "overlay-frame-delay",
+                                            &format!("UI tick delayed by {} ms", late.as_millis()),
+                                        );
+                                        last_delay_log = Some(Instant::now());
+                                    }
                                     let inputs = entity.update_in(cx, |this, _window, cx| {
                                         this.sync_preferences(_window, cx);
                                         #[allow(unused_mut)]
@@ -949,13 +964,16 @@ fn run() -> Result<(), String> {
                                                 }
                                                 cx.notify();
                                             }
-                                            let snapshot = client.snapshot();
-                                            if snapshot.revision != this.snapshot.revision {
+                                            let snapshot =
+                                                client.snapshot_after(this.snapshot.revision);
+                                            let changed = snapshot.is_some();
+                                            if let Some(snapshot) = snapshot {
                                                 this.snapshot = snapshot;
-                                                if visible {
-                                                    cx.notify();
-                                                    _window.refresh();
-                                                }
+                                            }
+                                            if this.frames.redraw(visible, changed, Instant::now())
+                                            {
+                                                cx.notify();
+                                                _window.refresh();
                                             }
                                             client.drain_events();
                                         }

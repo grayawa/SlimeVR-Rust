@@ -41,6 +41,10 @@ API 调试日志记录请求类型和事务号，不记录请求正文。重置�
 
 `runtime_timing` 默认每 10 秒汇总 tick jitter 与 tick 实际耗时的 p50 / p95 / p99 / p999 / max。`runtime_stall` 字段统计实际 tick 间隔超出目标周期后严格超过 2 / 5 / 10 / 50 / 100 ms 的次数；超过 50 ms 的窗口为 warn，其余为 info。可通过 `--timing-window-ms` 调整窗口，退出时补发剩余样本。这些指标不能单独证明 CPU 饱和，口径和量化精度见 [后端架构说明](rust-backend-api-architecture.zh-CN.md#tick-延迟统计)。同一 UDP 设备重新握手时，`device_connected` 的 `session` 递增，`preserve_calibration: true` 表示保留旋转校准。排查步骤见 [重连校准修复](rust-load-reconnect.zh-CN.md)。
 
+`udp_ingress_backpressure` 按 `--summary-ms` 窗口汇总接收队列：`coalesced` 是被更新数据完整覆盖而合并掉的旧纯姿态包；`dropped_poses` 是合并后仍超过姿态容量而淘汰的最旧姿态包；`dropped_controls` 是控制队列满后丢弃的新控制包。只有合并时为 debug，发生容量丢包时为 warn；这三个计数不包含操作系统 UDP 缓冲区丢包。接收策略见 [后端架构说明](rust-backend-api-architecture.zh-CN.md#执行和状态边界)。
+
+设备快照里的 `sequence_gaps` 只表示接收器观察到的序号间隔，也会包含队列主动合并的旧包，不能直接作为网络丢包数量。
+
 ## 文件格式与轮转
 
 桌面日志每行是一个 JSON 对象，包含秒级 `time`、毫秒级 `time_ms`、真实 `level`、来源 `source`（`gui` / `desktop` / `backend`）和 `args`。

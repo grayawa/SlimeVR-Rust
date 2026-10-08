@@ -375,7 +375,7 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
     let mut next_summary = options.summary_ms;
     let mut next_discovery = DISCOVERY_INTERVAL_MS;
     let mut next_api_publish = 0;
-    let mut ingress = ingress::Ingress::start(socket.clone());
+    let ingress = ingress::Ingress::start(socket.clone(), period);
     let shutdown = tokio::signal::ctrl_c();
     tokio::pin!(shutdown);
     let parent_shutdown = async {
@@ -394,14 +394,16 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
     tokio::pin!(parent_shutdown);
     loop {
         tokio::select! {
-            packet = ingress.packets.recv() => {
-                let packet = packet.ok_or_else(|| io::Error::other("UDP ingress stopped"))??;
-                let from = packet.from;
-                let bytes = &packet.bytes;
-                let at = start.elapsed().as_millis() as u64;
-                if let Some(journal) = &mut recorder {journal.write(&Record::Receive {at_ms:at, from, hex:encode_hex(bytes)})?;}
-                let effects = receiver.receive(from, bytes, at);
-                apply_effects(&socket, &mut recorder, effects, at, &mut engine, &api).await?;
+            batch = ingress.recv() => {
+                // Apply retained datagrams in order before publishing another pose tick.
+                for packet in batch? {
+                    let from = packet.from;
+                    let bytes = &packet.bytes;
+                    let at = start.elapsed().as_millis() as u64;
+                    if let Some(journal) = &mut recorder {journal.write(&Record::Receive {at_ms:at, from, hex:encode_hex(bytes)})?;}
+                    let effects = receiver.receive(from, bytes, at);
+                    apply_effects(&socket, &mut recorder, effects, at, &mut engine, &api).await?;
+                }
             }
             _ = clock.tick() => {
                 let at = start.elapsed().as_millis() as u64;
@@ -443,8 +445,15 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                 }
                 if at >= next_summary {
                     next_summary = at.saturating_add(options.summary_ms);
-                    let dropped = ingress.dropped.swap(0, Ordering::Relaxed);
-                    if dropped != 0 {logging::diagnostic(LogLevel::Warn, &serde_json::json!({"type":"udp_ingress_backpressure","at_ms":at,"dropped":dropped}));}
+                    let stats = ingress.stats();
+                    let coalesced = stats.coalesced.swap(0, Ordering::Relaxed);
+                    let dropped_poses = stats.dropped_poses.swap(0, Ordering::Relaxed);
+                    let dropped_controls = stats.dropped_controls.swap(0, Ordering::Relaxed);
+                    if coalesced != 0 || dropped_poses != 0 || dropped_controls != 0 {
+                        let level = if dropped_poses != 0 || dropped_controls != 0 {LogLevel::Warn} else {LogLevel::Debug};
+                        logging::diagnostic(level, &serde_json::json!({"type":"udp_ingress_backpressure","at_ms":at,
+                            "coalesced":coalesced,"dropped_poses":dropped_poses,"dropped_controls":dropped_controls}));
+                    }
                     if logging::enabled(LogLevel::Debug) {write_json(LogLevel::Debug, &receiver.snapshot(at))?;}
                     if let Some(journal) = &mut recorder {journal.flush()?;}
                 }

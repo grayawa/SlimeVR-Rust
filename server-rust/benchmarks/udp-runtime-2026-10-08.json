@@ -1,0 +1,1737 @@
+{
+  "date": "2026-10-08",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.99.0 (b940084d7 2026-09-28)",
+    "logical_cpus": 3,
+    "cgroup_quota_cpus": 2
+  },
+  "baseline_commit": "6f936018",
+  "implementation_commit": "110dc2de6854da1ec8f25dc07ddf3e69b67e3e71",
+  "notes": [
+    "Microbenchmark raw_reparse_reference isolates second parse cost in the same queue; it is not an exact copy of PR #10.",
+    "Runtime trials use real loopback UDP, six devices, two sensors each, API Service and 4ms pose ticks, without HMD or SteamVR.",
+    "Cgroup utilization includes the whole container, sender and pressure workers; it is not backend process CPU.",
+    "Runtime pressure-worker counts were 0 and 2, with three 10-second trials per version and load."
+  ],
+  "microbenchmark": [
+    {
+      "case": "single_rotation",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 64.788,
+        "p50": 0.18,
+        "p95": 0.201,
+        "p99": 0.221,
+        "p999": 0.37
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 13.61774,
+      "enqueue_us": {
+        "max": 278.118,
+        "p50": 0.12100000000000001,
+        "p95": 0.131,
+        "p99": 0.14100000000000001,
+        "p999": 0.301
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2255880.9317845693,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 45.889,
+        "p50": 0.131,
+        "p95": 0.16,
+        "p99": 0.19999999999999998,
+        "p999": 0.33099999999999996
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 11.869965,
+      "enqueue_us": {
+        "max": 125.779,
+        "p50": 0.12100000000000001,
+        "p95": 0.131,
+        "p99": 0.15,
+        "p999": 0.28099999999999997
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2588044.699373587,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 29280,
+      "dispatch_us": {
+        "max": 14.181000000000001,
+        "p50": 0.191,
+        "p95": 0.241,
+        "p99": 0.311,
+        "p999": 0.6
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 7.468281999999999,
+      "enqueue_us": {
+        "max": 41.012,
+        "p50": 0.13,
+        "p95": 0.21,
+        "p99": 0.22999999999999998,
+        "p999": 0.3
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 4113395.8251710366,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 1440,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 29280,
+      "dispatch_us": {
+        "max": 48.372,
+        "p50": 0.151,
+        "p95": 0.211,
+        "p99": 0.3,
+        "p999": 14.803
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 7.864215000000001,
+      "enqueue_us": {
+        "max": 69.034,
+        "p50": 0.13,
+        "p95": 0.21,
+        "p99": 0.22999999999999998,
+        "p999": 0.371
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 3906302.154760519,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 1440,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 149.655,
+        "p50": 0.131,
+        "p95": 0.16,
+        "p99": 0.181,
+        "p999": 0.36100000000000004
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 12.04014,
+      "enqueue_us": {
+        "max": 18.879,
+        "p50": 0.12,
+        "p95": 0.131,
+        "p99": 0.15,
+        "p999": 0.31
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2551465.3484095703,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 170.637,
+        "p50": 0.18,
+        "p95": 0.21,
+        "p99": 0.261,
+        "p999": 0.631
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 13.41765,
+      "enqueue_us": {
+        "max": 114.442,
+        "p50": 0.12,
+        "p95": 0.131,
+        "p99": 0.151,
+        "p999": 0.39
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2289521.6375445775,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 29280,
+      "dispatch_us": {
+        "max": 1.793,
+        "p50": 0.151,
+        "p95": 0.211,
+        "p99": 0.351,
+        "p999": 0.5810000000000001
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 8.571408000000002,
+      "enqueue_us": {
+        "max": 202.834,
+        "p50": 0.13,
+        "p95": 0.21,
+        "p99": 0.24,
+        "p999": 0.541
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 3584008.6016206434,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 1440,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 29280,
+      "dispatch_us": {
+        "max": 0.932,
+        "p50": 0.191,
+        "p95": 0.27,
+        "p99": 0.37,
+        "p999": 0.661
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 8.374072,
+      "enqueue_us": {
+        "max": 297.888,
+        "p50": 0.13,
+        "p95": 0.21,
+        "p99": 0.23099999999999998,
+        "p999": 0.48100000000000004
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 3668466.189447619,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 1440,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 158.138,
+        "p50": 0.18,
+        "p95": 0.21,
+        "p99": 0.29,
+        "p999": 0.661
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 13.888077000000001,
+      "enqueue_us": {
+        "max": 43.635,
+        "p50": 0.12,
+        "p95": 0.131,
+        "p99": 0.16,
+        "p999": 0.32
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2211969.302877569,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 22.554000000000002,
+        "p50": 0.13,
+        "p95": 0.151,
+        "p99": 0.161,
+        "p999": 0.25
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 11.351144,
+      "enqueue_us": {
+        "max": 43.195,
+        "p50": 0.12,
+        "p95": 0.131,
+        "p99": 0.14100000000000001,
+        "p999": 0.251
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2706335.1500077876,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 29280,
+      "dispatch_us": {
+        "max": 19.549,
+        "p50": 0.191,
+        "p95": 0.25,
+        "p99": 0.32099999999999995,
+        "p999": 0.7010000000000001
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 7.5397989999999995,
+      "enqueue_us": {
+        "max": 18.438,
+        "p50": 0.13,
+        "p95": 0.21,
+        "p99": 0.22999999999999998,
+        "p999": 0.3
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 4074379.1711158347,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 1440,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "single_rotation",
+      "coalesced": 29280,
+      "dispatch_us": {
+        "max": 14.592,
+        "p50": 0.15,
+        "p95": 0.22,
+        "p99": 0.28,
+        "p999": 0.731
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 7.736935000000001,
+      "enqueue_us": {
+        "max": 142.835,
+        "p50": 0.13,
+        "p95": 0.21,
+        "p99": 0.23099999999999998,
+        "p999": 0.36
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 3970564.5711124623,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 1440,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 67.331,
+        "p50": 0.38,
+        "p95": 0.41100000000000003,
+        "p99": 0.48,
+        "p999": 1.3719999999999999
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 23.19452,
+      "enqueue_us": {
+        "max": 179.5,
+        "p50": 0.21,
+        "p95": 0.241,
+        "p99": 0.34099999999999997,
+        "p999": 0.681
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1324450.7754417853,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 48.773,
+        "p50": 0.27,
+        "p95": 0.291,
+        "p99": 0.31,
+        "p999": 0.561
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 18.471233,
+      "enqueue_us": {
+        "max": 194.002,
+        "p50": 0.21,
+        "p95": 0.241,
+        "p99": 0.351,
+        "p999": 0.551
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1663126.6575436518,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 30000,
+      "dispatch_us": {
+        "max": 113.08,
+        "p50": 0.39,
+        "p95": 0.49100000000000005,
+        "p99": 0.781,
+        "p999": 113.08
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 11.332978,
+      "enqueue_us": {
+        "max": 52.339,
+        "p50": 0.211,
+        "p95": 0.32,
+        "p99": 0.371,
+        "p999": 0.661
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2710673.222872223,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 720,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 30000,
+      "dispatch_us": {
+        "max": 1.0410000000000001,
+        "p50": 0.26,
+        "p95": 0.401,
+        "p99": 0.541,
+        "p999": 1.0410000000000001
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 10.898886,
+      "enqueue_us": {
+        "max": 71.187,
+        "p50": 0.21,
+        "p95": 0.311,
+        "p99": 0.37,
+        "p999": 1.102
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2818636.6936951173,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 720,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 37.156,
+        "p50": 0.27,
+        "p95": 0.291,
+        "p99": 0.31,
+        "p999": 0.48100000000000004
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 18.18362,
+      "enqueue_us": {
+        "max": 23.264999999999997,
+        "p50": 0.201,
+        "p95": 0.24,
+        "p99": 0.33999999999999997,
+        "p999": 0.531
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1689432.5772315962,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 94.09100000000001,
+        "p50": 0.371,
+        "p95": 0.41100000000000003,
+        "p99": 0.521,
+        "p999": 2.204
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 22.748108,
+      "enqueue_us": {
+        "max": 197.096,
+        "p50": 0.21,
+        "p95": 0.25,
+        "p99": 0.36100000000000004,
+        "p999": 0.671
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1350441.9796143046,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 30000,
+      "dispatch_us": {
+        "max": 21.631999999999998,
+        "p50": 0.27099999999999996,
+        "p95": 0.441,
+        "p99": 0.751,
+        "p999": 21.631999999999998
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 12.883207,
+      "enqueue_us": {
+        "max": 959.2510000000001,
+        "p50": 0.211,
+        "p95": 0.33,
+        "p99": 0.431,
+        "p999": 1.0210000000000001
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2384499.4495547577,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 720,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 30000,
+      "dispatch_us": {
+        "max": 20.07,
+        "p50": 0.391,
+        "p95": 0.501,
+        "p99": 0.751,
+        "p999": 20.07
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 11.153557999999999,
+      "enqueue_us": {
+        "max": 72.97,
+        "p50": 0.21,
+        "p95": 0.32,
+        "p99": 0.38,
+        "p999": 0.621
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2754278.0519005684,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 720,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 170.10500000000002,
+        "p50": 0.371,
+        "p95": 0.41,
+        "p99": 0.451,
+        "p999": 2.294
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 22.740327,
+      "enqueue_us": {
+        "max": 71.888,
+        "p50": 0.21,
+        "p95": 0.25,
+        "p99": 0.381,
+        "p999": 0.641
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1350904.0569205536,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 48.352000000000004,
+        "p50": 0.27,
+        "p95": 0.291,
+        "p99": 0.31,
+        "p999": 0.49100000000000005
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 18.172914,
+      "enqueue_us": {
+        "max": 23.405,
+        "p50": 0.21,
+        "p95": 0.241,
+        "p99": 0.371,
+        "p999": 0.631
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1690427.8532325637,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 30000,
+      "dispatch_us": {
+        "max": 2.323,
+        "p50": 0.391,
+        "p95": 0.531,
+        "p99": 0.811,
+        "p999": 2.323
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 12.292911,
+      "enqueue_us": {
+        "max": 124.04699999999998,
+        "p50": 0.211,
+        "p95": 0.33,
+        "p99": 0.42100000000000004,
+        "p999": 0.741
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2499001.2536493596,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 720,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "dual_sensor_bundle",
+      "coalesced": 30000,
+      "dispatch_us": {
+        "max": 1.723,
+        "p50": 0.261,
+        "p95": 0.391,
+        "p99": 0.661,
+        "p999": 1.723
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 11.761021,
+      "enqueue_us": {
+        "max": 408.044,
+        "p50": 0.21,
+        "p95": 0.32,
+        "p99": 0.381,
+        "p999": 0.6910000000000001
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 2612018.1232564757,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 720,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 2615.099,
+        "p50": 0.37,
+        "p95": 0.41100000000000003,
+        "p99": 0.451,
+        "p999": 1.1119999999999999
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 25.174314,
+      "enqueue_us": {
+        "max": 77.877,
+        "p50": 0.21,
+        "p95": 0.241,
+        "p99": 0.31,
+        "p999": 0.721
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1220291.444684451,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 1854.276,
+        "p50": 0.27,
+        "p95": 0.561,
+        "p99": 0.771,
+        "p999": 21.482
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 27.470895,
+      "enqueue_us": {
+        "max": 2986.467,
+        "p50": 0.21,
+        "p95": 0.301,
+        "p99": 0.47100000000000003,
+        "p999": 2.294
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1118274.4501043742,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 14960,
+      "dispatch_us": {
+        "max": 122.16399999999999,
+        "p50": 0.33999999999999997,
+        "p95": 0.48,
+        "p99": 0.902,
+        "p999": 2.574
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 17.65061,
+      "enqueue_us": {
+        "max": 394.703,
+        "p50": 0.21,
+        "p95": 0.33,
+        "p99": 0.44999999999999996,
+        "p999": 1.4020000000000001
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1740449.763492593,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 15760,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 14960,
+      "dispatch_us": {
+        "max": 56.104,
+        "p50": 0.22999999999999998,
+        "p95": 0.391,
+        "p99": 1.062,
+        "p999": 2.884
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 22.512995,
+      "enqueue_us": {
+        "max": 2387.2870000000003,
+        "p50": 0.211,
+        "p95": 0.351,
+        "p99": 0.972,
+        "p999": 2.543
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1364545.2326534074,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 15760,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 87.782,
+        "p50": 0.27,
+        "p95": 0.771,
+        "p99": 0.992,
+        "p999": 1.502
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 21.242617,
+      "enqueue_us": {
+        "max": 1549.548,
+        "p50": 0.201,
+        "p95": 0.25,
+        "p99": 0.401,
+        "p999": 0.681
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1446149.5022011648,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 998.8399999999999,
+        "p50": 0.38,
+        "p95": 0.6010000000000001,
+        "p99": 0.802,
+        "p999": 2.674
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 27.958548,
+      "enqueue_us": {
+        "max": 84.547,
+        "p50": 0.201,
+        "p95": 0.32,
+        "p99": 0.47100000000000003,
+        "p999": 0.761
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1098769.5069143076,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 14960,
+      "dispatch_us": {
+        "max": 64.61699999999999,
+        "p50": 0.22999999999999998,
+        "p95": 0.36100000000000004,
+        "p99": 0.771,
+        "p999": 1.5519999999999998
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 16.298789,
+      "enqueue_us": {
+        "max": 1652.413,
+        "p50": 0.21,
+        "p95": 0.32,
+        "p99": 0.42100000000000004,
+        "p999": 0.881
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1884802.6071139395,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 15760,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 14960,
+      "dispatch_us": {
+        "max": 119.048,
+        "p50": 0.33999999999999997,
+        "p95": 0.49100000000000005,
+        "p99": 0.981,
+        "p999": 2.163
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 16.320962,
+      "enqueue_us": {
+        "max": 107.222,
+        "p50": 0.21,
+        "p95": 0.32099999999999995,
+        "p99": 0.49100000000000005,
+        "p999": 1.192
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1882241.990392478,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 15760,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 80.772,
+        "p50": 0.371,
+        "p95": 0.771,
+        "p99": 0.9309999999999999,
+        "p999": 2.114
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 22.112163,
+      "enqueue_us": {
+        "max": 247.562,
+        "p50": 0.19999999999999998,
+        "p95": 0.241,
+        "p99": 0.381,
+        "p999": 0.641
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1389280.6416088738,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 0,
+      "dispatch_us": {
+        "max": 246.485,
+        "p50": 0.27,
+        "p95": 0.37,
+        "p99": 0.531,
+        "p999": 0.871
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 18.109495,
+      "enqueue_us": {
+        "max": 114.372,
+        "p50": 0.201,
+        "p95": 0.241,
+        "p99": 0.391,
+        "p999": 0.751
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1696347.6894303237,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 30720,
+      "stalled": false,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 14960,
+      "dispatch_us": {
+        "max": 80.03,
+        "p50": 0.33999999999999997,
+        "p95": 0.48100000000000004,
+        "p99": 0.9209999999999999,
+        "p999": 2.193
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 18.853076,
+      "enqueue_us": {
+        "max": 257.22700000000003,
+        "p50": 0.21,
+        "p95": 0.32099999999999995,
+        "p99": 0.42100000000000004,
+        "p999": 0.952
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1629442.3254857722,
+      "receive_path": "raw_reparse_reference",
+      "selected_datagrams": 15760,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    },
+    {
+      "case": "control_heavy_bundle",
+      "coalesced": 14960,
+      "dispatch_us": {
+        "max": 71.026,
+        "p50": 0.22999999999999998,
+        "p95": 0.41,
+        "p99": 0.961,
+        "p999": 3.1750000000000003
+      },
+      "dropped_controls": 0,
+      "dropped_poses": 0,
+      "elapsed_ms": 15.414219999999998,
+      "enqueue_us": {
+        "max": 167.171,
+        "p50": 0.21,
+        "p95": 0.33,
+        "p99": 0.53,
+        "p999": 1.492
+      },
+      "input_datagrams": 30720,
+      "input_datagrams_per_second": 1992964.937570633,
+      "receive_path": "cached_parse",
+      "selected_datagrams": 15760,
+      "stalled": true,
+      "type": "udp_ingress_benchmark"
+    }
+  ],
+  "runtime": [
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 0,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41999,
+      "feed_seconds": 10.000572234974243,
+      "actual_datagrams_per_second": 4199.659680785074,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10002,
+          "window_ms": 10002.775533,
+          "expected_tick_ms": 4.0,
+          "ticks": 2501,
+          "interval_samples": 2500,
+          "tick_jitter_ms": {
+            "p50": 0.222,
+            "p95": 0.449,
+            "p99": 0.519,
+            "p999": 1.615,
+            "max": 2.769435
+          },
+          "tick_work_ms": {
+            "p50": 0.134,
+            "p95": 0.236,
+            "p99": 0.386,
+            "p999": 1.127,
+            "max": 1.8825999999999998
+          },
+          "runtime_stall": {
+            "gt_2ms": 1,
+            "gt_5ms": 0,
+            "gt_10ms": 0,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          },
+          "udp_datagrams": 42012,
+          "udp_batches": 16941,
+          "udp_budget_yields": 2,
+          "udp_coalesced": 0,
+          "udp_dropped_poses": 0,
+          "udp_dropped_controls": 0,
+          "udp_queue_delay_ms": {
+            "p50": 0.021,
+            "p95": 0.178,
+            "p99": 0.264,
+            "p999": 0.899,
+            "max": 1.9947200000000003
+          },
+          "udp_batch_work_ms": {
+            "p50": 0.003,
+            "p95": 0.006,
+            "p99": 0.008,
+            "p999": 0.064,
+            "max": 1.155808
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 0.16707863917592147,
+        "quota_utilization": 0.08353931958796074
+      },
+      "version": "current",
+      "trial": 1
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 0,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41997,
+      "feed_seconds": 10.000092667993158,
+      "actual_datagrams_per_second": 4199.661082583553,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10000,
+          "window_ms": 10000.329449,
+          "expected_tick_ms": 4.0,
+          "ticks": 2501,
+          "interval_samples": 2500,
+          "tick_jitter_ms": {
+            "p50": 0.21,
+            "p95": 0.47,
+            "p99": 0.547,
+            "p999": 1.147,
+            "max": 2.1735819999999997
+          },
+          "tick_work_ms": {
+            "p50": 0.145,
+            "p95": 0.262,
+            "p99": 0.521,
+            "p999": 1.979,
+            "max": 2.0837429999999997
+          },
+          "runtime_stall": {
+            "gt_2ms": 1,
+            "gt_5ms": 0,
+            "gt_10ms": 0,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          },
+          "udp_datagrams": 42005,
+          "udp_batches": 17092,
+          "udp_budget_yields": 3,
+          "udp_coalesced": 0,
+          "udp_dropped_poses": 0,
+          "udp_dropped_controls": 0,
+          "udp_queue_delay_ms": {
+            "p50": 0.02,
+            "p95": 0.183,
+            "p99": 0.28,
+            "p999": 1.043,
+            "max": 2.8074760000000003
+          },
+          "udp_batch_work_ms": {
+            "p50": 0.003,
+            "p95": 0.006,
+            "p99": 0.015,
+            "p999": 0.072,
+            "max": 1.544843
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 0.16967622764444976,
+        "quota_utilization": 0.08483811382222488
+      },
+      "version": "current",
+      "trial": 2
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 0,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41999,
+      "feed_seconds": 10.00057186599588,
+      "actual_datagrams_per_second": 4199.659835734568,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10001,
+          "window_ms": 10001.408984,
+          "expected_tick_ms": 4.0,
+          "ticks": 2501,
+          "interval_samples": 2500,
+          "tick_jitter_ms": {
+            "p50": 0.225,
+            "p95": 0.46,
+            "p99": 0.633,
+            "p999": 2.183,
+            "max": 2.697752
+          },
+          "tick_work_ms": {
+            "p50": 0.148,
+            "p95": 0.284,
+            "p99": 0.5,
+            "p999": 1.099,
+            "max": 2.9803759999999997
+          },
+          "runtime_stall": {
+            "gt_2ms": 1,
+            "gt_5ms": 0,
+            "gt_10ms": 0,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          },
+          "udp_datagrams": 42014,
+          "udp_batches": 18242,
+          "udp_budget_yields": 5,
+          "udp_coalesced": 0,
+          "udp_dropped_poses": 0,
+          "udp_dropped_controls": 0,
+          "udp_queue_delay_ms": {
+            "p50": 0.018,
+            "p95": 0.191,
+            "p99": 0.312,
+            "p999": 1.083,
+            "max": 3.517349
+          },
+          "udp_batch_work_ms": {
+            "p50": 0.003,
+            "p95": 0.005,
+            "p99": 0.009,
+            "p999": 0.088,
+            "max": 2.857516
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 0.17318319624190115,
+        "quota_utilization": 0.08659159812095057
+      },
+      "version": "current",
+      "trial": 3
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 2,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41999,
+      "feed_seconds": 10.000483295996673,
+      "actual_datagrams_per_second": 4199.6970303238,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10005,
+          "window_ms": 10005.77382,
+          "expected_tick_ms": 4.0,
+          "ticks": 2417,
+          "interval_samples": 2416,
+          "tick_jitter_ms": {
+            "p50": 0.303,
+            "p95": 0.893,
+            "p99": 5.023,
+            "p999": 13.055,
+            "max": 16.942217999999997
+          },
+          "tick_work_ms": {
+            "p50": 0.146,
+            "p95": 0.253,
+            "p99": 0.494,
+            "p999": 8.895,
+            "max": 9.137608
+          },
+          "runtime_stall": {
+            "gt_2ms": 65,
+            "gt_5ms": 26,
+            "gt_10ms": 4,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          },
+          "udp_datagrams": 41905,
+          "udp_batches": 31839,
+          "udp_budget_yields": 107,
+          "udp_coalesced": 82,
+          "udp_dropped_poses": 0,
+          "udp_dropped_controls": 0,
+          "udp_queue_delay_ms": {
+            "p50": 0.006,
+            "p95": 0.12,
+            "p99": 0.257,
+            "p999": 2.095,
+            "max": 17.269045000000002
+          },
+          "udp_batch_work_ms": {
+            "p50": 0.002,
+            "p95": 0.004,
+            "p99": 0.006,
+            "p999": 0.035,
+            "max": 0.637929
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 2.000538614769629,
+        "quota_utilization": 1.0002693073848146
+      },
+      "version": "current",
+      "trial": 1
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 2,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41985,
+      "feed_seconds": 10.004547891963739,
+      "actual_datagrams_per_second": 4196.591435553515,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10009,
+          "window_ms": 10009.277974999999,
+          "expected_tick_ms": 4.0,
+          "ticks": 2437,
+          "interval_samples": 2436,
+          "tick_jitter_ms": {
+            "p50": 0.286,
+            "p95": 2.999,
+            "p99": 6.959,
+            "p999": 11.167,
+            "max": 15.256408
+          },
+          "tick_work_ms": {
+            "p50": 0.147,
+            "p95": 0.234,
+            "p99": 0.43,
+            "p999": 7.055,
+            "max": 8.33239
+          },
+          "runtime_stall": {
+            "gt_2ms": 88,
+            "gt_5ms": 30,
+            "gt_10ms": 3,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          },
+          "udp_datagrams": 41922,
+          "udp_batches": 26790,
+          "udp_budget_yields": 106,
+          "udp_coalesced": 78,
+          "udp_dropped_poses": 0,
+          "udp_dropped_controls": 0,
+          "udp_queue_delay_ms": {
+            "p50": 0.009,
+            "p95": 0.171,
+            "p99": 0.273,
+            "p999": 1.107,
+            "max": 10.413287
+          },
+          "udp_batch_work_ms": {
+            "p50": 0.002,
+            "p95": 0.004,
+            "p99": 0.007,
+            "p999": 0.029,
+            "max": 0.188394
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 2.001084528375464,
+        "quota_utilization": 1.000542264187732
+      },
+      "version": "current",
+      "trial": 2
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 2,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41998,
+      "feed_seconds": 10.000138261006214,
+      "actual_datagrams_per_second": 4199.741933945437,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10001,
+          "window_ms": 10001.277218000001,
+          "expected_tick_ms": 4.0,
+          "ticks": 2427,
+          "interval_samples": 2426,
+          "tick_jitter_ms": {
+            "p50": 0.282,
+            "p95": 2.663,
+            "p99": 6.815,
+            "p999": 10.879,
+            "max": 11.061987
+          },
+          "tick_work_ms": {
+            "p50": 0.146,
+            "p95": 0.235,
+            "p99": 0.448,
+            "p999": 4.943,
+            "max": 7.048248
+          },
+          "runtime_stall": {
+            "gt_2ms": 94,
+            "gt_5ms": 42,
+            "gt_10ms": 4,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          },
+          "udp_datagrams": 41520,
+          "udp_batches": 24135,
+          "udp_budget_yields": 90,
+          "udp_coalesced": 475,
+          "udp_dropped_poses": 0,
+          "udp_dropped_controls": 0,
+          "udp_queue_delay_ms": {
+            "p50": 0.013,
+            "p95": 0.185,
+            "p99": 1.715,
+            "p999": 4.959,
+            "max": 13.549513
+          },
+          "udp_batch_work_ms": {
+            "p50": 0.002,
+            "p95": 0.005,
+            "p99": 0.009,
+            "p999": 0.037,
+            "max": 1.406384
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 2.000507740778682,
+        "quota_utilization": 1.000253870389341
+      },
+      "version": "current",
+      "trial": 3
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 0,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41998,
+      "feed_seconds": 10.000279570987914,
+      "actual_datagrams_per_second": 4199.682589058965,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10000,
+          "window_ms": 10000.757125,
+          "expected_tick_ms": 4.0,
+          "ticks": 2501,
+          "interval_samples": 2500,
+          "tick_jitter_ms": {
+            "p50": 0.212,
+            "p95": 0.462,
+            "p99": 0.567,
+            "p999": 1.407,
+            "max": 1.463046
+          },
+          "tick_work_ms": {
+            "p50": 0.145,
+            "p95": 0.242,
+            "p99": 0.389,
+            "p999": 0.951,
+            "max": 1.564803
+          },
+          "runtime_stall": {
+            "gt_2ms": 0,
+            "gt_5ms": 0,
+            "gt_10ms": 0,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 0.1704562345382114,
+        "quota_utilization": 0.0852281172691057
+      },
+      "version": "pr10",
+      "trial": 1
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 0,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41999,
+      "feed_seconds": 10.0003674949985,
+      "actual_datagrams_per_second": 4199.745661447445,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10000,
+          "window_ms": 10000.514991999999,
+          "expected_tick_ms": 4.0,
+          "ticks": 2501,
+          "interval_samples": 2500,
+          "tick_jitter_ms": {
+            "p50": 0.201,
+            "p95": 0.468,
+            "p99": 0.505,
+            "p999": 1.943,
+            "max": 2.153534
+          },
+          "tick_work_ms": {
+            "p50": 0.135,
+            "p95": 0.213,
+            "p99": 0.316,
+            "p999": 0.573,
+            "max": 0.590137
+          },
+          "runtime_stall": {
+            "gt_2ms": 1,
+            "gt_5ms": 0,
+            "gt_10ms": 0,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 0.1527714857243083,
+        "quota_utilization": 0.07638574286215415
+      },
+      "version": "pr10",
+      "trial": 2
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 0,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41998,
+      "feed_seconds": 10.000218121043872,
+      "actual_datagrams_per_second": 4199.708395522081,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10000,
+          "window_ms": 10000.446764999999,
+          "expected_tick_ms": 4.0,
+          "ticks": 2500,
+          "interval_samples": 2499,
+          "tick_jitter_ms": {
+            "p50": 0.208,
+            "p95": 0.476,
+            "p99": 0.685,
+            "p999": 3.351,
+            "max": 6.51555
+          },
+          "tick_work_ms": {
+            "p50": 0.145,
+            "p95": 0.243,
+            "p99": 0.396,
+            "p999": 2.519,
+            "max": 3.30552
+          },
+          "runtime_stall": {
+            "gt_2ms": 2,
+            "gt_5ms": 1,
+            "gt_10ms": 0,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 0.1610214877824999,
+        "quota_utilization": 0.08051074389124994
+      },
+      "version": "pr10",
+      "trial": 3
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 2,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41998,
+      "feed_seconds": 10.000305081019178,
+      "actual_datagrams_per_second": 4199.671875982386,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10000,
+          "window_ms": 10000.655887,
+          "expected_tick_ms": 4.0,
+          "ticks": 2449,
+          "interval_samples": 2448,
+          "tick_jitter_ms": {
+            "p50": 0.297,
+            "p95": 3.575,
+            "p99": 7.551,
+            "p999": 8.111,
+            "max": 8.19124
+          },
+          "tick_work_ms": {
+            "p50": 0.157,
+            "p95": 0.269,
+            "p99": 0.455,
+            "p999": 8.015,
+            "max": 12.015151
+          },
+          "runtime_stall": {
+            "gt_2ms": 83,
+            "gt_5ms": 26,
+            "gt_10ms": 0,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 2.001823128175984,
+        "quota_utilization": 1.000911564087992
+      },
+      "version": "pr10",
+      "trial": 1
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 2,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41999,
+      "feed_seconds": 10.000560184998903,
+      "actual_datagrams_per_second": 4199.664741081162,
+      "reports": [
+        {
+          "level": "warn",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10000,
+          "window_ms": 10000.688021,
+          "expected_tick_ms": 4.0,
+          "ticks": 2435,
+          "interval_samples": 2434,
+          "tick_jitter_ms": {
+            "p50": 0.28,
+            "p95": 3.567,
+            "p99": 4.087,
+            "p999": 8.223,
+            "max": 104.19081
+          },
+          "tick_work_ms": {
+            "p50": 0.154,
+            "p95": 0.273,
+            "p99": 0.439,
+            "p999": 7.919,
+            "max": 8.10079
+          },
+          "runtime_stall": {
+            "gt_2ms": 79,
+            "gt_5ms": 21,
+            "gt_10ms": 1,
+            "gt_50ms": 1,
+            "gt_100ms": 1
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 2.0017921626059585,
+        "quota_utilization": 1.0008960813029792
+      },
+      "version": "pr10",
+      "trial": 2
+    },
+    {
+      "type": "runtime_benchmark",
+      "devices": 6,
+      "sensors_per_device": 2,
+      "logical_cpus": 3,
+      "cpu_workers": 2,
+      "target_datagrams_per_second": 4200,
+      "sent_datagrams": 41997,
+      "feed_seconds": 10.000103358004708,
+      "actual_datagrams_per_second": 4199.656593187407,
+      "reports": [
+        {
+          "level": "info",
+          "type": "runtime_timing",
+          "tick_kind": "pose",
+          "at_ms": 10001,
+          "window_ms": 10001.402656,
+          "expected_tick_ms": 4.0,
+          "ticks": 2428,
+          "interval_samples": 2427,
+          "tick_jitter_ms": {
+            "p50": 0.284,
+            "p95": 1.255,
+            "p99": 5.183,
+            "p999": 9.375,
+            "max": 9.567153
+          },
+          "tick_work_ms": {
+            "p50": 0.151,
+            "p95": 0.251,
+            "p99": 1.703,
+            "p999": 8.927,
+            "max": 13.337943999999998
+          },
+          "runtime_stall": {
+            "gt_2ms": 64,
+            "gt_5ms": 43,
+            "gt_10ms": 0,
+            "gt_50ms": 0,
+            "gt_100ms": 0
+          }
+        }
+      ],
+      "capacity_backpressure": [],
+      "cgroup_cpu": {
+        "quota_cpus": 2.0,
+        "average_used_cpus": 2.0033706935602424,
+        "quota_utilization": 1.0016853467801212
+      },
+      "version": "pr10",
+      "trial": 3
+    }
+  ]
+}

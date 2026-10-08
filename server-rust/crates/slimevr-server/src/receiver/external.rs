@@ -89,6 +89,7 @@ impl Receiver {
                     status: SensorStatus::Ok,
                     last_alive_ms: at,
                     rotation: None,
+                    udp_rotation_timing: None,
                     acceleration: None,
                     position: None,
                     temperature: None,

@@ -24,7 +24,7 @@ impl Service {
         engine: &mut PoseEngine,
         at: u64,
     ) -> Vec<Wire> {
-        self.config.pose = engine.export_config();
+        self.sync_pose_config(engine);
         match self.try_handle(data, receiver, engine, at) {
             Ok(v) => v,
             Err(e) => {

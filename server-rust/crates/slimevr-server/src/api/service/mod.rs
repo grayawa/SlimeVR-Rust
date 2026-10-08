@@ -1,5 +1,7 @@
 //! Single-owner API state and shared configuration commit / observation restore.
 mod calibration;
+#[cfg(test)]
+mod configuration_tests;
 mod devices;
 mod legacy;
 mod notifications;
@@ -66,6 +68,9 @@ pub struct Service {
     result: Option<AutoBoneResult>,
     last_reset: u64,
     last_height: slimevr_core::gestures::HeightStatus,
+    pose_config_revision: Option<u64>,
+    hotkeys_dirty: bool,
+    osc_dirty: bool,
 }
 impl Service {
     pub fn new(
@@ -111,10 +116,35 @@ impl Service {
             result: None,
             last_reset: 0,
             last_height: slimevr_core::gestures::HeightStatus::Idle,
+            pose_config_revision: None,
+            hotkeys_dirty: false,
+            osc_dirty: false,
         }
     }
     fn broadcast(&self, b: Vec<u8>) {
         let _ = self.events.send(Wire::Binary(b));
+    }
+    fn sync_pose_config(&mut self, engine: &PoseEngine) {
+        let revision = engine.config_revision();
+        if self.pose_config_revision != Some(revision) {
+            self.config.pose = engine.export_config();
+            self.pose_config_revision = Some(revision);
+        }
+    }
+    pub fn take_hotkeys_update(&mut self) -> Result<Option<crate::hotkeys::Settings>, String> {
+        if !self.hotkeys_dirty {
+            return Ok(None);
+        }
+        let settings = crate::hotkeys::Settings::read(&self.config.yaml)?;
+        self.hotkeys_dirty = false;
+        Ok(Some(settings))
+    }
+    pub fn take_osc_update(&mut self) -> Option<crate::osc::Settings> {
+        if std::mem::take(&mut self.osc_dirty) {
+            Some(self.config.osc.clone())
+        } else {
+            None
+        }
     }
     pub fn error(&self, error: impl std::fmt::Display) {
         let message = error.to_string();
@@ -140,6 +170,8 @@ impl Service {
         config.validate()?;
         config.save(self.state_path.as_deref())?;
         engine.configure(at, config.pose.clone())?;
+        self.hotkeys_dirty |= self.config.yaml["keybindings"] != config.yaml["keybindings"];
+        self.osc_dirty |= self.config.osc != config.osc;
         self.changes.push(SceneInput::Configure {
             at_ms: at,
             config: Box::new(config.pose.clone()),
@@ -182,6 +214,7 @@ impl Service {
                         session: d.session,
                         packet_sequence: d.last_sequence,
                         received_at_ms: s.rotation.as_ref().map_or(at, |r| r.received_at_ms),
+                        socket_received_at_ms: s.udp_rotation_timing.map(|t| t.received_at_ms),
                         sensor_timestamp_us: None,
                         packet_rotation: None,
                         server_rotation: s.rotation.as_ref().map(|r| r.value),

@@ -1,3 +1,4 @@
+mod budget;
 mod ingress;
 mod timing;
 use crate::{
@@ -26,6 +27,14 @@ use tokio::{
 // replacement, continuous two-second broadcasts can keep an unknown tracker in its
 // old connected state forever. Leave a quiet window for its timeout and new handshake.
 const DISCOVERY_INTERVAL_MS: u64 = 10_000;
+
+enum Ready {
+    Udp(io::Result<ingress::Datagram>),
+    Tick,
+    Shutdown(io::Result<()>),
+    SteamVr(Option<crate::steamvr::Event>),
+    Request(Option<api::Request>),
+}
 
 pub struct ListenOptions {
     pub bind: SocketAddr,
@@ -392,54 +401,158 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         }
     };
     tokio::pin!(parent_shutdown);
+    let mut prioritize_tick = true;
     loop {
-        tokio::select! {
-            batch = ingress.recv() => {
-                // Apply retained datagrams in order before publishing another pose tick.
-                for packet in batch? {
-                    let from = packet.from;
-                    let bytes = &packet.bytes;
-                    let at = start.elapsed().as_millis() as u64;
-                    if let Some(journal) = &mut recorder {journal.write(&Record::Receive {at_ms:at, from, hex:encode_hex(bytes)})?;}
-                    let effects = receiver.receive(from, bytes, at);
-                    apply_effects(&socket, &mut recorder, effects, at, &mut engine, &api).await?;
-                }
+        let activity = async {
+            tokio::select! {
+                packet = ingress.recv() => Ready::Udp(packet),
+                event = async { match &mut steamvr { Some(bridge) => bridge.events.recv().await, None => std::future::pending().await } }, if steamvr.is_some() => Ready::SteamVr(event),
+                request = requests.recv(), if api.is_some() => Ready::Request(request),
             }
-            _ = clock.tick() => {
+        };
+        let ready = tokio::select! {
+            biased;
+            result = &mut shutdown => Ready::Shutdown(result),
+            _ = &mut parent_shutdown => Ready::Shutdown(Ok(())),
+            turn = budget::schedule(&mut clock, activity, prioritize_tick) => match turn {
+                budget::Turn::Tick => Ready::Tick,
+                budget::Turn::Activity(ready) => ready,
+            },
+        };
+        prioritize_tick = !matches!(ready, Ready::Tick);
+        match ready {
+            Ready::Udp(packet) => {
+                let batch_start = Instant::now();
+                let budget = budget::Budget::new(batch_start, period);
+                let mut packet = Some(packet?);
+                let mut handled = 0;
+                let mut yielded = false;
+                while let Some(next) = packet {
+                    let processed = Instant::now();
+                    let at = processed.duration_since(start).as_millis() as u64;
+                    let received_at_ms =
+                        next.received.saturating_duration_since(start).as_millis() as u64;
+                    timing.udp_received(processed.saturating_duration_since(next.received));
+                    if let Some(journal) = &mut recorder {
+                        journal.write(&Record::Receive {
+                            at_ms: at,
+                            received_at_ms: Some(received_at_ms),
+                            from: next.from,
+                            hex: encode_hex(&next.bytes),
+                        })?;
+                    }
+                    let effects =
+                        receiver.receive_parsed(next.from, next.parsed, at, Some(received_at_ms));
+                    apply_effects(&socket, &mut recorder, effects, at, &mut engine, &api).await?;
+                    handled += 1;
+                    if budget.exhausted(handled, Instant::now()) {
+                        yielded = true;
+                        break;
+                    }
+                    packet = ingress.try_recv()?;
+                }
+                timing.udp_batch(batch_start.elapsed(), yielded);
+            }
+            Ready::Tick => {
                 let at = start.elapsed().as_millis() as u64;
                 let tick_started = Instant::now();
                 timing.begin_tick(tick_started);
-                if let (Some(bridge),Some(service),Some(engine))=(&mut steamvr,&mut api,&mut engine) {
-                    for input in bridge.expire(at) { dispatch_source(service,input,&mut receiver,engine)?; }
+                if let (Some(bridge), Some(service), Some(engine)) =
+                    (&mut steamvr, &mut api, &mut engine)
+                {
+                    for input in bridge.expire(at) {
+                        dispatch_source(service, input, &mut receiver, engine)?;
+                    }
                     bridge.provider_tick(at);
-                    service.steamvr_status(bridge.state.status.clone(),engine.snapshot());
+                    service.steamvr_status(bridge.state.status.clone(), engine.snapshot());
                 }
-                if let (Some(service),Some(engine))=(&mut api,&mut engine) {
-                    if let (Some(state),Some(osc))=(&mut osc_state,&mut osc){for event in state.reconfigure(service.config.osc.clone(),at)?{service.source_input(event,&mut receiver,engine)?;}osc.configure(state.generation,&state.config);}
-                    if let Some(keys)=&hotkeys{keys.configure(crate::hotkeys::Settings::read(&service.config.yaml)?);}
-                    service.device_tick(&mut receiver,at);
-                    flush_device_commands(service,&socket,&mut recorder,at).await?;
-                    service.before_tick(engine,at);
-                    write_api_changes(service,&mut recorder,at)?;
+                if let (Some(service), Some(engine)) = (&mut api, &mut engine) {
+                    if let (Some(state), Some(osc)) = (&mut osc_state, &mut osc) {
+                        if let Some(config) = service.take_osc_update() {
+                            for event in state.reconfigure(config, at)? {
+                                service.source_input(event, &mut receiver, engine)?;
+                            }
+                            osc.configure(state.generation, &state.config);
+                        }
+                    }
+                    if let Some(keys) = &hotkeys {
+                        if let Some(settings) = service.take_hotkeys_update()? {
+                            keys.configure(settings);
+                        }
+                    }
+                    service.device_tick(&mut receiver, at);
+                    flush_device_commands(service, &socket, &mut recorder, at).await?;
+                    service.before_tick(engine, at);
+                    write_api_changes(service, &mut recorder, at)?;
                 }
-                if let Some(journal) = &mut recorder {journal.write(&Record::Tick {at_ms:at})?;}
+                if let Some(journal) = &mut recorder {
+                    journal.write(&Record::Tick { at_ms: at })?;
+                }
                 let effects = receiver.tick(at);
                 apply_effects(&socket, &mut recorder, effects, at, &mut engine, &api).await?;
-                if let Some(engine)=&mut engine {engine.tick(at).map_err(io::Error::other)?;if logging::enabled(LogLevel::Debug) && at>=next_pose_output{write_json(LogLevel::Debug, engine.snapshot())?;next_pose_output=at.saturating_add(options.pose_output_ms);}}
-                if let (Some(bridge),Some(service),Some(engine))=(&mut steamvr,&mut api,&engine) {
-                    service.steamvr_auto_share(engine.snapshot())?;
-                    bridge.state.output(&service.config,engine.snapshot(),&receiver,&bridge.output);
+                if let Some(engine) = &mut engine {
+                    engine.tick(at).map_err(io::Error::other)?;
+                    if logging::enabled(LogLevel::Debug) && at >= next_pose_output {
+                        write_json(LogLevel::Debug, engine.snapshot())?;
+                        next_pose_output = at.saturating_add(options.pose_output_ms);
+                    }
                 }
-                if let (Some(service),Some(engine))=(&mut api,&engine) {
-                    if let (Some(state),Some(osc))=(&mut osc_state,&osc){state.neck_height=slimevr_core::autobone::skeleton_height(service.config.pose.skeleton)-service.config.pose.skeleton.neck_length;state.controller_arms=[slimevr_core::skeleton::BodyPosition::LeftHand,slimevr_core::skeleton::BodyPosition::RightHand].into_iter().filter(|b|!service.config.pose.skeleton.force_arms_from_hmd&&(service.external.get(b).is_some_and(|p|p.position.is_some())||engine.snapshot().trackers.iter().any(|p|p.body==*b&&p.position.is_some()))).collect();match state.output(engine.snapshot(),at,engine.calibrated_head()){Ok(output)=>osc.send(output),Err(e)=>service.error(e)}}
-                    service.after_tick(engine,&receiver,at);
-                    if at>=next_api_publish {next_api_publish=at.saturating_add(10);if let Some(live)=&live {live.send_replace(service.live(&receiver,engine,at));}}
+                if let (Some(bridge), Some(service), Some(engine)) =
+                    (&mut steamvr, &mut api, &engine)
+                {
+                    service.steamvr_auto_share(engine.snapshot())?;
+                    bridge.state.output(
+                        &service.config,
+                        engine.snapshot(),
+                        &receiver,
+                        &bridge.output,
+                    );
+                }
+                if let (Some(service), Some(engine)) = (&mut api, &engine) {
+                    if let (Some(state), Some(osc)) = (&mut osc_state, &osc) {
+                        state.neck_height =
+                            slimevr_core::autobone::skeleton_height(service.config.pose.skeleton)
+                                - service.config.pose.skeleton.neck_length;
+                        state.controller_arms = [
+                            slimevr_core::skeleton::BodyPosition::LeftHand,
+                            slimevr_core::skeleton::BodyPosition::RightHand,
+                        ]
+                        .into_iter()
+                        .filter(|b| {
+                            !service.config.pose.skeleton.force_arms_from_hmd
+                                && (service
+                                    .external
+                                    .get(b)
+                                    .is_some_and(|p| p.position.is_some())
+                                    || engine
+                                        .snapshot()
+                                        .trackers
+                                        .iter()
+                                        .any(|p| p.body == *b && p.position.is_some()))
+                        })
+                        .collect();
+                        match state.output(engine.snapshot(), at, engine.calibrated_head()) {
+                            Ok(output) => osc.send(output),
+                            Err(e) => service.error(e),
+                        }
+                    }
+                    service.after_tick(engine, &receiver, at);
+                    if at >= next_api_publish {
+                        next_api_publish = at.saturating_add(10);
+                        if let Some(live) = &live {
+                            live.send_replace(service.live(&receiver, engine, at));
+                        }
+                    }
                 }
                 if options.discovery && at >= next_discovery && receiver.needs_discovery() {
                     next_discovery = at.saturating_add(DISCOVERY_INTERVAL_MS);
                     for target in &targets {
-                        if let Err(error) = socket.send_to(&protocol::header(0, &[]), target).await {
-                            write_json(LogLevel::Warn, &serde_json::json!({"type":"discovery_error", "target":target, "error":error.to_string()}))?;
+                        if let Err(error) = socket.send_to(&protocol::header(0, &[]), target).await
+                        {
+                            write_json(
+                                LogLevel::Warn,
+                                &serde_json::json!({"type":"discovery_error", "target":target, "error":error.to_string()}),
+                            )?;
                         }
                     }
                 }
@@ -449,86 +562,240 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                     let coalesced = stats.coalesced.swap(0, Ordering::Relaxed);
                     let dropped_poses = stats.dropped_poses.swap(0, Ordering::Relaxed);
                     let dropped_controls = stats.dropped_controls.swap(0, Ordering::Relaxed);
+                    timing.ingress_counts(coalesced, dropped_poses, dropped_controls);
                     if coalesced != 0 || dropped_poses != 0 || dropped_controls != 0 {
-                        let level = if dropped_poses != 0 || dropped_controls != 0 {LogLevel::Warn} else {LogLevel::Debug};
-                        logging::diagnostic(level, &serde_json::json!({"type":"udp_ingress_backpressure","at_ms":at,
-                            "coalesced":coalesced,"dropped_poses":dropped_poses,"dropped_controls":dropped_controls}));
+                        let level = if dropped_poses != 0 || dropped_controls != 0 {
+                            LogLevel::Warn
+                        } else {
+                            LogLevel::Debug
+                        };
+                        logging::diagnostic(
+                            level,
+                            &serde_json::json!({"type":"udp_ingress_backpressure","at_ms":at,
+                            "coalesced":coalesced,"dropped_poses":dropped_poses,"dropped_controls":dropped_controls}),
+                        );
                     }
-                    if logging::enabled(LogLevel::Debug) {write_json(LogLevel::Debug, &receiver.snapshot(at))?;}
-                    if let Some(journal) = &mut recorder {journal.flush()?;}
+                    if logging::enabled(LogLevel::Debug) {
+                        write_json(LogLevel::Debug, &receiver.snapshot(at))?;
+                    }
+                    if let Some(journal) = &mut recorder {
+                        journal.flush()?;
+                    }
                 }
                 let tick_finished = Instant::now();
                 timing.end_tick(tick_finished.duration_since(tick_started));
-                if let Some(report) = timing.report(tick_finished, start.elapsed().as_millis() as u64, false) {
+                if let Some(report) =
+                    timing.report(tick_finished, start.elapsed().as_millis() as u64, false)
+                {
                     report_timing(&report);
                 }
-                if options.run_for.is_some_and(|duration| start.elapsed() >= duration) {break;}
+                if options
+                    .run_for
+                    .is_some_and(|duration| start.elapsed() >= duration)
+                {
+                    break;
+                }
             }
-            result = &mut shutdown => {result?; break;}
-            _ = &mut parent_shutdown => break,
-            event = async { match &mut steamvr { Some(bridge) => bridge.events.recv().await, None => std::future::pending().await } }, if steamvr.is_some() => {
+            Ready::Shutdown(result) => {
+                result?;
+                break;
+            }
+            Ready::SteamVr(event) => {
                 if event.is_none() {
-                    if let (Some(mut bridge),Some(service),Some(engine))=(steamvr.take(),&mut api,&mut engine) {
-                        let at=start.elapsed().as_millis() as u64;
-                        for input in bridge.state.disconnect(at) {dispatch_source(service,input,&mut receiver,engine)?;}
-                        bridge.state.status.available=false;
-                        bridge.state.status.last_error=Some("SteamVR transport stopped".into());
-                        service.steamvr_status(bridge.state.status.clone(),engine.snapshot());
-                        write_api_changes(service,&mut recorder,at)?;
+                    if let (Some(mut bridge), Some(service), Some(engine)) =
+                        (steamvr.take(), &mut api, &mut engine)
+                    {
+                        let at = start.elapsed().as_millis() as u64;
+                        for input in bridge.state.disconnect(at) {
+                            dispatch_source(service, input, &mut receiver, engine)?;
+                        }
+                        bridge.state.status.available = false;
+                        bridge.state.status.last_error = Some("SteamVR transport stopped".into());
+                        service.steamvr_status(bridge.state.status.clone(), engine.snapshot());
+                        write_api_changes(service, &mut recorder, at)?;
                     }
                     continue;
                 }
-                if let (Some(event),Some(bridge),Some(service),Some(engine))=(event,&mut steamvr,&mut api,&mut engine) {
-                    let at=start.elapsed().as_millis() as u64;
-                    let current=bridge.state.current(&event);
-                    let action = if let crate::steamvr::Event::Message(_,message)=&event {
-                        if let Some(crate::steamvr::messages::protobuf_message::Message::UserAction(action))=&message.message { Some(action.name.clone()) } else {None}
-                    } else {None};
-                    match bridge.receive(event,at) {
-                        Ok(inputs) => for input in inputs {dispatch_source(service,input,&mut receiver,engine)?;},
-                        Err(error) => { bridge.state.status.last_error=Some(error.clone());write_json(LogLevel::Warn, &serde_json::json!({"type":"steamvr_error","message":error}))?; }
+                if let (Some(event), Some(bridge), Some(service), Some(engine)) =
+                    (event, &mut steamvr, &mut api, &mut engine)
+                {
+                    let at = start.elapsed().as_millis() as u64;
+                    let current = bridge.state.current(&event);
+                    let action = if let crate::steamvr::Event::Message(_, message) = &event {
+                        if let Some(
+                            crate::steamvr::messages::protobuf_message::Message::UserAction(action),
+                        ) = &message.message
+                        {
+                            Some(action.name.clone())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    };
+                    match bridge.receive(event, at) {
+                        Ok(inputs) => {
+                            for input in inputs {
+                                dispatch_source(service, input, &mut receiver, engine)?;
+                            }
+                        }
+                        Err(error) => {
+                            bridge.state.status.last_error = Some(error.clone());
+                            write_json(
+                                LogLevel::Warn,
+                                &serde_json::json!({"type":"steamvr_error","message":error}),
+                            )?;
+                        }
                     }
-                    if current && action.as_deref()==Some("pause_tracking") {
-                        service.steamvr_input(slimevr_core::pose::SceneInput::Pause {at_ms:at,paused:!engine.is_paused()},engine)?;
-                    } else if current && action.as_deref()==Some("feet_mounting_reset") {
-                        service.steamvr_input(slimevr_core::pose::SceneInput::ResetSelected {at_ms:at,kind:slimevr_core::calibration::ResetKind::Mounting,
-                            bodies: [slimevr_core::skeleton::BodyPosition::LeftFoot,slimevr_core::skeleton::BodyPosition::RightFoot].into_iter().collect()},engine)?;
+                    if current && action.as_deref() == Some("pause_tracking") {
+                        service.steamvr_input(
+                            slimevr_core::pose::SceneInput::Pause {
+                                at_ms: at,
+                                paused: !engine.is_paused(),
+                            },
+                            engine,
+                        )?;
+                    } else if current && action.as_deref() == Some("feet_mounting_reset") {
+                        service.steamvr_input(
+                            slimevr_core::pose::SceneInput::ResetSelected {
+                                at_ms: at,
+                                kind: slimevr_core::calibration::ResetKind::Mounting,
+                                bodies: [
+                                    slimevr_core::skeleton::BodyPosition::LeftFoot,
+                                    slimevr_core::skeleton::BodyPosition::RightFoot,
+                                ]
+                                .into_iter()
+                                .collect(),
+                            },
+                            engine,
+                        )?;
                     }
-                    service.steamvr_status(bridge.state.status.clone(),engine.snapshot());
-                    write_api_changes(service,&mut recorder,at)?;
+                    service.steamvr_status(bridge.state.status.clone(), engine.snapshot());
+                    write_api_changes(service, &mut recorder, at)?;
                 }
             }
-            request = requests.recv(), if api.is_some() => {
-                let at=start.elapsed().as_millis() as u64;
-                let request=if let Some(api::Request::Hid(event))=request {if let Some(journal)=&mut recorder{journal.write(&Record::Hid{at_ms:at,event:event.clone()})?;}let effects=receiver.hid(&event,at);apply_effects(&socket,&mut recorder,effects,at,&mut engine,&api).await?;None}else{request};
-                if let (Some(request),Some(service),Some(engine))=(request,&mut api,&mut engine) {
+            Ready::Request(request) => {
+                let at = start.elapsed().as_millis() as u64;
+                let request = if let Some(api::Request::Hid(event)) = request {
+                    if let Some(journal) = &mut recorder {
+                        journal.write(&Record::Hid {
+                            at_ms: at,
+                            event: event.clone(),
+                        })?;
+                    }
+                    let effects = receiver.hid(&event, at);
+                    apply_effects(&socket, &mut recorder, effects, at, &mut engine, &api).await?;
+                    None
+                } else {
+                    request
+                };
+                if let (Some(request), Some(service), Some(engine)) =
+                    (request, &mut api, &mut engine)
+                {
                     match request {
-                        api::Request::Hotkey{action,delay_ms}=>{if let Err(e)=service.hotkey(action,delay_ms,at){service.error(e);}},
-                        api::Request::HotkeyError(error)=>service.error(error),
-                        api::Request::Vrchat(values)=>service.vrchat=values,
-                        api::Request::Osc(event)=>{if let Some(state)=&mut osc_state{match event{crate::osc::Event::Datagram{generation,port,bytes}if generation==state.generation=>{match state.receive(port,&bytes,at,engine.calibrated_head()){Ok(events)=>for event in events{service.source_input(event,&mut receiver,engine)?;},Err(e)=>service.error(e)}write_api_changes(service,&mut recorder,at)?;},crate::osc::Event::Error{generation,message}if generation==state.generation=>service.error(message),_=>{}}}},
-                        api::Request::Hid(_)=>unreachable!(),
-                        api::Request::Diagnostics(context)=>{service.diagnostics.udev=context.udev;service.diagnostics.wayland=context.wayland;service.diagnostics.public_networks=context.public_networks;service.diagnostics.network_supported=context.network_supported;},
-                        api::Request::Firmware(event)=>service.firmware_event(event,&mut receiver,at),
-                        api::Request::Serial(event)=>{let previous=receiver.config.allowed_macs.clone();service.serial_event(event,&mut receiver,at);if previous!=receiver.config.allowed_macs {if let Some(recorder)=&mut recorder {recorder.write(&Record::Admission{at_ms:at,allowed_macs:receiver.config.allowed_macs.clone()})?;}}},
-                        api::Request::Client{data,reply}=>{
-                            let previous=receiver.config.allowed_macs.clone();
-                            let response=service.handle(data,&mut receiver,engine,at);
-                            if previous!=receiver.config.allowed_macs {if let Some(recorder)=&mut recorder {recorder.write(&Record::Admission{at_ms:at,allowed_macs:receiver.config.allowed_macs.clone()})?;}}
-                            write_api_changes(service,&mut recorder,at)?;
-                            flush_device_commands(service,&socket,&mut recorder,at).await?;
-                            let _=reply.send(response);
-                        },
-                        api::Request::AutoBoneEpoch{epoch,total}=>service.auto_epoch(&epoch,total),
-                        api::Request::DriverStatus{status,error}=>service.driver_update(status,error,engine.snapshot()),
-                        api::Request::AutoBoneDone(result)=>service.auto_done(result),
-                        api::Request::AutoBoneSaved{result,record,count}=>service.auto_saved(result,record,count),
+                        api::Request::Hotkey { action, delay_ms } => {
+                            if let Err(e) = service.hotkey(action, delay_ms, at) {
+                                service.error(e);
+                            }
+                        }
+                        api::Request::HotkeyError(error) => service.error(error),
+                        api::Request::Vrchat(values) => service.vrchat = values,
+                        api::Request::Osc(event) => {
+                            if let Some(state) = &mut osc_state {
+                                match event {
+                                    crate::osc::Event::Datagram {
+                                        generation,
+                                        port,
+                                        bytes,
+                                    } if generation == state.generation => {
+                                        match state.receive(
+                                            port,
+                                            &bytes,
+                                            at,
+                                            engine.calibrated_head(),
+                                        ) {
+                                            Ok(events) => {
+                                                for event in events {
+                                                    service.source_input(
+                                                        event,
+                                                        &mut receiver,
+                                                        engine,
+                                                    )?;
+                                                }
+                                            }
+                                            Err(e) => service.error(e),
+                                        }
+                                        write_api_changes(service, &mut recorder, at)?;
+                                    }
+                                    crate::osc::Event::Error {
+                                        generation,
+                                        message,
+                                    } if generation == state.generation => service.error(message),
+                                    _ => {}
+                                }
+                            }
+                        }
+                        api::Request::Hid(_) => unreachable!(),
+                        api::Request::Diagnostics(context) => {
+                            service.diagnostics.udev = context.udev;
+                            service.diagnostics.wayland = context.wayland;
+                            service.diagnostics.public_networks = context.public_networks;
+                            service.diagnostics.network_supported = context.network_supported;
+                        }
+                        api::Request::Firmware(event) => {
+                            service.firmware_event(event, &mut receiver, at)
+                        }
+                        api::Request::Serial(event) => {
+                            let previous = receiver.config.allowed_macs.clone();
+                            service.serial_event(event, &mut receiver, at);
+                            if previous != receiver.config.allowed_macs {
+                                if let Some(recorder) = &mut recorder {
+                                    recorder.write(&Record::Admission {
+                                        at_ms: at,
+                                        allowed_macs: receiver.config.allowed_macs.clone(),
+                                    })?;
+                                }
+                            }
+                        }
+                        api::Request::Client { data, reply } => {
+                            let previous = receiver.config.allowed_macs.clone();
+                            let response = service.handle(data, &mut receiver, engine, at);
+                            if previous != receiver.config.allowed_macs {
+                                if let Some(recorder) = &mut recorder {
+                                    recorder.write(&Record::Admission {
+                                        at_ms: at,
+                                        allowed_macs: receiver.config.allowed_macs.clone(),
+                                    })?;
+                                }
+                            }
+                            write_api_changes(service, &mut recorder, at)?;
+                            flush_device_commands(service, &socket, &mut recorder, at).await?;
+                            let _ = reply.send(response);
+                        }
+                        api::Request::AutoBoneEpoch { epoch, total } => {
+                            service.auto_epoch(&epoch, total)
+                        }
+                        api::Request::DriverStatus { status, error } => {
+                            service.driver_update(status, error, engine.snapshot())
+                        }
+                        api::Request::AutoBoneDone(result) => service.auto_done(result),
+                        api::Request::AutoBoneSaved {
+                            result,
+                            record,
+                            count,
+                        } => service.auto_saved(result, record, count),
                     }
                 }
             }
         }
     }
     let at = start.elapsed().as_millis() as u64;
+    let stats = ingress.stats();
+    timing.ingress_counts(
+        stats.coalesced.swap(0, Ordering::Relaxed),
+        stats.dropped_poses.swap(0, Ordering::Relaxed),
+        stats.dropped_controls.swap(0, Ordering::Relaxed),
+    );
     if let Some(report) = timing.report(Instant::now(), at, true) {
         report_timing(&report);
     }

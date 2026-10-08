@@ -145,6 +145,7 @@ fn device_command_journal_replays_ack_state_and_exact_udp_output() {
     ] {
         journal
             .write(&Record::Receive {
+                received_at_ms: None,
                 at_ms: at,
                 from: d.address,
                 hex: recording::encode_hex(&bytes),
@@ -180,6 +181,7 @@ fn device_command_journal_replays_ack_state_and_exact_udp_output() {
     let bytes = wire(24, 2, &[0, 0, 1]);
     journal
         .write(&Record::Receive {
+            received_at_ms: None,
             at_ms: 3,
             from: d.address,
             hex: recording::encode_hex(&bytes),

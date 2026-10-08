@@ -92,6 +92,7 @@ fn autobone_cli_fits_motion_writes_reloadable_config_and_preserves_existing_file
                 session: 1,
                 packet_sequence: i as i64,
                 received_at_ms: at,
+                socket_received_at_ms: None,
                 sensor_timestamp_us: None,
                 packet_rotation: None,
                 server_rotation: Some(rotations[&binding.body]),

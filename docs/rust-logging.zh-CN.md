@@ -45,6 +45,10 @@ API 调试日志记录请求类型和事务号，不记录请求正文。重置�
 
 设备快照里的 `sequence_gaps` 只表示接收器观察到的序号间隔，也会包含队列主动合并的旧包，不能直接作为网络丢包数量。
 
+`runtime_timing` 还提供 `udp_queue_delay_ms`、`udp_batch_work_ms` 的 p50 / p95 / p99 / p999 / max，以及 `udp_datagrams`、`udp_batches`、`udp_budget_yields` 和队列合并／容量丢包计数。它们在 info 下可用，避免为了性能测量开启逐帧日志。队列计数按 summary 窗口采集，可能归入相邻 timing 窗口。
+
+Receiver freshness 和 TrackerPose 的 `pose_age_ms` 对 UDP 使用 socket 接收时刻，`pose_processing_age_ms` 保留主循环处理年龄，`pose_queue_delay_ms` 显示排队延迟。状态机与 replay 的时钟仍采用处理时刻，旧录制按原时刻回退。基准命令与测量结果见 [UDP 与 runtime 性能说明](rust-udp-runtime-performance.zh-CN.md)。
+
 ## 文件格式与轮转
 
 桌面日志每行是一个 JSON 对象，包含秒级 `time`、毫秒级 `time_ms`、真实 `level`、来源 `source`（`gui` / `desktop` / `backend`）和 `args`。

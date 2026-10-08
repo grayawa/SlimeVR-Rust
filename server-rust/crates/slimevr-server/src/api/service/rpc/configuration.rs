@@ -78,6 +78,7 @@ impl Service {
                 let mut c = self.config.clone();
                 crate::hotkeys::change(&mut c.yaml, r)?;
                 c.save(self.state_path.as_deref())?;
+                self.hotkeys_dirty |= self.config.yaml["keybindings"] != c.yaml["keybindings"];
                 self.config = c;
                 self.broadcast(crate::hotkeys::frame(
                     tx,

@@ -51,6 +51,135 @@ fn rotation(sensor: u8, seq: i64) -> Vec<u8> {
 }
 
 #[test]
+fn delayed_arrival_is_diagnostic_only_and_is_not_refreshed_by_other_sensor_or_acceleration() {
+    let mut r = initialized(22);
+    r.receive(addr(1111), &wire(15, 2, &[1, 1, 13]), 2);
+    let fx = r.receive_timed(addr(1111), &rotation(0, 3), 200, Some(100));
+    let sample = fx
+        .events
+        .iter()
+        .find_map(|e| match &e.kind {
+            EventKind::Sample { sample } => Some(sample),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(sample.received_at_ms, 200);
+    assert_eq!(sample.socket_received_at_ms, Some(100));
+    r.receive_timed(addr(1111), &rotation(1, 4), 210, Some(205));
+    r.receive_timed(addr(1111), &wire(4, 5, &[0; 13]), 220, Some(215));
+    r.receive_timed(addr(1111), &rotation(0, 3), 230, Some(229)); // Rejected duplicate.
+    assert_eq!(r.devices[MAC].last_alive_ms, 220);
+    assert_eq!(
+        r.devices[MAC].sensors[&0]
+            .rotation
+            .as_ref()
+            .unwrap()
+            .received_at_ms,
+        200
+    );
+    let s = r.snapshot(250);
+    assert_eq!(s["freshness"][0]["pose_age_ms"], 150);
+    assert_eq!(s["freshness"][0]["pose_processing_age_ms"], 50);
+    assert_eq!(s["freshness"][0]["pose_queue_delay_ms"], 100);
+    assert_eq!(s["freshness"][1]["pose_age_ms"], 45);
+    r.tick(1200); // Transport timeout still uses the processing heartbeat, not the arrival clock.
+    assert!(!r.devices[MAC].transport_timed_out);
+    r.receive_timed(
+        addr(1111),
+        &handshake([2, 0, 0, 0, 0, 1], 0, 22),
+        1300,
+        Some(1200),
+    );
+    assert!(r.devices[MAC].sensors.is_empty());
+    r.receive_timed(addr(1111), &wire(15, 1, &[0, 1, 13]), 1301, Some(1300));
+    assert!(r.devices[MAC].sensors[&0].rotation.is_none());
+    assert!(r.devices[MAC].sensors[&0].udp_rotation_timing.is_none());
+}
+
+#[test]
+fn dual_clock_journal_replays_exactly_with_arrival_before_an_earlier_processing_tick() {
+    use slimevr_core::{
+        pose::{PoseConfig, PoseEngine, TrackerBinding},
+        skeleton::BodyPosition,
+    };
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("dual-clock.jsonl");
+    let mut r = accepted();
+    let pose_config = PoseConfig {
+        bindings: vec![TrackerBinding {
+            device_key: MAC.into(),
+            sensor_id: 0,
+            body: BodyPosition::Chest,
+            mounting: Quaternion::IDENTITY,
+        }],
+        ..Default::default()
+    };
+    let mut engine = PoseEngine::new(pose_config.clone()).unwrap();
+    let mut journal = Recorder::create(&path, &r.config).unwrap();
+    for (at, received, bytes) in [
+        (0, 0, handshake([2, 0, 0, 0, 0, 1], 0, 22)),
+        (1, 1, wire(15, 1, &[0, 1, 13])),
+        (200, 100, rotation(0, 2)),
+    ] {
+        if at == 200 {
+            journal.write(&Record::Tick { at_ms: 190 }).unwrap();
+            assert!(r.tick(190).outbound.is_empty());
+            engine.tick(190).unwrap();
+        }
+        journal
+            .write(&Record::Receive {
+                at_ms: at,
+                received_at_ms: Some(received),
+                from: addr(1111),
+                hex: recording::encode_hex(&bytes),
+            })
+            .unwrap();
+        let fx = r.receive_timed(addr(1111), &bytes, at, Some(received));
+        for event in &fx.events {
+            engine.ingest(event).unwrap();
+        }
+        for reply in fx.outbound {
+            journal
+                .write(&Record::Send {
+                    at_ms: at,
+                    to: reply.to,
+                    hex: recording::encode_hex(&reply.bytes),
+                })
+                .unwrap();
+        }
+    }
+    journal.finish(250).unwrap();
+    let replay = recording::replay(&path, |_| {}).unwrap();
+    assert_eq!(r.snapshot(250), replay.receiver.snapshot(250));
+    engine.tick(250).unwrap();
+    let mut replay_engine = PoseEngine::new(pose_config).unwrap();
+    recording::replay_observed(&path, |input| {
+        match input {
+            recording::ReplayInput::Event(event) => replay_engine.ingest(event)?,
+            recording::ReplayInput::Tick(at) => {
+                replay_engine.tick(at)?;
+            }
+            _ => {}
+        }
+        Ok(())
+    })
+    .unwrap();
+    replay_engine.tick(250).unwrap();
+    assert_eq!(
+        serde_json::to_value(engine.snapshot()).unwrap(),
+        serde_json::to_value(replay_engine.snapshot()).unwrap()
+    );
+    let text = std::fs::read_to_string(&path).unwrap();
+    let future = text.replace("\"received_at_ms\":100", "\"received_at_ms\":201");
+    std::fs::write(&path, future).unwrap();
+    assert!(recording::replay(&path, |_| {})
+        .err()
+        .unwrap()
+        .to_string()
+        .contains("receive clock"));
+}
+
+#[test]
 fn udp_rehandshake_after_server_stall_preserves_calibration_and_rejects_old_session() {
     use slimevr_core::{
         calibration::ResetKind,
@@ -494,6 +623,7 @@ fn journal_roundtrip_verifies_replies_and_final_state_and_detects_corruption() {
     ] {
         journal
             .write(&Record::Receive {
+                received_at_ms: None,
                 at_ms: at,
                 from: addr(1111),
                 hex: recording::encode_hex(&bytes),
@@ -557,6 +687,7 @@ fn journal_rejects_empty_bad_version_and_missing_replies() {
     let mut journal = Recorder::create(&p, &accepted().config).unwrap();
     journal
         .write(&Record::Receive {
+            received_at_ms: None,
             at_ms: 0,
             from: addr(1111),
             hex: recording::encode_hex(&handshake([2, 0, 0, 0, 0, 1], 0, 22)),

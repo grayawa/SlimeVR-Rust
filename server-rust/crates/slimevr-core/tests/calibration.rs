@@ -14,6 +14,7 @@ fn sample(body_id: u8, at: u64, q: Q) -> TrackerSample {
         session: 1,
         packet_sequence: at as i64,
         received_at_ms: at,
+        socket_received_at_ms: None,
         sensor_timestamp_us: None,
         packet_rotation: Some(q),
         server_rotation: Some(q),

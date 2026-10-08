@@ -36,6 +36,8 @@ pub enum Record {
     },
     Receive {
         at_ms: u64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        received_at_ms: Option<u64>,
         from: SocketAddr,
         hex: String,
     },
@@ -233,13 +235,23 @@ pub fn replay_observed(
                 r.config_command(&command).map_err(JournalError::Invalid)?
             }
             Record::Hid { event, .. } => r.hid(&event, at_ms),
-            Record::Receive { from, hex, .. } => {
+            Record::Receive {
+                from,
+                hex,
+                received_at_ms,
+                ..
+            } => {
                 if !expected.is_empty() {
                     return Err(JournalError::Invalid(format!(
                         "line {records}: missing reply record"
                     )));
                 }
-                r.receive(from, &decode_hex(&hex)?, at_ms)
+                if received_at_ms.is_some_and(|received| received > at_ms) {
+                    return Err(JournalError::Invalid(
+                        "UDP receive clock is after processing clock".into(),
+                    ));
+                }
+                r.receive_timed(from, &decode_hex(&hex)?, at_ms, received_at_ms)
             }
             Record::PoseSetup { config, .. } => {
                 if records != 2 || at_ms != 0 {

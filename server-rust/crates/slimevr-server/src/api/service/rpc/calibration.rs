@@ -33,7 +33,7 @@ impl Service {
                 let input = SceneInput::ClearMounting { at_ms: at };
                 engine.scene_input(input.clone())?;
                 self.changes.push(input);
-                self.config.pose = engine.export_config();
+                self.sync_pose_config(engine);
                 self.config.save(self.state_path.as_deref())?;
                 out.push(settings::frame(tx, &self.config));
             }

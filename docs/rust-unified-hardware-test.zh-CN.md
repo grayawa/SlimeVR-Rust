@@ -15,7 +15,7 @@
 - [ ] Full → Yaw → Mounting；默认 / 开启脚部安装；HMD 俯仰开关、局部复位、清除安装；手动安装方向保存、重启恢复。
 - [ ] 暂停 / 恢复、tap 校准和两次敲击分配；未分配 tracker 可被识别；Windows 快捷键含延迟、SteamVR 按钮绑定。
 - [ ] 站立、转身、行走、蹲、坐、躺；腿部开关、StayAligned / Localizer；HMD / 控制器锚点丢失后恢复。
-- [ ] 重复原来的 CPU 密集任务，观察追踪器在线时点位是否错乱；负载下降、设备重新握手后应保留校准并恢复。记下时间并核对 `runtime_stall` / `device_connected`，详见 [重连校准修复](rust-load-reconnect.zh-CN.md)。
+- [ ] 重复原来的 CPU 密集任务，观察追踪器在线时点位是否错乱；负载下降、设备重新握手后应保留校准并恢复。记下时间并核对 `runtime_timing`（jitter 分位数与 stall 计数）/ `device_connected`，详见 [重连校准修复](rust-load-reconnect.zh-CN.md)。
 - [ ] 自动身高校准成功、超时 / 取消；骨长应用保存。AutoBone 录制 / SAVE / PROCESS / APPLY、重启加载、PFS-PFR 导入、失败结果不应用。
 - [ ] 磁力计全局 / 单 tracker 开关，实际 ACK、超时 / 重连与状态反馈。
 - [ ] BVH 开始 / 停止、改变骨架、正常退出；在 Blender 等工具导入，层级 / 动作 / 帧率合理。

@@ -59,6 +59,9 @@ enum Command {
         log_level: Option<LogLevel>,
         #[arg(long, default_value_t=1000, value_parser=clap::value_parser!(u64).range(1..))]
         summary_ms: u64,
+        /// Timing histogram window; p999 needs at least 1000 observed intervals.
+        #[arg(long, default_value_t=10_000, value_parser=clap::value_parser!(u64).range(1..))]
+        timing_window_ms: u64,
         /// Exit after this many seconds (useful for captures and integration tests).
         #[arg(long, value_parser=clap::value_parser!(u64).range(1..))]
         run_for: Option<u64>,
@@ -146,13 +149,28 @@ enum Command {
     },
 }
 
-#[tokio::main(flavor = "current_thread")]
+// The root future owns receiver/pose state on the calling thread. Spawned IPC,
+// WebSocket and UDP tasks run on two independent I/O workers.
+#[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() {
-    if let Err(error) = run().await {
+    let logs = match slimevr_server::logging::start() {
+        Ok(guard) => guard,
+        Err(error) => {
+            eprintln!("Unable to start diagnostic writer: {error}");
+            std::process::exit(1);
+        }
+    };
+    let failed = if let Err(error) = run().await {
         slimevr_server::logging::diagnostic(
             LogLevel::Error,
             &serde_json::json!({"type":"backend_fatal_error", "message":error.to_string()}),
         );
+        true
+    } else {
+        false
+    };
+    drop(logs);
+    if failed {
         std::process::exit(1);
     }
 }
@@ -174,6 +192,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             record,
             events,
             summary_ms,
+            timing_window_ms,
             log_level,
             run_for,
             pose_config,
@@ -204,6 +223,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 record,
                 log_level: LogLevel::resolve(log_level, events)?,
                 summary_ms,
+                timing_window_ms,
                 run_for: run_for.map(Duration::from_secs),
                 discovery: !no_discovery,
                 discovery_targets,

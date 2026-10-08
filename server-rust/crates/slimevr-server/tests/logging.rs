@@ -183,3 +183,132 @@ fn environment_overrides_default_cli_overrides_environment_and_invalid_values_fa
     assert_eq!(failure["level"], "error");
     assert_eq!(failure["type"], "backend_fatal_error");
 }
+
+#[test]
+fn unread_diagnostic_pipe_does_not_stop_tracker_handshakes() {
+    let dir = tempfile::tempdir().unwrap();
+    let pose = dir.path().join("pose.json");
+    std::fs::write(&pose, "{}").unwrap();
+    let mut child = Running(
+        Command::new(env!("CARGO_BIN_EXE_slimevr-server"))
+            .env_remove("SLIMEVR_LOG_LEVEL")
+            .args([
+                "listen",
+                "--bind",
+                "127.0.0.1:0",
+                "--no-discovery",
+                "--accept-new-devices",
+                "--run-for",
+                "2",
+                "--log-level",
+                "trace",
+                "--pose-ms",
+                "1",
+                "--pose-output-ms",
+                "1",
+                "--pose-config",
+            ])
+            .arg(pose)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap(),
+    );
+    let mut stdout = BufReader::new(child.0.stdout.take().unwrap());
+    let stderr = child.0.stderr.take().unwrap();
+    let errors = std::thread::spawn(move || {
+        std::io::copy(&mut BufReader::new(stderr), &mut std::io::sink()).unwrap()
+    });
+    let mut first = String::new();
+    stdout.read_line(&mut first).unwrap();
+    let listening: Value = serde_json::from_str(&first).unwrap();
+    // No stdout consumer: rapid full pose snapshots fill the child pipe.
+    std::thread::sleep(Duration::from_millis(300));
+    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    socket.connect(listening["bind"].as_str().unwrap()).unwrap();
+    socket
+        .set_read_timeout(Some(Duration::from_secs(1)))
+        .unwrap();
+    socket.send(&handshake()).unwrap();
+    let mut buffer = [0; 1500];
+    socket
+        .recv(&mut buffer)
+        .expect("blocked logs must not stall handshake");
+    socket.recv(&mut buffer).unwrap();
+    socket.send(&wire(15, 1, &[0, 1, 13])).unwrap();
+    socket
+        .recv(&mut buffer)
+        .expect("sensor registration must remain responsive");
+    let reader =
+        std::thread::spawn(move || std::io::copy(&mut stdout, &mut std::io::sink()).unwrap());
+    assert!(child.0.wait().unwrap().success());
+    reader.join().unwrap();
+    errors.join().unwrap();
+}
+
+#[test]
+fn timing_windows_emit_percentiles_cumulative_stalls_and_final_partial_window() {
+    let dir = tempfile::tempdir().unwrap();
+    let pose = dir.path().join("pose.json");
+    std::fs::write(&pose, "{}").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_slimevr-server"))
+        .env_remove("SLIMEVR_LOG_LEVEL")
+        .args([
+            "listen",
+            "--bind",
+            "127.0.0.1:0",
+            "--no-discovery",
+            "--run-for",
+            "1",
+            "--log-level",
+            "info",
+            "--pose-ms",
+            "4",
+            "--timing-window-ms",
+            "200",
+            "--pose-config",
+        ])
+        .arg(pose)
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    let reports: Vec<Value> = stdout
+        .lines()
+        .chain(stderr.lines())
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .filter(|value| value["type"] == "runtime_timing")
+        .collect();
+    assert!(!reports.is_empty());
+    let mut ticks = 0;
+    let mut samples = 0;
+    for report in &reports {
+        assert_eq!(report["tick_kind"], "pose");
+        assert_eq!(report["expected_tick_ms"], 4.);
+        assert!(report["window_ms"].as_f64().unwrap() > 0.);
+        ticks += report["ticks"].as_u64().unwrap();
+        let count = report["interval_samples"].as_u64().unwrap();
+        samples += count;
+        for key in ["tick_work_ms", "tick_jitter_ms"] {
+            if key == "tick_jitter_ms" && count == 0 {
+                assert!(report[key].is_null());
+                continue;
+            }
+            let p: Vec<_> = ["p50", "p95", "p99", "p999", "max"]
+                .into_iter()
+                .map(|p| report[key][p].as_f64().unwrap())
+                .collect();
+            assert!(p.windows(2).all(|pair| pair[0] <= pair[1]));
+        }
+        let stalls: Vec<_> = ["gt_2ms", "gt_5ms", "gt_10ms", "gt_50ms", "gt_100ms"]
+            .into_iter()
+            .map(|key| report["runtime_stall"][key].as_u64().unwrap())
+            .collect();
+        assert!(stalls.windows(2).all(|pair| pair[0] >= pair[1]));
+        assert!(stalls[0] <= count);
+    }
+    // Every observed interval is represented once, including across window boundaries.
+    assert_eq!(samples + 1, ticks);
+    assert!(!stdout.contains("\"type\":\"runtime_stall\""));
+}

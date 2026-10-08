@@ -1,0 +1,73 @@
+name: Build Tauri
+on:
+  workflow_dispatch:
+    inputs:
+      other_tauri_platforms:
+        description: 'Also build Tauri for Linux x64/ARM64 and macOS'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: build-tauri-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  CARGO_INCREMENTAL: '0'
+  VITE_DESKTOP_VERSION: '0.1.0'
+jobs:
+  backend:
+    uses: ./.github/workflows/build-backend.yml
+  tauri:
+    needs: backend
+    uses: ./.github/workflows/windows-app.yml
+    with:
+      app: Tauri
+  tauri-other-platforms:
+    name: Tauri (${{ matrix.os }})
+    if: github.event_name == 'workflow_dispatch' && inputs.other_tauri_platforms
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y g++-14 cmake ninja-build pkg-config libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libudev-dev patchelf
+      - if: runner.os == 'Linux'
+        run: echo "CXX=g++-14" >> "$GITHUB_ENV"
+      - uses: lukka/get-cmake@latest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            server-rust -> target
+            gui/src-tauri -> target
+          key: tauri-${{ matrix.os }}
+          cache-on-failure: true
+      - run: pnpm install --frozen-lockfile
+      - run: cargo test --manifest-path server-rust/Cargo.toml --workspace --locked
+      - run: pnpm tauri:rust:build
+      - run: cargo test --manifest-path gui/src-tauri/Cargo.toml --locked
+      - uses: actions/upload-artifact@v7
+        with:
+          name: slimevr-rust-tauri-${{ matrix.os }}
+          path: |
+            LICENSE-MIT
+            LICENSE-APACHE
+            server-rust/licenses/
+            gui/src-tauri/target/release/bundle/**
+            server-rust/target/release/slimevr-server
+          if-no-files-found: error
+          retention-days: 30

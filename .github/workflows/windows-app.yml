@@ -1,0 +1,126 @@
+name: Windows app build implementation
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: 'GPUI, Tauri or Overlay'
+        required: true
+        type: string
+permissions:
+  contents: read
+env:
+  CARGO_INCREMENTAL: '0'
+  VITE_DESKTOP_VERSION: '0.1.0'
+jobs:
+  build:
+    name: Windows ${{ inputs.app }}
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Validate app selection
+        env:
+          APP: ${{ inputs.app }}
+        run: |
+          case "$APP" in GPUI|Tauri|Overlay) ;; *) echo "Unknown app: $APP" >&2; exit 1 ;; esac
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - if: inputs.app != 'Overlay'
+        uses: actions/download-artifact@v8
+        with:
+          name: SlimeVR-Backend-Windows-x64
+          path: server-rust/target/release
+      - if: inputs.app == 'Tauri'
+        uses: pnpm/action-setup@v6
+      - if: inputs.app == 'Tauri'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - if: inputs.app != 'Overlay'
+        uses: lukka/get-cmake@latest
+      - if: inputs.app != 'Tauri'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: gui-gpui -> target
+          key: windows-gpui
+          cache-on-failure: true
+      - if: inputs.app == 'Tauri'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: gui/src-tauri -> target
+          key: windows-tauri
+          cache-on-failure: true
+      - if: inputs.app == 'Tauri'
+        run: pnpm install --frozen-lockfile
+      - name: Prepare desktop resources
+        if: inputs.app != 'Overlay'
+        run: |
+          python gui/scripts/fetch-steamvr-drivers.py
+          python gui/scripts/build-bindings-provider.py
+      - name: Build GPUI applications
+        if: inputs.app == 'GPUI'
+        run: cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --features vr-dashboard --bin slimevr-gpui --bin slimevr-gpui-components --bin slimevr-gpui-probe
+      - name: Build Overlay
+        if: inputs.app == 'Overlay'
+        run: cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --features vr-dashboard --bin slimevr-gpui-overlay
+      - name: Native GPUI checks
+        if: inputs.app != 'Tauri'
+        run: |
+          cargo clippy --manifest-path gui-gpui/Cargo.toml --release --features vr-dashboard --all-targets --locked -- -D warnings
+          cargo test --manifest-path gui-gpui/Cargo.toml --release --features vr-dashboard --lib --locked
+      - name: GPUI real-backend checks
+        if: inputs.app == 'GPUI'
+        shell: pwsh
+        run: |
+          $env:SLIMEVR_TEST_BACKEND = "$PWD/server-rust/target/release/slimevr-server.exe"
+          cargo test --manifest-path gui-gpui/Cargo.toml --release --features vr-dashboard --test backend --locked -- --ignored
+      - name: Tauri communication checks
+        if: inputs.app == 'Tauri'
+        working-directory: gui
+        env:
+          SLIMEVR_RUST_BINARY: ${{ github.workspace }}/server-rust/target/release/slimevr-server.exe
+        run: |
+          pnpm typecheck
+          pnpm test:desktop
+          pnpm test:backend
+          pnpm test:websocket
+      - name: Build Tauri with the shared backend
+        if: inputs.app == 'Tauri'
+        working-directory: gui
+        run: |
+          pnpm exec tauri build --config src-tauri/tauri.rust.windows.conf.json
+          cargo test --manifest-path src-tauri/Cargo.toml --locked
+      - run: python gui/scripts/fetch-vc-runtime.py --output dist/vc-runtime
+      - name: Package GPUI
+        if: inputs.app == 'GPUI'
+        run: python gui-gpui/scripts/package-windows.py --gui-exe gui-gpui/target/release/slimevr-gpui.exe --components-exe gui-gpui/target/release/slimevr-gpui-components.exe --server-exe server-rust/target/release/slimevr-server.exe --probe-exe gui-gpui/target/release/slimevr-gpui-probe.exe --vc-runtime-dir dist/vc-runtime --build-revision "$GITHUB_SHA" --output dist/SlimeVR-GPUI-Windows-x64.zip
+      - name: Package Tauri
+        if: inputs.app == 'Tauri'
+        run: python gui/scripts/package-windows-portable.py --gui-exe gui/src-tauri/target/release/slimevr-gui.exe --server-exe server-rust/target/release/slimevr-server.exe --bindings-dir gui/src-tauri/resources/bindings/win64 --vc-runtime-dir dist/vc-runtime --build-revision "$GITHUB_SHA" --output dist/SlimeVR-Tauri-Windows-x64.zip
+      - name: Package Overlay
+        if: inputs.app == 'Overlay'
+        run: python gui-gpui/scripts/package-overlay-windows.py --overlay-exe gui-gpui/target/release/slimevr-gpui-overlay.exe --vc-runtime-dir dist/vc-runtime --build-revision "$GITHUB_SHA" --output dist/SlimeVR-Overlay-Windows-x64.zip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SlimeVR-${{ inputs.app }}-Windows-x64
+          path: |
+            dist/SlimeVR-${{ inputs.app }}-Windows-x64.zip
+            dist/SlimeVR-${{ inputs.app }}-Windows-x64.zip.sha256
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - if: inputs.app == 'Tauri'
+        uses: actions/upload-artifact@v7
+        with:
+          name: slimevr-tauri-windows-installers
+          path: gui/src-tauri/target/release/bundle/**
+          retention-days: 30
+          if-no-files-found: error

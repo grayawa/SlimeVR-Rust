@@ -1,0 +1,16 @@
+name: Build GPUI
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-gpui-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  backend:
+    uses: ./.github/workflows/build-backend.yml
+  gpui:
+    needs: backend
+    uses: ./.github/workflows/windows-app.yml
+    with:
+      app: GPUI

@@ -1,0 +1,13 @@
+name: Build Overlay
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-overlay-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  overlay:
+    uses: ./.github/workflows/windows-app.yml
+    with:
+      app: Overlay

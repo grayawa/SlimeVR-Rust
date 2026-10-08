@@ -6,12 +6,12 @@
 
 ## 项目入口
 
-| 目录 | 内容 | 说明 |
-| --- | --- | --- |
+| 目录           | 内容                                                                                  | 说明                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `server-rust/` | UDP/HID 接收、姿态算法、校准、AutoBone、SteamVR、OSC/VMC、SolarXR API、YAML 配置、BVH | [后端](server-rust/README.zh-CN.md) · [算法](server-rust/README.core.zh-CN.md) · [API 架构](docs/rust-backend-api-architecture.zh-CN.md) |
-| `gui-gpui/` | GPUI Kit 原生界面、组件库、引导、原版 Fluent 翻译 | [构建与使用](gui-gpui/README.zh-CN.md) · [组件库](docs/rust-gpui-components.zh-CN.md) |
-| `gui/` | React 界面、Tauri 宿主及打包工具 | [Tauri 构建](gui/README.tauri.md) |
-| `docs/` | 移植说明、功能对照、修复记录及实机测试清单 | [交接记录](docs/rust-completion-worklog.zh-CN.md) · [统一测试清单](docs/rust-unified-hardware-test.zh-CN.md) |
+| `gui-gpui/`    | GPUI Kit 原生界面、组件库、引导、原版 Fluent 翻译                                     | [构建与使用](gui-gpui/README.zh-CN.md) · [组件库](docs/rust-gpui-components.zh-CN.md)                                                    |
+| `gui/`         | React 界面、Tauri 宿主及打包工具                                                      | [Tauri 构建](gui/README.tauri.md)                                                                                                        |
+| `docs/`        | 移植说明、功能对照、修复记录及实机测试清单                                            | [交接记录](docs/rust-completion-worklog.zh-CN.md) · [统一测试清单](docs/rust-unified-hardware-test.zh-CN.md)                             |
 
 后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 前端不需要 WebView2；Tauri 前端需要系统提供 WebView2。
 
@@ -48,7 +48,7 @@ pnpm install --frozen-lockfile
 pnpm tauri:rust:build
 ```
 
-GitHub Actions 中的 **SlimeVR AIO** 工作流统一构建 Tauri、GPUI 和 SteamVR Dashboard，支持手动运行和 PR 检查，详见 [CI 说明](docs/rust-ci.zh-CN.md)。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
+GitHub Actions 中的 **SlimeVR Checks** 自动检查 PR 和 main；**Build GPUI**、**Build Tauri**、**Build Overlay** 可分别手动构建测试包。**SlimeVR AIO Release** 仅用于发布标签或手动发布打包，详见 [CI 说明](docs/rust-ci.zh-CN.md)。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
 
 ## 文档与许可
 

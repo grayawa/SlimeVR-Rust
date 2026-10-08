@@ -41,7 +41,7 @@ cargo build --manifest-path gui-gpui/Cargo.toml --release --locked --features vr
 
 Windows 建议 Rust 1.92+、MSVC 和 Windows SDK。程序位于 `gui-gpui/target/release/slimevr-gpui-overlay.exe`，将固定版本 SDK 的 `bindings-provider/openvr/bin/win64/openvr_api.dll` 放在程序旁边，或用 `--openvr-dll` 指定。附加包包含它和原始 OpenVR 许可证。
 
-GitHub Actions：打开仓库 **Actions → SlimeVR AIO → Run workflow**。成功后在该次运行的 **Artifacts** 下载 `SlimeVR-Overlay-Windows-x64`，解压外层 artifact ZIP，再解压里面的附加包。它包含 EXE、OpenVR DLL、微软运行库、启动脚本、许可证和测试说明；源码与微软运行库来源均在工作流中构建 / 校验，不依赖本地旧压缩包。Artifact 默认保留 30 天。
+GitHub Actions：打开仓库 **Actions → Build Overlay → Run workflow**，选择需要测试的分支。成功后在该次运行的 **Artifacts** 下载 `SlimeVR-Overlay-Windows-x64`，解压外层 artifact ZIP，再解压里面的附加包。无需等待 GPUI、Tauri 或后端构建。它包含 EXE、OpenVR DLL、微软运行库、启动脚本、许可证和测试说明；源码与微软运行库来源均在工作流中构建 / 校验，不依赖本地旧压缩包。Artifact 默认保留 30 天。发布合集仍可从 **SlimeVR AIO Release** 下载。
 
 `vr-dashboard` 是可选功能，正常桌面构建不启用 GPU 输出补丁。注册的窗口以 GPU copy 更新共享 D3D11 纹理并提交给 OpenVR，不做逐帧 CPU 回读。隐藏窗口通过异步帧消息绘制；未注册的桌面窗口保持交换链显示行为。
 

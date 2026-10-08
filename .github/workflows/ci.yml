@@ -1,0 +1,149 @@
+name: SlimeVR Checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/**'
+      - 'gui/**'
+      - 'gui-gpui/**'
+      - 'server-rust/**'
+      - 'shared/**'
+      - 'bindings-provider/**'
+      - 'solarxr-protocol'
+      - 'solarxr-protocol/**'
+      - '.gitmodules'
+      - '.node-version'
+      - '.editorconfig'
+      - '.prettierrc'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+  pull_request:
+    paths:
+      - '.github/**'
+      - 'gui/**'
+      - 'gui-gpui/**'
+      - 'server-rust/**'
+      - 'shared/**'
+      - 'bindings-provider/**'
+      - 'solarxr-protocol'
+      - 'solarxr-protocol/**'
+      - '.gitmodules'
+      - '.node-version'
+      - '.editorconfig'
+      - '.prettierrc'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_TEST_DEBUG: '0'
+  VITE_DESKTOP_VERSION: '0.1.0'
+jobs:
+  workflows:
+    name: Workflows and packaging tools
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate workflows
+        run: |
+          curl -fsSL https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o "$RUNNER_TEMP/actionlint.tar.gz"
+          echo '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  actionlint.tar.gz' > "$RUNNER_TEMP/actionlint.sha256"
+          (cd "$RUNNER_TEMP" && sha256sum --check actionlint.sha256 && tar -xzf actionlint.tar.gz actionlint)
+          "$RUNNER_TEMP/actionlint" -shellcheck= -pyflakes=
+      - run: python -m unittest discover -s server-rust/tools -p test_reference_sources.py
+      - run: python -m unittest discover -s gui/scripts -p test_package_aio.py
+  web:
+    name: React checks and web build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - working-directory: gui
+        run: |
+          pnpm lint
+          pnpm test:desktop
+          pnpm test:websocket
+          pnpm web:build
+      - run: tar -czf slimevr-gui-dist.tar.gz -C gui/dist .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: gui-dist
+          path: slimevr-gui-dist.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+  rust:
+    name: Rust checks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            server-rust -> target
+            gui-gpui -> target
+            gui-gpui/overlay-runtime -> target
+          key: checks-${{ matrix.os }}
+          cache-on-failure: true
+      - name: Rust format checks
+        run: |
+          cargo fmt --manifest-path server-rust/Cargo.toml -p slimevr-core -p slimevr-server --check
+          cargo fmt --manifest-path gui-gpui/Cargo.toml --check
+          cargo fmt --manifest-path gui/src-tauri/Cargo.toml --check
+      - name: Backend checks
+        run: |
+          cargo test --manifest-path server-rust/Cargo.toml --workspace --locked
+          cargo clippy --manifest-path server-rust/Cargo.toml --workspace --all-targets --locked -- -D warnings
+      - name: GPUI state, communication and Overlay input checks
+        run: |
+          cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked
+          cargo clippy --manifest-path gui-gpui/Cargo.toml --no-default-features --all-targets --locked -- -D warnings
+          cargo test --manifest-path gui-gpui/overlay-runtime/Cargo.toml
+      - name: GPUI real-backend loopback
+        env:
+          SLIMEVR_TEST_BACKEND: ${{ github.workspace }}/server-rust/target/debug/slimevr-server${{ runner.os == 'Windows' && '.exe' || '' }}
+        run: cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --test backend --locked -- --ignored
+      - if: runner.os == 'Linux'
+        uses: pnpm/action-setup@v6
+      - if: runner.os == 'Linux'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - if: runner.os == 'Linux'
+        run: pnpm install --frozen-lockfile
+      - name: React real-backend communication
+        if: runner.os == 'Linux'
+        working-directory: gui
+        run: pnpm test:backend

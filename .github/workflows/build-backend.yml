@@ -1,0 +1,33 @@
+name: Build Windows Backend
+on:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+env:
+  CARGO_INCREMENTAL: '0'
+jobs:
+  build:
+    name: Windows backend
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server-rust -> target
+          key: windows-backend
+          cache-on-failure: true
+      - run: cargo build --manifest-path server-rust/Cargo.toml --release --locked --bin slimevr-server
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SlimeVR-Backend-Windows-x64
+          path: server-rust/target/release/slimevr-server.exe
+          retention-days: 30
+          if-no-files-found: error

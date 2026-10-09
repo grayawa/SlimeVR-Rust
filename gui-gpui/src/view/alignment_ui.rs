@@ -55,7 +55,7 @@ impl SlimeView {
                     .rounded_lg()
                     .bg(rgb(0x10352f))
                     .text_color(rgb(0x50e897))
-                    .child(format!("{} · GPUI test15", env!("CARGO_PKG_VERSION"))),
+                    .child(format!("{} · GPUI test16", env!("CARGO_PKG_VERSION"))),
             )
             .child(div().flex_1())
             .child(

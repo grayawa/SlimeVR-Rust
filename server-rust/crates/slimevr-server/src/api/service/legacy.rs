@@ -72,7 +72,7 @@ impl Service {
                 };
                 self.steamvr_input(input, engine)?;
                 self.sync_pose_config(engine);
-                self.config.save(self.state_path.as_deref())?;
+                self.persist_config()?;
                 Ok(Vec::new())
             }
             _ => self.input_pose(text, engine, at).map(|_| Vec::new()),

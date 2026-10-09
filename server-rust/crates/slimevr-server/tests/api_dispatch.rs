@@ -141,8 +141,8 @@ fn identity(wire: &Wire) -> (rpc::RpcMessage, u32) {
     (header.message_type(), header.tx_id().unwrap().id())
 }
 
-#[test]
-fn mixed_batch_preserves_reply_order_transactions_broadcasts_and_yaml() {
+#[tokio::test]
+async fn mixed_batch_preserves_reply_order_transactions_broadcasts_and_yaml() {
     use rpc::RpcMessage as R;
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("vrconfig.yml");
@@ -178,6 +178,7 @@ fn mixed_batch_preserves_reply_order_transactions_broadcasts_and_yaml() {
     );
     assert!(engine.is_paused());
     assert_eq!(engine.export_config().skeleton.hips_width, 0.36);
+    service.finish_config_save().await.unwrap();
     let saved = FrontendConfig::load(&path).unwrap();
     assert_eq!(saved.pose.skeleton.hips_width, 0.36);
     assert_eq!(saved.allowed_macs, ["02:00:00:00:00:01"]);

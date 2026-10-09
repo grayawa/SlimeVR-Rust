@@ -34,7 +34,7 @@ impl Service {
                 engine.scene_input(input.clone())?;
                 self.changes.push(input);
                 self.sync_pose_config(engine);
-                self.config.save(self.state_path.as_deref())?;
+                self.persist_config()?;
                 out.push(settings::frame(tx, &self.config));
             }
             rpc::RpcMessage::ResetRequest => {

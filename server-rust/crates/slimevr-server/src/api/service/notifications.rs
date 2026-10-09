@@ -10,8 +10,7 @@ impl Service {
         if sharing.update_automatic(pose) {
             let mut config = self.config.clone();
             config.steam_vr = sharing;
-            config.save(self.state_path.as_deref())?;
-            self.config = config;
+            self.install_config(config)?;
             self.broadcast(settings::frame(0, &self.config));
         }
         Ok(())

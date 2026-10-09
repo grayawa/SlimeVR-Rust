@@ -1,5 +1,5 @@
 //! SolarXR encoding uses the repository's generated bindings; no alternate GUI protocol.
-use crate::receiver::DeviceState;
+use super::live::LiveDevice;
 use slimevr_core::{
     pose::{PoseConfig, PoseSnapshot},
     skeleton::{BodyPosition as B, HeadPose, SkeletonConfig},
@@ -288,7 +288,7 @@ impl Feed {
 // Tracker/device component masks are honored for the stream's requested groups. Unknown telemetry remains absent.
 pub fn data_frame(
     feed: &Feed,
-    devices: &BTreeMap<String, DeviceState>,
+    devices: &[LiveDevice],
     ids: &BTreeMap<String, u8>,
     pose: &PoseSnapshot,
     config: &PoseConfig,
@@ -301,7 +301,8 @@ pub fn data_frame(
     let mut device_offsets = Vec::new();
     let mask = &feed.tracker_mask;
     if feed.devices || feed.trackers {
-        for (key, d) in devices {
+        for d in devices {
+            let key = &d.key;
             let Some(id) = ids.get(key) else { continue };
             let device_id = dt::DeviceId::new(*id);
             let mut trackers = Vec::new();

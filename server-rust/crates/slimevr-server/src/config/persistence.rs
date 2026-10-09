@@ -1,4 +1,4 @@
-//! Keep synchronous save/ACK semantics, but measure preparation, I/O and fsync.
+//! Atomic synchronous persistence primitive, called by the runtime's disk worker.
 use super::{error, to_yaml, FrontendConfig, MAX_CONFIG_BYTES};
 use crate::{log_level::LogLevel, logging};
 use serde::Serialize;
@@ -26,6 +26,29 @@ pub(crate) struct SaveReport {
     error_kind: Option<String>,
 }
 impl SaveReport {
+    pub(super) fn emit_async(&self, revision: u64, queue_delay: std::time::Duration) {
+        #[derive(Serialize)]
+        struct AsyncReport<'a> {
+            #[serde(flatten)]
+            report: &'a SaveReport,
+            revision: u64,
+            queue_delay_ms: f64,
+            background: bool,
+        }
+        logging::diagnostic(
+            if self.outcome == "error" || self.total_ms > 4. {
+                LogLevel::Warn
+            } else {
+                LogLevel::Info
+            },
+            &AsyncReport {
+                report: self,
+                revision,
+                queue_delay_ms: queue_delay.as_secs_f64() * 1000.,
+                background: true,
+            },
+        );
+    }
     pub(crate) fn emit(&self) {
         let level = if self.outcome == "error" || self.total_ms > 4. {
             LogLevel::Warn

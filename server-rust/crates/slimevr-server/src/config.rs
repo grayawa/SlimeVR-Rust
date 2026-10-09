@@ -1,6 +1,7 @@
 //! SlimeVR's vrconfig.yml is the persistent source. Runtime structs are an adapter,
 //! not a second configuration file. Keep unmapped YAML fields when saving.
 mod persistence;
+mod worker;
 use crate::{api::FrontendConfig, receiver::normalize_mac};
 pub use persistence::save;
 pub(crate) use persistence::save_measured;
@@ -14,6 +15,7 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
 };
+pub(crate) use worker::{Completion, Writer};
 
 const MAX_CONFIG_BYTES: u64 = 8 * 1024 * 1024;
 const VERSION: u64 = 15;

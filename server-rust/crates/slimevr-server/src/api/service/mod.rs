@@ -4,6 +4,8 @@ mod calibration;
 mod configuration_tests;
 mod devices;
 mod legacy;
+#[cfg(test)]
+mod live_bench;
 mod notifications;
 mod recording;
 mod rpc;
@@ -32,7 +34,7 @@ use std::{
 use tokio::sync::{broadcast, mpsc};
 
 pub struct Service {
-    pub config: FrontendConfig,
+    pub config: super::SharedConfig,
     pub state_path: Option<PathBuf>,
     pub commands: mpsc::Sender<Request>,
     pub events: broadcast::Sender<Wire>,
@@ -71,6 +73,8 @@ pub struct Service {
     pose_config_revision: Option<u64>,
     hotkeys_dirty: bool,
     osc_dirty: bool,
+    device_metadata: BTreeMap<String, Arc<super::live::DeviceMetadata>>,
+    config_writer: Option<crate::config::Writer>,
 }
 impl Service {
     pub fn new(
@@ -80,7 +84,7 @@ impl Service {
         events: broadcast::Sender<Wire>,
     ) -> Self {
         Self {
-            config,
+            config: config.into(),
             state_path: path,
             commands,
             events,
@@ -119,6 +123,8 @@ impl Service {
             pose_config_revision: None,
             hotkeys_dirty: false,
             osc_dirty: false,
+            device_metadata: BTreeMap::new(),
+            config_writer: None,
         }
     }
     fn broadcast(&self, b: Vec<u8>) {
@@ -154,6 +160,50 @@ impl Service {
         );
         let _ = self.events.send(error_wire(message));
     }
+    pub(crate) fn ensure_config_writer(&mut self) -> Result<(), String> {
+        if self.config_writer.is_none() {
+            if let Some(path) = &self.state_path {
+                self.config_writer = Some(crate::config::Writer::start(path.clone())?);
+            }
+        }
+        Ok(())
+    }
+    fn persist_config(&mut self) -> Result<(), String> {
+        self.config.validate()?;
+        self.ensure_config_writer()?;
+        if let Some(writer) = &mut self.config_writer {
+            writer.submit(self.config.snapshot())?;
+        }
+        Ok(())
+    }
+    fn install_config(&mut self, config: FrontendConfig) -> Result<(), String> {
+        config.validate()?;
+        self.ensure_config_writer()?;
+        self.config.replace(config);
+        self.persist_config()
+    }
+    pub fn config_save_revision(&self) -> u64 {
+        self.config_writer
+            .as_ref()
+            .map_or(0, |writer| writer.revision())
+    }
+    pub(crate) fn poll_config_save(&self) -> Option<crate::config::Completion> {
+        let result = self.config_writer.as_ref()?.poll()?;
+        if let Some(error) = result
+            .previous_error
+            .as_ref()
+            .or(result.result.as_ref().err())
+        {
+            self.error(error);
+        }
+        Some(result)
+    }
+    pub async fn finish_config_save(&mut self) -> Result<(), String> {
+        if let Some(writer) = &mut self.config_writer {
+            writer.finish().await?;
+        }
+        Ok(())
+    }
     fn commit(
         &mut self,
         config: FrontendConfig,
@@ -168,7 +218,7 @@ impl Service {
             self.setup_taps.clear();
         }
         config.validate()?;
-        config.save(self.state_path.as_deref())?;
+        self.ensure_config_writer()?;
         engine.configure(at, config.pose.clone())?;
         self.hotkeys_dirty |= self.config.yaml["keybindings"] != config.yaml["keybindings"];
         self.osc_dirty |= self.config.osc != config.osc;
@@ -176,7 +226,7 @@ impl Service {
             at_ms: at,
             config: Box::new(config.pose.clone()),
         });
-        self.config = config;
+        self.install_config(config)?;
         if let Some(hid) = &self.hid {
             hid.set_direct(
                 self.config.yaml["hidConfig"]["trackersOverHID"]
@@ -253,12 +303,34 @@ impl Service {
         }
         Ok(())
     }
-    pub fn live(&self, receiver: &Receiver, engine: &PoseEngine, at: u64) -> Arc<LiveState> {
+    pub fn live(&mut self, receiver: &Receiver, engine: &PoseEngine, at: u64) -> Arc<LiveState> {
+        self.device_metadata
+            .retain(|key, _| receiver.devices.contains_key(key));
+        let devices = receiver
+            .devices
+            .values()
+            .map(|device| {
+                let metadata = match self
+                    .device_metadata
+                    .get(&device.key)
+                    .filter(|metadata| metadata.matches(device))
+                {
+                    Some(metadata) => metadata.clone(),
+                    None => {
+                        let metadata = Arc::new(super::live::DeviceMetadata::new(device));
+                        self.device_metadata
+                            .insert(device.key.clone(), metadata.clone());
+                        metadata
+                    }
+                };
+                super::live::LiveDevice::new(device, metadata)
+            })
+            .collect();
         Arc::new(LiveState {
             at,
-            devices: receiver.devices.clone(),
-            config: self.config.clone(),
-            pose: engine.snapshot().clone(),
+            devices,
+            config: self.config.snapshot(),
+            pose: engine.shared_snapshot(),
             external: self.external.clone(),
             persistent: self.state_path.is_some(),
             steam_vr: self.steam_vr.clone(),

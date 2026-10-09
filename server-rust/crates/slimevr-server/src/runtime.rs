@@ -1,5 +1,6 @@
 mod budget;
 mod ingress;
+mod replies;
 mod timing;
 use crate::{
     api::{self, FrontendConfig, Service},
@@ -223,6 +224,10 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         .take()
         .map(|c| Service::new(c, options.state.clone(), commands.clone(), events.clone()));
     if let Some(service) = &mut api {
+        // Create the idle writer before tracking; no thread spawn on a pose tick.
+        service.ensure_config_writer().map_err(io::Error::other)?;
+    }
+    if let Some(service) = &mut api {
         service.local_ip = if !options.bind.ip().is_unspecified() {
             options.bind.ip()
         } else {
@@ -349,7 +354,7 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
     let mut live = None;
     let mut api_task = None;
     let mut api_address = None;
-    if let (Some(bind), Some(service), Some(engine)) = (options.api_bind, &api, &engine) {
+    if let (Some(bind), Some(service), Some(engine)) = (options.api_bind, &mut api, &engine) {
         let (publisher, subscriber) =
             tokio::sync::watch::channel(service.live(&receiver, engine, 0));
         let (address, task) = api::serve(bind, commands, subscriber, events, pubsub_hub).await?;
@@ -415,6 +420,7 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
     };
     tokio::pin!(parent_shutdown);
     let mut prioritize_tick = true;
+    let mut deferred_replies = replies::Replies::default();
     loop {
         let activity = async {
             tokio::select! {
@@ -470,6 +476,11 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                 let at = start.elapsed().as_millis() as u64;
                 let tick_started = Instant::now();
                 timing.begin_tick(tick_started);
+                if let Some(service) = &api {
+                    if let Some(completion) = service.poll_config_save() {
+                        deferred_replies.complete(completion);
+                    }
+                }
                 if let (Some(bridge), Some(service), Some(engine)) =
                     (&mut steamvr, &mut api, &mut engine)
                 {
@@ -777,6 +788,13 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                             }
                         }
                         api::Request::Client { data, reply } => {
+                            if deferred_replies.full() {
+                                let _ = reply.send(vec![api::error_wire(
+                                    "Too many pending configuration saves".into(),
+                                )]);
+                                continue;
+                            }
+                            let save_before = service.config_save_revision();
                             let previous = receiver.config.allowed_macs.clone();
                             let response = service.handle(data, &mut receiver, engine, at);
                             if previous != receiver.config.allowed_macs {
@@ -789,7 +807,12 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                             }
                             write_api_changes(service, &mut recorder, at)?;
                             flush_device_commands(service, &socket, &mut recorder, at).await?;
-                            let _ = reply.send(response);
+                            let save_after = service.config_save_revision();
+                            if save_after > save_before {
+                                deferred_replies.defer(save_after, response, reply);
+                            } else {
+                                let _ = reply.send(response);
+                            }
                         }
                         api::Request::AutoBoneEpoch { epoch, total } => {
                             service.auto_epoch(&epoch, total)
@@ -834,11 +857,17 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         engine.tick(at).map_err(io::Error::other)?;
         write_json(LogLevel::Debug, engine.snapshot())?;
     }
+    let mut config_save_result = Ok(());
     if let (Some(service), Some(engine)) = (&mut api, &engine) {
         service.after_tick(engine, &receiver, at);
         service.finish_bvh();
         service.hid.take();
         service.serial.take();
+        let saved = service.finish_config_save().await;
+        if let Some(completion) = service.poll_config_save() {
+            deferred_replies.complete(completion);
+        }
+        config_save_result = saved;
     }
     if let Some(journal) = &mut recorder {
         journal.finish(at)?;
@@ -865,7 +894,7 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
     if let Some(task) = api_task {
         task.abort();
     }
-    Ok(())
+    config_save_result.map_err(|error| io::Error::other(error).into())
 }
 
 fn write_api_changes(

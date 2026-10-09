@@ -48,7 +48,7 @@ API 调试日志记录请求类型和事务号，不记录请求正文。重置�
 `runtime_timing` 还提供 `udp_queue_delay_ms`、`udp_batch_work_ms` 的 p50 / p95 / p99 / p999 / max，以及 `udp_datagrams`、`udp_batches`、`udp_budget_yields` 和队列合并／容量丢包计数。它们在 info 下可用，避免为了性能测量开启逐帧日志。队列计数按 summary 窗口采集，可能归入相邻 timing 窗口。
 
 `runtime_timing` 新增 `api_live_snapshot_ms` 和 `api_live_snapshots`，单独测量
-`Service::live()` 全量克隆的分位数与次数；不包含 watch 发布和旧快照析构，
+`Service::live()` 构造共享快照的分位数与次数；不包含 watch 发布和旧快照析构，
 也不是线程 CPU 耗时。无 API 时为 null / 0。
 
 同一记录中的 SteamVR 输出计数包括：
@@ -68,7 +68,11 @@ API 调试日志记录请求类型和事务号，不记录请求正文。重置�
 不能重复相加。`outcome` 为 saved / unchanged / error；error 带错误类别，
 不含路径或配置正文。正常为 info，保存超过 4ms 或失败为 warn。相同内容
 仍会构造 YAML 并读取比较，但不会写入或 fsync；无持久路径不发此记录。
-初始保存报告在 listening 后补发，耗时仍是启动保存的耗时。
+运行期保存由独立的配置写入线程执行，带 `background: true`、保存 `revision`
+和 `queue_delay_ms`；后者不包含在 `total_ms`。连续修改可能合并待写版本，
+每个实际执行的保存才产生一条记录。磁盘失败还通过 `backend_error` 通知前端；
+内存配置保留，保存成功确认仍等待落盘。正常退出会排空待写配置。
+初始保存仍在追踪启动前同步完成，报告在 listening 后补发，耗时是启动保存的耗时。
 
 Receiver freshness 和 TrackerPose 的 `pose_age_ms` 对 UDP 使用 socket 接收时刻，`pose_processing_age_ms` 保留主循环处理年龄，`pose_queue_delay_ms` 显示排队延迟。状态机与 replay 的时钟仍采用处理时刻，旧录制按原时刻回退。基准命令与测量结果见 [UDP 与 runtime 性能说明](rust-udp-runtime-performance.zh-CN.md)。
 

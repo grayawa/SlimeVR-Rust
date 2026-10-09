@@ -18,8 +18,8 @@ fn service() -> (Service, PoseEngine, Receiver) {
     )
 }
 
-#[test]
-fn live_keybind_and_osc_changes_notify_once_and_failed_commit_keeps_current_settings() {
+#[tokio::test]
+async fn configuration_changes_notify_once_and_disk_failure_keeps_live_settings() {
     let (mut service, mut engine, receiver) = service();
     assert!(service.take_hotkeys_update().unwrap().is_none());
     assert!(service.take_osc_update().is_none());
@@ -46,13 +46,27 @@ fn live_keybind_and_osc_changes_notify_once_and_failed_commit_keeps_current_sett
     let mut new_keys = keys.clone();
     new_keys.bindings[0].value = "ALT+F12".into();
     new_keys.write(&mut invalid.yaml).unwrap();
-    assert!(service.commit(invalid, &mut engine, &receiver, 3).is_err());
+    let mut events = service.events.subscribe();
+    service.commit(invalid, &mut engine, &receiver, 3).unwrap();
+    assert!(service.finish_config_save().await.is_err());
+    assert!(service.poll_config_save().unwrap().result.is_err());
+    let mut errors = Vec::new();
+    while let Ok(wire) = events.try_recv() {
+        if let Wire::Text(message) = wire {
+            errors.push(serde_json::from_str::<serde_json::Value>(&message).unwrap());
+        }
+    }
+    assert!(errors.iter().any(|error| error["type"] == "backend_error"));
     assert_eq!(
         crate::hotkeys::Settings::read(&service.config.yaml).unwrap(),
-        keys
+        new_keys.clone()
     );
     assert_eq!(service.config.osc, osc);
-    assert!(service.take_hotkeys_update().unwrap().is_none());
+    assert_eq!(service.take_hotkeys_update().unwrap(), Some(new_keys));
+    let mut invalid = service.config.clone();
+    invalid.pose.skeleton.hips_width = -1.;
+    assert!(service.commit(invalid, &mut engine, &receiver, 4).is_err());
+    assert!(service.config.pose.skeleton.hips_width > 0.);
 }
 
 #[test]
@@ -95,4 +109,62 @@ fn tick_and_read_requests_observe_metadata_height_and_cleared_mounting_after_rev
     }
     assert_eq!(service.config.pose.hmd_height, Some(1.7));
     assert_eq!(service.config.pose.imu_types[&B::Chest], 13);
+}
+
+#[test]
+fn live_snapshots_share_static_data_and_pose_without_mutating_previous_frames() {
+    let (mut service, mut engine, _) = service();
+    let mut receiver = Receiver::new(crate::receiver::ReceiverConfig {
+        accept_new_devices: true,
+        ..Default::default()
+    })
+    .unwrap();
+    let mut handshake: Vec<u8> = [9u32, 13, 1, 0, 0, 0, 22]
+        .into_iter()
+        .flat_map(u32::to_be_bytes)
+        .collect();
+    handshake.extend(b"\x05test\0");
+    handshake.extend([2, 0, 0, 0, 0, 1]);
+    let from = "127.0.0.1:6969".parse().unwrap();
+    receiver.receive(from, &crate::protocol::header(3, &handshake), 0);
+    receiver.receive(from, &crate::protocol::header(15, &[0, 1, 13]), 0);
+    engine.tick(0).unwrap();
+    let first = service.live(&receiver, &engine, 0);
+    let second = service.live(&receiver, &engine, 1);
+    assert_eq!(first.devices.len(), 1);
+    assert!(Arc::ptr_eq(&first.config, &second.config));
+    assert!(Arc::ptr_eq(&first.pose, &second.pose));
+    assert!(Arc::ptr_eq(
+        &first.devices[0].metadata,
+        &second.devices[0].metadata
+    ));
+    service.config.yaml["custom"] = serde_yaml_ng::Value::String("changed".into());
+    receiver
+        .devices
+        .get_mut("02:00:00:00:00:01")
+        .unwrap()
+        .display_name = Some("New name".into());
+    let mut rotation = vec![0, 1];
+    for v in [0f32, 0., 0., 1.] {
+        rotation.extend(v.to_be_bytes());
+    }
+    rotation.push(3);
+    receiver.receive(from, &crate::protocol::header(17, &rotation), 2);
+    engine.tick(2).unwrap();
+    let third = service.live(&receiver, &engine, 2);
+    assert!(!Arc::ptr_eq(&first.config, &third.config));
+    assert!(!Arc::ptr_eq(&first.pose, &third.pose));
+    assert!(!Arc::ptr_eq(
+        &first.devices[0].metadata,
+        &third.devices[0].metadata
+    ));
+    assert!(first.config.yaml["custom"].is_null());
+    assert_eq!(first.pose.at_ms, 0);
+    assert!(first.devices[0].display_name.is_none());
+    assert!(first.devices[0].sensors[0].1.rotation.is_none());
+    assert!(third.devices[0].sensors[0].1.rotation.is_some());
+    assert_eq!(third.devices[0].display_name.as_deref(), Some("New name"));
+    receiver.forget_device("02:00:00:00:00:01");
+    assert!(service.live(&receiver, &engine, 3).devices.is_empty());
+    assert!(service.device_metadata.is_empty());
 }

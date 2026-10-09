@@ -176,7 +176,7 @@ impl Service {
             }
             self.last_reset = p.reset_count;
             self.last_height = p.height_status;
-            if let Err(e) = self.config.save(self.state_path.as_deref()) {
+            if let Err(e) = self.persist_config() {
                 self.error(e);
             }
             self.broadcast(settings::frame(0, &self.config));

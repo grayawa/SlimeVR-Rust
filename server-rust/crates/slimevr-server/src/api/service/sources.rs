@@ -62,13 +62,14 @@ impl Service {
                     c.tracker_names
                         .insert(format!("{device_key}/{sensor_id}"), custom.into());
                 }
-                c.save(self.state_path.as_deref())?;
+                c.validate()?;
+                self.ensure_config_writer()?;
                 engine.configure(event.at_ms, c.pose.clone())?;
                 self.changes.push(SceneInput::Configure {
                     at_ms: event.at_ms,
                     config: Box::new(c.pose.clone()),
                 });
-                self.config = c;
+                self.install_config(c)?;
             }
         }
         Ok(())

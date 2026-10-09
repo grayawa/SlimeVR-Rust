@@ -294,7 +294,7 @@ fn hand_tracking_controller_handover_keeps_current_sources_in_solarxr_feed() {
                     trackers: true,
                     ..Default::default()
                 },
-                &BTreeMap::new(),
+                &[],
                 &BTreeMap::new(),
                 engine.snapshot(),
                 &service.config.pose,

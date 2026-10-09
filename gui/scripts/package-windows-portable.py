@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import hashlib
+import importlib.util
 import json
 import platform
 import shutil
@@ -12,6 +13,9 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+notice_spec = importlib.util.spec_from_file_location('distribution_notices', ROOT / 'gui/scripts/distribution-notices.py')
+notices = importlib.util.module_from_spec(notice_spec)
+notice_spec.loader.exec_module(notices)
 SYSTEM_DLLS = {
     'advapi32.dll', 'bcrypt.dll', 'bcryptprimitives.dll', 'cfgmgr32.dll',
     'combase.dll', 'comctl32.dll', 'crypt32.dll', 'dbghelp.dll', 'dwmapi.dll',
@@ -84,8 +88,7 @@ def main():
         # MSVC embeds the loader statically; GNU builds may import its DLL.
         if 'webview2loader.dll' in pe_info(args.gui_exe)['imports']:
             shutil.copy2(args.gui_exe.parent / 'WebView2Loader.dll', base / 'WebView2Loader.dll')
-        for name in ['LICENSE-MIT', 'LICENSE-APACHE']:
-            shutil.copy2(ROOT / name, base / name)
+        notices.copy_notices(ROOT, base, args.build_revision)
         driver = base / 'drivers/slimevr-openvr-driver-win64'
         shutil.copytree(source / 'slimevr-openvr-driver-win64', driver)
         for name in ['LICENSE-MIT', 'LICENSE-APACHE']:
@@ -96,8 +99,8 @@ def main():
             shutil.copy2(args.bindings_dir / name, bindings / name)
         shutil.copy2(ROOT / 'bindings-provider/openvr/LICENSE', bindings.parent / 'OPENVR-LICENSE')
         licenses = base / 'licenses'
-        licenses.mkdir()
-        shutil.copytree(ROOT / 'server-rust/licenses', licenses / 'rust-backend')
+        licenses.mkdir(exist_ok=True)
+        shutil.copytree(ROOT / 'server-rust/licenses', licenses / 'rust-backend', dirs_exist_ok=True)
         shutil.copy2(args.vc_runtime_dir / 'VC-Runtime-LICENSE.rtf', licenses / 'VC-Runtime-LICENSE.rtf')
         shutil.copy2(args.vc_runtime_dir / 'SOURCE.json', licenses / 'VC-Runtime-SOURCE.json')
         for name in VC_DLLS:

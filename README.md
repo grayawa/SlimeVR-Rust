@@ -59,6 +59,6 @@ GitHub Actions 中的 **SlimeVR Checks** 自动检查 PR 和 main；**Build GPUI
 
 硬件使用和佩戴说明可参考 [SlimeVR 官方文档](https://docs.slimevr.dev/)。本项目构建包从本仓库 GitHub Actions 的 artifacts 下载。
 
-继承的 SlimeVR 代码版权属于 Eiren Rain 和 SlimeVR Contributors，按原始 [MIT](LICENSE-MIT) / [Apache-2.0](LICENSE-APACHE) 双许可证分发。分发源码或二进制时须保留原始许可文件和版权声明；数学代码的第三方许可位于 `server-rust/licenses/`，构建包一并携带。贡献默认使用相同双许可证。
+本项目维护的新增代码和修改采用 **[GPL-3.0-or-later](LICENSE)**，即 GNU GPL 第 3 版或后续版本。继承的 SlimeVR 代码仍保留 Eiren Rain 和 SlimeVR Contributors 的版权及原始 [MIT](LICENSE-MIT) / [Apache-2.0](LICENSE-APACHE) 许可；它们不是我们新增代码的替代许可。第三方代码、字体及图像沿用各自许可证。具体范围、历史版本授权及二进制源码提供方式见 [许可说明](LICENSING.md) 和 [第三方声明](THIRD_PARTY_NOTICES.md)。贡献按所修改代码的许可接受。
 
 SlimeVR 商标与标识的使用规则见 [TRADEMARK.md](TRADEMARK.md)。本项目不代表 SlimeVR 官方发行版。

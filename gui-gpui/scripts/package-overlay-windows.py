@@ -59,15 +59,14 @@ def main():
                 raise ValueError(f'Missing runtime license/provenance: {name}')
         shutil.copy2(args.overlay_exe, base / 'SlimeVR-Overlay.exe')
         shutil.copy2(args.openvr_dll, base / 'openvr_api.dll')
-        for name in ['LICENSE-MIT', 'LICENSE-APACHE']:
-            shutil.copy2(ROOT / name, base / name)
+        gui.portable.notices.copy_notices(ROOT, base, args.build_revision)
         shutil.copytree(ROOT / 'server-rust/licenses', licenses / 'rust-backend', dirs_exist_ok=True)
         shutil.copy2(ROOT / 'bindings-provider/openvr/LICENSE', licenses / 'OpenVR-LICENSE')
         shutil.copy2(ROOT / 'gui-gpui/assets/GPUI-Kit-LICENSE-APACHE', licenses)
         vendor = ROOT / 'gui-gpui/vendor/gpui-pre-windows'
         shutil.copy2(vendor / 'LICENSE-APACHE', licenses / 'GPUI-Windows-LICENSE-APACHE')
         shutil.copy2(vendor / 'SLIMEVR-PATCH.md', licenses / 'GPUI-Windows-PATCH.md')
-        shutil.copytree(ROOT / 'gui-gpui/assets/fonts', licenses / 'fonts', ignore=shutil.ignore_patterns('*.ttf'))
+        shutil.copytree(ROOT / 'gui-gpui/assets/fonts', licenses / 'fonts', ignore=shutil.ignore_patterns('*.ttf'), dirs_exist_ok=True)
         shutil.copy2(ROOT / 'docs/rust-steamvr-dashboard.zh-CN.md', base / '面板说明与测试.md')
         for name, flags in [('Start-Overlay.cmd', ''), ('Preview-Overlay.cmd', '--preview'), ('Demo-Overlay.cmd', '--demo')]:
             (base / name).write_bytes((

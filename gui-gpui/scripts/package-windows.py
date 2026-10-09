@@ -44,9 +44,9 @@ def main():
   if args.server_exe:shutil.copy2(args.server_exe,base/'slimevr-server.exe')
   if not(base/'slimevr-server.exe').is_file():raise ValueError('A backend executable is required')
   if args.probe_exe:shutil.copy2(args.probe_exe,base/'slimevr-gpui-probe.exe')
-  for name in ['LICENSE-MIT','LICENSE-APACHE']:shutil.copy2(ROOT/name,base/name)
+  portable.notices.copy_notices(ROOT,base,args.build_revision)
   shutil.copytree(ROOT/'server-rust/licenses',licenses/'rust-backend',dirs_exist_ok=True)
-  shutil.copytree(ROOT/'gui-gpui/assets/fonts',licenses/'fonts',ignore=shutil.ignore_patterns('*.ttf'))
+  shutil.copytree(ROOT/'gui-gpui/assets/fonts',licenses/'fonts',ignore=shutil.ignore_patterns('*.ttf'),dirs_exist_ok=True)
   kit_license=ROOT/'gui-gpui/assets/GPUI-Kit-LICENSE-APACHE'
   if kit_license.is_file():shutil.copy2(kit_license,licenses/kit_license.name)
   shutil.copy2(ROOT/'gui-gpui/vendor/gpui-pre-windows/LICENSE-APACHE',licenses/'GPUI-Windows-LICENSE-APACHE')

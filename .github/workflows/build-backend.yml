@@ -25,9 +25,14 @@ jobs:
           key: windows-backend
           cache-on-failure: true
       - run: cargo build --manifest-path server-rust/Cargo.toml --release --locked --bin slimevr-server
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Include license and source notices
+        run: python gui/scripts/distribution-notices.py --output dist/backend --revision "$GITHUB_SHA" --backend-exe server-rust/target/release/slimevr-server.exe
       - uses: actions/upload-artifact@v7
         with:
           name: SlimeVR-Backend-Windows-x64
-          path: server-rust/target/release/slimevr-server.exe
+          path: dist/backend/
           retention-days: 30
           if-no-files-found: error

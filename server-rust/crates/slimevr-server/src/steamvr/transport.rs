@@ -1,7 +1,11 @@
 //! Driver-compatible local IPC, with bounded queues and session-scoped output.
-use super::{messages::ProtobufMessage, Batch, Event};
+use super::{messages::ProtobufMessage, output_stats::WriteBatch, Batch, Event, OutputStats};
 use prost::Message;
-use std::{io, path::Path};
+use std::{
+    io,
+    path::Path,
+    sync::{atomic::Ordering, Arc},
+};
 use tokio::{
     io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
     sync::mpsc,
@@ -74,6 +78,7 @@ async fn connection<S: AsyncRead + AsyncWrite + Unpin>(
     session: u64,
     events: &mpsc::Sender<Event>,
     output: &mut mpsc::Receiver<Batch>,
+    stats: &OutputStats,
 ) -> io::Result<()> {
     events
         .send(Event::Connected(session))
@@ -95,12 +100,10 @@ async fn connection<S: AsyncRead + AsyncWrite + Unpin>(
     let send = async {
         while let Some(batch) = output.recv().await {
             if batch.session != session {
+                stats.stale_batches.fetch_add(1, Ordering::Relaxed);
                 continue;
             }
-            for message in batch.messages {
-                let bytes = encode(&message)?;
-                timeout(Duration::from_millis(250), writer.write_all(&bytes)).await??;
-            }
+            write_batch(&mut writer, batch, stats).await?;
         }
         Ok::<(), io::Error>(())
     };
@@ -112,6 +115,24 @@ async fn connection<S: AsyncRead + AsyncWrite + Unpin>(
         .send(Event::Disconnected(session))
         .await
         .map_err(io::Error::other)?;
+    result
+}
+
+async fn write_batch<W: AsyncWrite + Unpin>(
+    writer: &mut W,
+    batch: Batch,
+    stats: &OutputStats,
+) -> io::Result<()> {
+    let measured = WriteBatch::new(stats);
+    let result = async {
+        for message in batch.messages {
+            let bytes = encode(&message)?;
+            timeout(Duration::from_millis(250), writer.write_all(&bytes)).await??;
+        }
+        Ok(())
+    }
+    .await;
+    measured.finish(result.is_ok());
     result
 }
 
@@ -155,7 +176,16 @@ impl Listener {
             identity: (metadata.dev(), metadata.ino()),
         })
     }
-    pub async fn run(self, events: mpsc::Sender<Event>, mut output: mpsc::Receiver<Batch>) {
+    pub async fn run(self, events: mpsc::Sender<Event>, output: mpsc::Receiver<Batch>) {
+        self.run_with_stats(events, output, Arc::new(OutputStats::default()))
+            .await;
+    }
+    pub async fn run_with_stats(
+        self,
+        events: mpsc::Sender<Event>,
+        mut output: mpsc::Receiver<Batch>,
+        stats: Arc<OutputStats>,
+    ) {
         let mut session = 0;
         loop {
             let stream = match self.listener.accept().await {
@@ -163,7 +193,7 @@ impl Listener {
                 Err(_) => break,
             };
             session += 1;
-            let _ = connection(stream, session, &events, &mut output).await;
+            let _ = connection(stream, session, &events, &mut output, &stats).await;
             if events.is_closed() {
                 break;
             }
@@ -213,14 +243,23 @@ impl Listener {
             .create(path)?;
         Ok(Self { server })
     }
-    pub async fn run(mut self, events: mpsc::Sender<Event>, mut output: mpsc::Receiver<Batch>) {
+    pub async fn run(self, events: mpsc::Sender<Event>, output: mpsc::Receiver<Batch>) {
+        self.run_with_stats(events, output, Arc::new(OutputStats::default()))
+            .await;
+    }
+    pub async fn run_with_stats(
+        mut self,
+        events: mpsc::Sender<Event>,
+        mut output: mpsc::Receiver<Batch>,
+        stats: Arc<OutputStats>,
+    ) {
         let mut session = 0;
         loop {
             if self.server.connect().await.is_err() {
                 break;
             }
             session += 1;
-            let _ = connection(&mut self.server, session, &events, &mut output).await;
+            let _ = connection(&mut self.server, session, &events, &mut output, &stats).await;
             let _ = self.server.disconnect();
             if events.is_closed() {
                 break;
@@ -246,5 +285,59 @@ impl Listener {
                 break;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn batch(messages: usize) -> Batch {
+        Batch {
+            session: 1,
+            messages: (0..messages)
+                .map(|_| {
+                    super::super::envelope(
+                        super::super::messages::protobuf_message::Message::Version(
+                            super::super::messages::Version {
+                                protocol_version: 2,
+                            },
+                        ),
+                    )
+                })
+                .collect(),
+        }
+    }
+    #[tokio::test]
+    async fn completed_partial_failed_and_cancelled_writes_have_distinct_counts() {
+        let stats = OutputStats::default();
+        let (mut writer, mut reader) = tokio::io::duplex(16);
+        let (written, ()) = tokio::join!(write_batch(&mut writer, batch(2), &stats), async {
+            for _ in 0..2 {
+                read(&mut reader).await.unwrap();
+            }
+        });
+        written.unwrap();
+        assert_eq!(stats.snapshot().steamvr_output_batches_written, 1);
+        drop(reader);
+        assert!(write_batch(&mut writer, batch(1), &stats).await.is_err());
+        assert_eq!(stats.snapshot().steamvr_output_write_failed, 1);
+        let (mut writer, _blocked_reader) = tokio::io::duplex(1);
+        let mut writing = Box::pin(write_batch(&mut writer, batch(2), &stats));
+        assert!(matches!(
+            futures_util::poll!(&mut writing),
+            std::task::Poll::Pending
+        ));
+        drop(writing);
+        assert_eq!(stats.snapshot().steamvr_output_write_cancelled, 1);
+        assert_eq!(stats.snapshot().steamvr_output_batches_written, 1);
+    }
+    #[tokio::test(start_paused = true)]
+    async fn timeout_of_a_partially_written_batch_is_a_failure_not_a_completed_batch() {
+        let stats = OutputStats::default();
+        let (mut writer, _blocked_reader) = tokio::io::duplex(1);
+        assert!(write_batch(&mut writer, batch(2), &stats).await.is_err());
+        assert_eq!(stats.snapshot().steamvr_output_write_failed, 1);
+        assert_eq!(stats.snapshot().steamvr_output_batches_written, 0);
+        assert_eq!(stats.snapshot().steamvr_output_write_cancelled, 0);
     }
 }

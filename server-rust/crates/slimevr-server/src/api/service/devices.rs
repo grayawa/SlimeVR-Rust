@@ -112,7 +112,7 @@ impl Service {
         }
         if changed {
             receiver.config.allowed_macs = self.config.allowed_macs.clone();
-            if let Err(e) = self.config.save(self.state_path.as_deref()) {
+            if let Err(e) = self.persist_config() {
                 self.error(e);
             }
         }

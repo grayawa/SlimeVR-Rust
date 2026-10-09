@@ -58,8 +58,7 @@ impl Service {
                     } else {
                         c.ignored_steps.remove(&id);
                     }
-                    c.save(self.state_path.as_deref())?;
-                    self.config = c;
+                    self.install_config(c)?;
                 }
                 out.push(diagnostics::frame(
                     tx,
@@ -98,8 +97,7 @@ impl Service {
                 }
                 crate::config::put(&mut c.yaml, &["vrcConfig", "mutedWarnings"], muted)
                     .map_err(|e| e.to_string())?;
-                c.save(self.state_path.as_deref())?;
-                self.config = c;
+                self.install_config(c)?;
                 self.broadcast(vrchat::frame(
                     tx,
                     self.vrchat.as_ref(),
@@ -121,8 +119,7 @@ impl Service {
                     crate::config::put(&mut c.yaml, &["overlay", "isMirrored"], value)
                         .map_err(|e| e.to_string())?;
                 }
-                c.save(self.state_path.as_deref())?;
-                self.config = c;
+                self.install_config(c)?;
                 self.broadcast(overlay_frame(tx, &self.config));
             }
             rpc::RpcMessage::ServerInfosRequest => {

@@ -87,8 +87,7 @@ impl Service {
                     None
                 };
                 self.device_control.ready(&commands)?;
-                c.save(self.state_path.as_deref())?;
-                self.config = c;
+                self.install_config(c)?;
                 if commands.is_empty() {
                     out.push(device_control::mag_frame(tx, tracker, r.enable()));
                 } else {
@@ -198,8 +197,7 @@ impl Service {
                 if !c.allowed_macs.contains(&mac) {
                     c.allowed_macs.push(mac);
                 }
-                c.save(self.state_path.as_deref())?;
-                self.config = c;
+                self.install_config(c)?;
                 receiver.config.allowed_macs = self.config.allowed_macs.clone();
             }
             _ => unreachable!("RPC routed to the wrong domain"),

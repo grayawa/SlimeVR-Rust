@@ -1,24 +1,21 @@
 //! Messages crossing the transport / single-owner runtime boundary.
-use crate::{
-    api::{diagnostics, vrchat, FrontendConfig},
-    receiver::DeviceState,
-};
+use crate::api::{diagnostics, vrchat, FrontendConfig};
 use serde_json::json;
 use slimevr_core::{
     autobone::{AutoBoneResult, Epoch},
     pose::PoseSnapshot,
     skeleton::{BodyPosition as B, HeadPose},
 };
-use std::{collections::BTreeMap, path::PathBuf};
+use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 use tokio::sync::oneshot;
 use tokio_tungstenite::tungstenite::Message;
 
 #[derive(Clone)]
 pub struct LiveState {
     pub at: u64,
-    pub devices: BTreeMap<String, DeviceState>,
-    pub config: FrontendConfig,
-    pub pose: PoseSnapshot,
+    pub devices: Vec<super::live::LiveDevice>,
+    pub config: Arc<FrontendConfig>,
+    pub pose: Arc<PoseSnapshot>,
     pub external: BTreeMap<B, HeadPose>,
     pub persistent: bool,
     pub steam_vr: crate::steamvr::Status,
@@ -76,6 +73,6 @@ pub enum Request {
         count: usize,
     },
 }
-pub(super) fn error_wire(message: String) -> Wire {
+pub(crate) fn error_wire(message: String) -> Wire {
     Wire::Text(json!({"type":"backend_error","message":message}).to_string())
 }

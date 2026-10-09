@@ -6,7 +6,10 @@ use crate::{
     EventKind, InputEvent, Quaternion as Q, SensorStatus, Timed, TrackerSample, Vector3 as V,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::{
+    collections::{BTreeMap, BTreeSet, VecDeque},
+    sync::Arc,
+};
 
 fn default_mounting() -> Q {
     Q::rotation_y(std::f32::consts::PI)
@@ -279,7 +282,7 @@ pub struct PoseEngine {
     last_full_reset_ms: Option<u64>,
     mounting_completed: bool,
     feet_mounting_completed: bool,
-    last_snapshot: PoseSnapshot,
+    last_snapshot: Arc<PoseSnapshot>,
 }
 impl PoseEngine {
     pub fn new(config: PoseConfig) -> Result<Self, String> {
@@ -332,7 +335,7 @@ impl PoseEngine {
             last_full_reset_ms: None,
             mounting_completed: false,
             feet_mounting_completed: false,
-            last_snapshot: PoseSnapshot {
+            last_snapshot: Arc::new(PoseSnapshot {
                 kind: "pose_snapshot",
                 at_ms: 0,
                 tick_dt_seconds: 0.0,
@@ -353,7 +356,7 @@ impl PoseEngine {
                 height_status: crate::gestures::HeightStatus::Idle,
                 measured_height: 0.0,
                 flex_rotations: BTreeMap::new(),
-            },
+            }),
         })
     }
     fn advance(&mut self, at: u64) -> Result<(), String> {
@@ -1129,7 +1132,7 @@ impl PoseEngine {
         }
         self.frame += 1;
         self.last_tick_ms = Some(at);
-        self.last_snapshot = PoseSnapshot {
+        self.last_snapshot = Arc::new(PoseSnapshot {
             kind: "pose_snapshot",
             at_ms: at,
             tick_dt_seconds: dt,
@@ -1155,7 +1158,7 @@ impl PoseEngine {
             height_status: self.height_calibration.status,
             measured_height: self.height_calibration.height,
             flex_rotations: self.flex_rotations.clone(),
-        };
+        });
         Ok(&self.last_snapshot)
     }
     /// Changes only when exported configuration may change, never on ordinary samples/ticks.
@@ -1210,6 +1213,10 @@ impl PoseEngine {
     }
     pub fn snapshot(&self) -> &PoseSnapshot {
         &self.last_snapshot
+    }
+    /// Immutable solved frame, shared with readers without cloning its maps.
+    pub fn shared_snapshot(&self) -> Arc<PoseSnapshot> {
+        self.last_snapshot.clone()
     }
     pub fn calibrated_head(&self) -> Option<HeadPose> {
         self.head

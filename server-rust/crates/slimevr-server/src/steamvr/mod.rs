@@ -1,6 +1,8 @@
 //! SteamVR driver protocol v2. The runtime owns pose changes; IPC never solves.
 pub mod manager;
+mod output_stats;
 pub mod transport;
+pub use output_stats::{OutputCounters, OutputStats};
 pub mod messages {
     include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 }
@@ -18,6 +20,7 @@ use std::{
     io,
     path::{Path, PathBuf},
     process::Stdio,
+    sync::{atomic::Ordering, Arc},
 };
 use tokio::{sync::mpsc, task::JoinHandle};
 
@@ -145,8 +148,12 @@ pub struct Session {
     shared: BTreeSet<String>,
     ready: bool,
     initialized: bool,
+    output_stats: Arc<OutputStats>,
 }
 impl Session {
+    pub fn output_stats(&self) -> &Arc<OutputStats> {
+        &self.output_stats
+    }
     pub fn current(&self, event: &Event) -> bool {
         matches!(event, Event::Message(session,_) if *session==self.session && self.status.connected)
     }
@@ -570,17 +577,26 @@ impl Session {
                 }
             }
         }
-        if !messages.is_empty()
-            && sender
-                .try_send(Batch {
-                    session: self.session,
-                    messages,
-                })
-                .is_ok()
-        {
-            self.shared = shared;
-            self.initialized = true;
-            self.ready = false;
+        if !messages.is_empty() {
+            match sender.try_send(Batch {
+                session: self.session,
+                messages,
+            }) {
+                Ok(()) => {
+                    self.output_stats.enqueued.fetch_add(1, Ordering::Relaxed);
+                    self.shared = shared;
+                    self.initialized = true;
+                    self.ready = false;
+                }
+                Err(mpsc::error::TrySendError::Full(_)) => {
+                    self.output_stats.queue_full.fetch_add(1, Ordering::Relaxed);
+                }
+                Err(mpsc::error::TrySendError::Closed(_)) => {
+                    self.output_stats
+                        .queue_closed
+                        .fetch_add(1, Ordering::Relaxed);
+                }
+            }
         }
     }
 }
@@ -761,7 +777,8 @@ impl Bridge {
                 }
             }
         });
-        let task = tokio::spawn(listener.run(sender, receiver));
+        let output_stats = Arc::new(OutputStats::default());
+        let task = tokio::spawn(listener.run_with_stats(sender, receiver, output_stats.clone()));
         let rpc_task = tokio::spawn(rpc_listener.run_rpc(commands, publisher, hub));
         let provider_path = if no_provider {
             None
@@ -770,6 +787,7 @@ impl Bridge {
         };
         Ok(Self {
             state: Session {
+                output_stats,
                 status: Status {
                     available: true,
                     endpoint: Some(endpoint.into()),

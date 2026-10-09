@@ -77,9 +77,10 @@ impl Service {
                     .ok_or("missing keybind change")?;
                 let mut c = self.config.clone();
                 crate::hotkeys::change(&mut c.yaml, r)?;
-                c.save(self.state_path.as_deref())?;
+                c.validate()?;
+                self.ensure_config_writer()?;
                 self.hotkeys_dirty |= self.config.yaml["keybindings"] != c.yaml["keybindings"];
-                self.config = c;
+                self.install_config(c)?;
                 self.broadcast(crate::hotkeys::frame(
                     tx,
                     &crate::hotkeys::Settings::read(&self.config.yaml)?,

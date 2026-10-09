@@ -299,7 +299,29 @@ fn real_cli_uses_original_default_file_and_udp_port_and_migrates_legacy_state_on
     );
     let ready: serde_json::Value =
         serde_json::from_str(String::from_utf8_lossy(&run.stdout).lines().next().unwrap()).unwrap();
+    assert_eq!(ready["type"], "listening");
     assert!(!ready["bind"].as_str().unwrap().ends_with(":6969"));
+    let diagnostics: Vec<serde_json::Value> = String::from_utf8_lossy(&run.stdout)
+        .lines()
+        .chain(String::from_utf8_lossy(&run.stderr).lines())
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    let save = diagnostics
+        .iter()
+        .find(|entry| entry["type"] == "config_save_timing")
+        .unwrap();
+    assert_eq!(save["outcome"], "saved");
+    assert_eq!(save["files_written"], 2); // Existing YAML and its backup.
+    assert_eq!(save["sync_all_calls"], 2);
+    assert!(save["file_io_ms"].as_f64().unwrap() >= save["sync_all_ms"].as_f64().unwrap());
+    let timing = diagnostics
+        .iter()
+        .find(|entry| entry["type"] == "runtime_timing")
+        .unwrap();
+    assert!(timing["api_live_snapshots"].as_u64().unwrap() > 0);
+    assert!(timing["api_live_snapshot_ms"]["max"].as_f64().unwrap() >= 0.);
+    assert_eq!(timing["steamvr_output_batches_written"], 0);
+    assert_eq!(timing["steamvr_output_queue_full"], 0);
     let c = FrontendConfig::load(&path).unwrap();
     assert_eq!(c.yaml["custom"].as_str(), Some("keep me"));
     assert!(!dir.path().join("rust-backend.json").exists());

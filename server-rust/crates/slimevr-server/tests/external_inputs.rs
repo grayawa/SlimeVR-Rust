@@ -22,8 +22,8 @@ fn added(serial: &str, role: i32) -> messages::ProtobufMessage {
         ..Default::default()
     }))
 }
-#[test]
-fn vive_role_yaml_assignment_no_imu_mounting_and_recorded_reconnect() {
+#[tokio::test]
+async fn vive_role_yaml_assignment_no_imu_mounting_and_recorded_reconnect() {
     let mut config=slimevr_server::config::from_yaml(serde_yaml_ng::from_str("version: 15\ntrackers:\n  LHR-test:\n    designation: body:left_foot\n    customName: Vive foot\n").unwrap()).unwrap();
     config.pose.filter.mode = slimevr_core::filtering::FilterType::Prediction;
     let temp = tempfile::tempdir().unwrap();
@@ -81,12 +81,6 @@ fn vive_role_yaml_assignment_no_imu_mounting_and_recorded_reconnect() {
             .calibration
             .mounting_reset_done
     );
-    let reloaded = FrontendConfig::load(&path).unwrap();
-    assert_eq!(reloaded.pose.bindings[0].device_key, "steamvr:LHR-test");
-    assert_eq!(
-        reloaded.yaml["trackers"]["LHR-test"]["designation"].as_str(),
-        Some("body:left_foot")
-    );
     for input in session
         .receive(Event::Connected(5), 4)
         .unwrap()
@@ -111,6 +105,13 @@ fn vive_role_yaml_assignment_no_imu_mounting_and_recorded_reconnect() {
     engine.tick(6).unwrap();
     assert_eq!(engine.snapshot().trackers[0].session, 5);
     assert_eq!(receiver.devices["steamvr:LHR-test"].session, 5);
+    service.finish_config_save().await.unwrap();
+    let reloaded = FrontendConfig::load(&path).unwrap();
+    assert_eq!(reloaded.pose.bindings[0].device_key, "steamvr:LHR-test");
+    assert_eq!(
+        reloaded.yaml["trackers"]["LHR-test"]["designation"].as_str(),
+        Some("body:left_foot")
+    );
 }
 fn packet(addr: &str, args: Vec<rosc::OscType>) -> Vec<u8> {
     rosc::encoder::encode(&rosc::OscPacket::Message(rosc::OscMessage {

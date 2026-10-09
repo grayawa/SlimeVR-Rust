@@ -86,3 +86,38 @@ Wi-Fi、HMD、SteamVR 输出与 VRChat 尚需实测。
 原始记录和环境信息见 [测量数据](../server-rust/benchmarks/udp-runtime-2026-10-08.json)。
 后续优化 BTreeSet / BTreeMap 或 Mutex 前应保留这组对照，并在目标 Windows
 机器上测量锁竞争和后端 CPU，不能把分位数的单次变化直接当成性能回归。
+
+## API 快照共享与配置写入（2026-10-09）
+
+运行隔离的快照构造微基准：
+
+```sh
+cargo test --manifest-path server-rust/Cargo.toml -p slimevr-server --release --lib api::service::live_bench::benchmark_live_snapshot_sharing --locked -- --ignored --nocapture
+```
+
+六台设备、每台两个传感器、12 个已分配节点，使用 `vrconfig-v15.yml` 测试
+配置。每种路径各做三轮、每轮 20,000 次，交替先后顺序。参考路径重建旧
+`Service::live()` 的全量克隆字段集合；共享路径调用新的 `Service::live()`。
+两者都包含构造和析构，不包含解算、网络、watch 发布与锁竞争。这与日志中
+不含析构的 `api_live_snapshot_ms` 测量边界不同，不应直接比较绝对值。
+
+下表分位数取三轮中位数，max 取三轮最大观测值，单位 µs：
+
+| 路径         | p50    | p95    | p99     | p999    | max      |
+| ------------ | ------ | ------ | ------- | ------- | -------- |
+| 全量克隆参考 | 25.869 | 40.651 | 113.751 | 460.633 | 6103.737 |
+| 共享快照     | 0.711  | 0.771  | 1.002   | 14.793  | 253.661  |
+
+原始记录见 [快照测量数据](../server-rust/benchmarks/live-snapshot-2026-10-09.json)。
+这个微基准证明复制开销降低，不证明 SteamVR / VRChat 的整体 p99 或 p999
+已经改善。墙钟尾延迟包含系统抢占，本轮测试期间环境还有其他测试进程。
+姿态 tick 改为创建一个共享 `Arc`，这部分新增成本不在快照微基准内。
+设备动态读数仍复制；外部追踪小表与 SteamVR 状态仍按值复制。
+
+配置保存使用独立 OS 线程，保留原子的 YAML 备份、`sync_all()` 和替换逻辑。
+慢磁盘测试用阻塞的写入函数验证：首个写入阻塞期间，生产方继续提交 99 次
+配置并推进 PoseEngine；队列只有正在写的版本和最新待写版本，释放后仅
+写入 revision 1 与 100，退出等待完成。额外测试验证保存失败的通知、失败后
+保留内存配置，以及客户端回复等待持久化 revision。阻塞替身用于稳定验证
+调度边界，不用于预测实际磁盘耗时。启动保存、离线工具、BVH 与 replay
+journal 仍使用各自原来的同步接口。

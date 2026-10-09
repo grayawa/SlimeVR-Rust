@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-09",
+  "comparison": "isolated snapshot construction and destruction; full-clone reference vs Service::live; not end-to-end latency",
+  "os": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "devices": 6,
+  "sensors_per_device": 2,
+  "config_fixture": "vrconfig-v15.yml",
+  "trials": [
+    {
+      "max": 2107.95,
+      "p50": 25.869,
+      "p95": 38.097,
+      "p99": 90.406,
+      "p999": 263.096,
+      "path": "full_clone_reference",
+      "samples": 20000,
+      "trial": 0,
+      "unit": "us"
+    },
+    {
+      "max": 84.076,
+      "p50": 0.7010000000000001,
+      "p95": 0.771,
+      "p99": 0.992,
+      "p999": 14.793000000000001,
+      "path": "shared",
+      "samples": 20000,
+      "trial": 0,
+      "unit": "us"
+    },
+    {
+      "max": 202.795,
+      "p50": 0.711,
+      "p95": 0.771,
+      "p99": 1.002,
+      "p999": 14.422,
+      "path": "shared",
+      "samples": 20000,
+      "trial": 1,
+      "unit": "us"
+    },
+    {
+      "max": 6103.737,
+      "p50": 25.849,
+      "p95": 40.651,
+      "p99": 113.751,
+      "p999": 460.633,
+      "path": "full_clone_reference",
+      "samples": 20000,
+      "trial": 1,
+      "unit": "us"
+    },
+    {
+      "max": 2549.393,
+      "p50": 25.869,
+      "p95": 49.725,
+      "p99": 132.79000000000002,
+      "p999": 710.268,
+      "path": "full_clone_reference",
+      "samples": 20000,
+      "trial": 2,
+      "unit": "us"
+    },
+    {
+      "max": 253.66100000000003,
+      "p50": 0.711,
+      "p95": 0.782,
+      "p99": 1.232,
+      "p999": 29.915,
+      "path": "shared",
+      "samples": 20000,
+      "trial": 2,
+      "unit": "us"
+    }
+  ]
+}

@@ -294,7 +294,7 @@ fn hand_tracking_controller_handover_keeps_current_sources_in_solarxr_feed() {
                     trackers: true,
                     ..Default::default()
                 },
-                &BTreeMap::new(),
+                &[],
                 &BTreeMap::new(),
                 engine.snapshot(),
                 &service.config.pose,
@@ -393,6 +393,10 @@ async fn output_uses_final_computed_pose_stable_serials_and_retries_registration
     // Occupied queue: new share changes must not be acknowledged/lost.
     config.steam_vr.trackers.insert("head".into(), false);
     session.output(&config, &pose, &receiver, &sender);
+    let stats = session.output_stats().clone();
+    assert_eq!(stats.snapshot().steamvr_output_batches_enqueued, 1);
+    assert_eq!(stats.snapshot().steamvr_output_queue_full, 1);
+    assert_eq!(stats.snapshot().steamvr_output_batches_written, 0);
     let first = output.recv().await.unwrap();
     assert_eq!(
         first
@@ -441,6 +445,11 @@ async fn output_uses_final_computed_pose_stable_serials_and_retries_registration
             assert_eq!(t.tracker_id, t.tracker_role);
         }
     }
+    assert_eq!(stats.snapshot().steamvr_output_batches_enqueued, 3);
+    drop(output);
+    config.steam_vr.trackers.insert("head".into(), true);
+    session.output(&config, &pose, &receiver, &sender);
+    assert_eq!(stats.snapshot().steamvr_output_queue_closed, 1);
 }
 
 #[test]
@@ -599,7 +608,8 @@ async fn socket_ownership_stale_cleanup_and_stream_reconnect_are_safe() {
     let listener = steamvr::transport::Listener::bind(&path).unwrap();
     let (sender, mut events) = mpsc::channel(16);
     let (output, receiver) = mpsc::channel(4);
-    let task = tokio::spawn(listener.run(sender, receiver));
+    let stats = std::sync::Arc::new(steamvr::OutputStats::default());
+    let task = tokio::spawn(listener.run_with_stats(sender, receiver, stats.clone()));
     let mut client = tokio::net::UnixStream::connect(&path).await.unwrap();
     // The ownership probe above may enqueue an empty connection; this fresh listener has none.
     let session = match tokio::time::timeout(Duration::from_secs(1), events.recv())
@@ -641,6 +651,16 @@ async fn socket_ownership_stale_cleanup_and_stream_reconnect_are_safe() {
         steamvr::transport::read(&mut client).await.unwrap(),
         position(0, 1.7)
     );
+    // Finish notification can run just after the reader observes the final bytes.
+    tokio::time::timeout(Duration::from_secs(1), async {
+        while stats.snapshot().steamvr_output_batches_written == 0 {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
+    assert_eq!(stats.snapshot().steamvr_output_batches_written, 1);
+    assert_eq!(stats.snapshot().steamvr_output_stale_batches, 1);
     task.abort();
     let _ = task.await;
     assert!(!path.exists());

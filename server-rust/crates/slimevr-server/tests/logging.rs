@@ -286,6 +286,8 @@ fn timing_windows_emit_percentiles_cumulative_stalls_and_final_partial_window() 
     for report in &reports {
         assert_eq!(report["tick_kind"], "pose");
         assert_eq!(report["expected_tick_ms"], 4.);
+        assert_eq!(report["api_live_snapshots"], 0);
+        assert!(report["api_live_snapshot_ms"].is_null());
         assert!(report["window_ms"].as_f64().unwrap() > 0.);
         ticks += report["ticks"].as_u64().unwrap();
         let count = report["interval_samples"].as_u64().unwrap();

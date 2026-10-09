@@ -129,6 +129,10 @@ pub(super) struct Report {
     pub udp_dropped_controls: u64,
     pub udp_queue_delay_ms: Option<Percentiles>,
     pub udp_batch_work_ms: Option<Percentiles>,
+    pub api_live_snapshots: u64,
+    pub api_live_snapshot_ms: Option<Percentiles>,
+    #[serde(flatten)]
+    pub steamvr_output: crate::steamvr::OutputCounters,
 }
 
 pub(super) struct Timing {
@@ -142,6 +146,7 @@ pub(super) struct Timing {
     stalls: Stalls,
     udp_delay: Histogram,
     udp_work: Histogram,
+    live_snapshot: Histogram,
     udp_yields: u64,
     udp_loss: [u64; 3],
 }
@@ -158,6 +163,7 @@ impl Timing {
             stalls: Stalls::default(),
             udp_delay: Histogram::new(),
             udp_work: Histogram::new(),
+            live_snapshot: Histogram::new(),
             udp_yields: 0,
             udp_loss: [0; 3],
         }
@@ -179,6 +185,9 @@ impl Timing {
     pub fn udp_batch(&mut self, elapsed: Duration, yielded: bool) {
         self.udp_work.record(elapsed);
         self.udp_yields += u64::from(yielded);
+    }
+    pub fn live_snapshot(&mut self, elapsed: Duration) {
+        self.live_snapshot.record(elapsed);
     }
     pub fn ingress_counts(&mut self, coalesced: u64, dropped_poses: u64, dropped_controls: u64) {
         for (total, count) in
@@ -212,11 +221,15 @@ impl Timing {
             udp_dropped_controls: self.udp_loss[2],
             udp_queue_delay_ms: self.udp_delay.percentiles(),
             udp_batch_work_ms: self.udp_work.percentiles(),
+            api_live_snapshots: self.live_snapshot.count,
+            api_live_snapshot_ms: self.live_snapshot.percentiles(),
+            steamvr_output: Default::default(),
         };
         self.jitter.clear();
         self.work.clear();
         self.udp_delay.clear();
         self.udp_work.clear();
+        self.live_snapshot.clear();
         self.udp_loss = [0; 3];
         self.window_start = now;
         // Keep previous: a stall crossing a reporting boundary must still count.
@@ -240,6 +253,7 @@ mod tests {
         timing.end_tick(Duration::from_micros(100));
         timing.udp_received(Duration::from_millis(100));
         timing.udp_batch(Duration::from_millis(2), true);
+        timing.live_snapshot(Duration::from_millis(3));
         timing.ingress_counts(12, 1, 2);
         let report = timing
             .report(start + Duration::from_secs(1), 1000, false)
@@ -249,6 +263,8 @@ mod tests {
         assert_eq!(report.udp_budget_yields, 1);
         assert_eq!(report.udp_queue_delay_ms.unwrap().max, 100.);
         assert_eq!(report.udp_batch_work_ms.unwrap().max, 2.);
+        assert_eq!(report.api_live_snapshots, 1);
+        assert_eq!(report.api_live_snapshot_ms.unwrap().max, 3.);
         assert_eq!(
             [
                 report.udp_coalesced,
@@ -267,6 +283,8 @@ mod tests {
         assert_eq!(report.udp_budget_yields, 0);
         assert!(report.udp_queue_delay_ms.is_none());
         assert_eq!(report.udp_coalesced, 0);
+        assert_eq!(report.api_live_snapshots, 0);
+        assert!(report.api_live_snapshot_ms.is_none());
     }
     #[test]
     fn fractional_excess_keeps_clock_precision_at_thresholds() {

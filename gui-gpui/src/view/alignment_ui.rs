@@ -55,7 +55,7 @@ impl SlimeView {
                     .rounded_lg()
                     .bg(rgb(0x10352f))
                     .text_color(rgb(0x50e897))
-                    .child(format!("{} · GPUI test14", env!("CARGO_PKG_VERSION"))),
+                    .child(format!("{} · GPUI test15", env!("CARGO_PKG_VERSION"))),
             )
             .child(div().flex_1())
             .child(
@@ -342,34 +342,32 @@ impl SlimeView {
             side = side.child(self.skeleton_panel((height - 260.).max(270.), cx));
         }
         if self.checklist_closed {
-            side = side
-                .child(
-                    div()
-                        .h_flex()
-                        .flex_wrap()
-                        .gap_2()
-                        .child(self.bvh(cx))
-                        .child(
-                            Button::new("home-pause")
-                                .small()
-                                .label(self.text(if paused {
-                                    "tracking-paused"
-                                } else {
-                                    "tracking-unpaused"
-                                }))
-                                .disabled(!connected || busy || self.snapshot.paused.is_none())
-                                .on_click(cx.listener(move |this, _, _, cx| {
-                                    this.send(Command::Pause(!paused), cx)
-                                })),
-                        )
-                        .child(
-                            Button::new("home-vr-mode")
-                                .small()
-                                .label(self.text("vrmode-title"))
-                                .on_click(cx.listener(|this, _, _, cx| this.go(Page::VrMode, cx))),
-                        ),
-                )
-                .child(self.preview_menu(cx));
+            side = side.child(
+                div()
+                    .h_flex()
+                    .flex_wrap()
+                    .gap_2()
+                    .child(self.bvh(cx))
+                    .child(
+                        Button::new("home-pause")
+                            .small()
+                            .label(self.text(if paused {
+                                "tracking-paused"
+                            } else {
+                                "tracking-unpaused"
+                            }))
+                            .disabled(!connected || busy || self.snapshot.paused.is_none())
+                            .on_click(cx.listener(move |this, _, _, cx| {
+                                this.send(Command::Pause(!paused), cx)
+                            })),
+                    )
+                    .child(
+                        Button::new("home-vr-mode")
+                            .small()
+                            .label(self.text("vrmode-title"))
+                            .on_click(cx.listener(|this, _, _, cx| this.go(Page::VrMode, cx))),
+                    ),
+            );
         }
         div()
             .flex()
@@ -865,49 +863,6 @@ impl SlimeView {
             .child(controls)
             .child(pane)
             .into_any_element()
-    }
-}
-
-impl SlimeView {}
-
-impl SlimeView {
-    fn preview_menu(&self, cx: &mut Context<Self>) -> AnyElement {
-        let toggles = self.read("SettingsResponse")["model_settings"]["toggles"].clone();
-        let choices: Vec<_> = ["floor_clip", "skating_correction", "toe_snap", "foot_plant"]
-            .into_iter()
-            .map(|field| {
-                (
-                    field,
-                    self.text(&format!("native-tmp-{field}")),
-                    self.temporary_tweaks
-                        .get(field)
-                        .copied()
-                        .unwrap_or(toggles[field] == true),
-                )
-            })
-            .collect();
-        let clear = self.text("native-tmp-clear");
-        let view = cx.entity().downgrade();
-        Button::new("home-preview-options").ghost().small()
-            .child(svg().path("slime/Gear.svg").size(px(16.)).text_color(cx.theme().muted_foreground))
-            .dropdown_menu(move |mut menu,_,_| {
-                for (field,label,enabled) in &choices {
-                    let view=view.clone();let field=*field;let enabled=*enabled;
-                    menu=menu.item(PopupMenuItem::new(label.clone()).checked(enabled).on_click(move |_,_,cx| {
-                        let _=view.update(cx,|this,cx| {
-                            let mut value=json!({});value[field]=json!(!enabled);
-                            if this.client.rpc("LegTweaksTmpChange",value).is_ok(){this.temporary_tweaks.insert(field.into(),!enabled);}
-                            cx.notify();
-                        });
-                    }));
-                }
-                let view=view.clone();menu.item(PopupMenuItem::new(clear.clone()).on_click(move |_,_,cx| {
-                    let _=view.update(cx,|this,cx| {
-                        this.rpc("LegTweaksTmpClear",json!({"floor_clip":true,"skating_correction":true,"toe_snap":true,"foot_plant":true}),cx);
-                        this.temporary_tweaks.clear();
-                    });
-                }))
-            }).into_any_element()
     }
 }
 

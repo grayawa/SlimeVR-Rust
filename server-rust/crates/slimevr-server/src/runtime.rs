@@ -129,6 +129,7 @@ async fn apply_effects(
 
 pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
     logging::configure(options.log_level);
+    let mut initial_config_save = None;
     if options.state.is_none() && (options.api_bind.is_some() || options.steamvr_endpoint.is_some())
     {
         options.state = Some(crate::config::default_path());
@@ -165,7 +166,15 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         config.allowed_macs.sort();
         config.allowed_macs.dedup();
         config.validate().map_err(io::Error::other)?;
-        config.save(Some(&path)).map_err(io::Error::other)?;
+        let (saved, report) = crate::config::save_measured(&config, Some(&path));
+        if saved.is_err() {
+            if let Some(report) = report {
+                report.emit();
+            }
+            saved?;
+        } else {
+            initial_config_save = report;
+        }
         options.state = Some(path);
         if !options.bind_explicit {
             options.bind.set_port(config.tracker_port);
@@ -366,6 +375,10 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         "allowed_macs":receiver.config.allowed_macs, "discovery_targets":targets,
         "steamvr_endpoint": steamvr.as_ref().and_then(|b| b.state.status.endpoint.as_ref())}),
     )?;
+    // Preserve the ready/listening event as the first startup diagnostic.
+    if let Some(report) = initial_config_save {
+        report.emit();
+    }
     let start = Instant::now();
     let period = Duration::from_millis(if engine.is_some() {
         options.pose_ms
@@ -540,7 +553,10 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                     if at >= next_api_publish {
                         next_api_publish = at.saturating_add(10);
                         if let Some(live) = &live {
-                            live.send_replace(service.live(&receiver, engine, at));
+                            let snapshot_started = Instant::now();
+                            let snapshot = service.live(&receiver, engine, at);
+                            timing.live_snapshot(snapshot_started.elapsed());
+                            live.send_replace(snapshot);
                         }
                     }
                 }
@@ -584,9 +600,12 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
                 }
                 let tick_finished = Instant::now();
                 timing.end_tick(tick_finished.duration_since(tick_started));
-                if let Some(report) =
+                if let Some(mut report) =
                     timing.report(tick_finished, start.elapsed().as_millis() as u64, false)
                 {
+                    if let Some(bridge) = &steamvr {
+                        report.steamvr_output = bridge.state.output_stats().take_window();
+                    }
                     report_timing(&report);
                 }
                 if options
@@ -796,7 +815,10 @@ pub async fn listen(mut options: ListenOptions) -> Result<(), Box<dyn Error>> {
         stats.dropped_poses.swap(0, Ordering::Relaxed),
         stats.dropped_controls.swap(0, Ordering::Relaxed),
     );
-    if let Some(report) = timing.report(Instant::now(), at, true) {
+    if let Some(mut report) = timing.report(Instant::now(), at, true) {
+        if let Some(bridge) = &steamvr {
+            report.steamvr_output = bridge.state.output_stats().take_window();
+        }
         report_timing(&report);
     }
     if let (Some(service), Some(engine)) = (&mut api, &mut engine) {
@@ -907,7 +929,11 @@ fn dispatch_source(
 }
 
 fn report_timing(report: &timing::Report) {
-    let level = if report.runtime_stall.gt_50ms != 0 {
+    let level = if report.runtime_stall.gt_50ms != 0
+        || report.steamvr_output.steamvr_output_queue_full != 0
+        || report.steamvr_output.steamvr_output_queue_closed != 0
+        || report.steamvr_output.steamvr_output_write_failed != 0
+    {
         LogLevel::Warn
     } else {
         LogLevel::Info

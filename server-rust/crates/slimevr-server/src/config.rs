@@ -1,6 +1,9 @@
 //! SlimeVR's vrconfig.yml is the persistent source. Runtime structs are an adapter,
 //! not a second configuration file. Keep unmapped YAML fields when saving.
+mod persistence;
 use crate::{api::FrontendConfig, receiver::normalize_mac};
+pub use persistence::save;
+pub(crate) use persistence::save_measured;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_yaml_ng::{Mapping, Value};
 use slimevr_core::{
@@ -8,8 +11,7 @@ use slimevr_core::{
 };
 use std::{
     collections::BTreeSet,
-    fs,
-    io::{self, Write},
+    fs, io,
     path::{Path, PathBuf},
 };
 
@@ -762,35 +764,6 @@ pub fn forget_device(c: &mut FrontendConfig, mac: &str) {
                 .is_none_or(|(key, _)| key != mac)
         });
     }
-}
-pub fn save(c: &FrontendConfig, path: Option<&Path>) -> io::Result<()> {
-    c.validate().map_err(error)?;
-    let Some(path) = path else { return Ok(()) };
-    let data = serde_yaml_ng::to_string(&to_yaml(c)?).map_err(|e| error(e.to_string()))?;
-    if data.len() as u64 > MAX_CONFIG_BYTES {
-        return Err(error("serialized configuration exceeds 8 MiB"));
-    }
-    let parent = path
-        .parent()
-        .filter(|p| !p.as_os_str().is_empty())
-        .unwrap_or_else(|| Path::new("."));
-    fs::create_dir_all(parent)?;
-    if path.exists() {
-        let original = fs::read(path)?;
-        if original == data.as_bytes() {
-            return Ok(());
-        }
-        let backup = PathBuf::from(format!("{}.bak", path.display()));
-        atomic_write(parent, &backup, &original)?;
-    }
-    atomic_write(parent, path, data.as_bytes())
-}
-fn atomic_write(parent: &Path, path: &Path, data: &[u8]) -> io::Result<()> {
-    let mut file = tempfile::NamedTempFile::new_in(parent)?;
-    file.write_all(data)?;
-    file.as_file().sync_all()?;
-    file.persist(path).map_err(|e| e.error)?;
-    Ok(())
 }
 
 pub fn default_path() -> PathBuf {

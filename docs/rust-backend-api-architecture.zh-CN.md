@@ -37,15 +37,19 @@
 每个 `runtime_timing` 汇总包含 `tick_kind`（`pose` 或仅接收模式的
 `receiver`）、目标周期、实际窗口长度、tick 数与间隔样本数。
 
-| 字段                                                           | 含义                                                                                                         |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `tick_jitter_ms`                                               | 相邻 tick 的实际间隔与目标周期之差的绝对值，输出 p50 / p95 / p99 / p999 / max                                |
-| `tick_work_ms`                                                 | 一次主循环 tick 的实际耗时，包含状态更新、解算、输出和周期维护，输出同样的分位数；不是单独 PoseEngine 的耗时 |
-| `runtime_stall`                                                | 实际间隔超出目标周期的部分，累计统计严格超过 2 / 5 / 10 / 50 / 100 ms 的次数，字段为 `gt_2ms` 等             |
-| `udp_queue_delay_ms`                                           | 从 socket 接收后到主循环开始处理的等待时间，包含接收任务解析与队列等待，输出同样的分位数                     |
-| `udp_batch_work_ms`                                            | 一次有预算的 UDP 处理实际耗时，包含接收器、effects 和可选 journal 写入，输出同样的分位数                     |
-| `udp_datagrams` / `udp_batches` / `udp_budget_yields`          | 本窗口处理的包数、批次数与达到预算而退出批次的次数                                                           |
-| `udp_coalesced` / `udp_dropped_poses` / `udp_dropped_controls` | 汇入窗口的队列合并、姿态容量丢包与控制容量丢包数量                                                           |
+| 字段                                                                                              | 含义                                                                                                         |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `tick_jitter_ms`                                                                                  | 相邻 tick 的实际间隔与目标周期之差的绝对值，输出 p50 / p95 / p99 / p999 / max                                |
+| `tick_work_ms`                                                                                    | 一次主循环 tick 的实际耗时，包含状态更新、解算、输出和周期维护，输出同样的分位数；不是单独 PoseEngine 的耗时 |
+| `runtime_stall`                                                                                   | 实际间隔超出目标周期的部分，累计统计严格超过 2 / 5 / 10 / 50 / 100 ms 的次数，字段为 `gt_2ms` 等             |
+| `udp_queue_delay_ms`                                                                              | 从 socket 接收后到主循环开始处理的等待时间，包含接收任务解析与队列等待，输出同样的分位数                     |
+| `udp_batch_work_ms`                                                                               | 一次有预算的 UDP 处理实际耗时，包含接收器、effects 和可选 journal 写入，输出同样的分位数                     |
+| `udp_datagrams` / `udp_batches` / `udp_budget_yields`                                             | 本窗口处理的包数、批次数与达到预算而退出批次的次数                                                           |
+| `udp_coalesced` / `udp_dropped_poses` / `udp_dropped_controls`                                    | 汇入窗口的队列合并、姿态容量丢包与控制容量丢包数量                                                           |
+| `api_live_snapshot_ms` / `api_live_snapshots`                                                     | `Service::live()` 全量克隆的耗时分位数与调用次数，不含 watch 发布和旧快照析构                                |
+| `steamvr_output_batches_enqueued` / `steamvr_output_batches_written`                              | 主循环成功入队批次与 IPC 写完全部消息的批次，二者分别计数                                                    |
+| `steamvr_output_queue_full` / `steamvr_output_queue_closed`                                       | `try_send` 因队列满或接收端关闭而失败的次数                                                                  |
+| `steamvr_output_write_failed` / `steamvr_output_write_cancelled` / `steamvr_output_stale_batches` | 编码／写入／超时失败、发送 future 被连接结束取消、重连后丢弃旧会话批次                                       |
 
 例如目标周期 4 ms、实际间隔 7 ms，jitter 为 3 ms，stall 只增加
 `gt_2ms`；实际间隔 1 ms 时 jitter 同样为 3 ms，但不增加 stall。
@@ -55,7 +59,7 @@
 
 默认窗口为 10 秒，可用 `listen --timing-window-ms 30000` 改成 30 秒。
 退出时会补发剩余的部分窗口，空窗口不发。正常汇总为 info；窗口内有
-超过 50 ms 的 stall 时为 warn。旧的单条 `runtime_stall` / 100 ms
+超过 50 ms 的 stall，或 SteamVR 队列满／关闭／写入失败时为 warn。旧的单条 `runtime_stall` / 100 ms
 间隔告警已替换为这些统计。默认 4 ms 周期下，10 秒约有 2,500 个间隔
 样本；不足 1,000 个样本时 p999 通常接近最大值，分析时必须同时看
 `interval_samples`、`window_ms` 和 `max`。
@@ -63,10 +67,37 @@
 分位数采用 nearest-rank 与固定大小的微秒直方图，不保存或逐帧排序
 原始样本。小于 512 微秒的桶按微秒分辨，之后桶宽不超过约 0.4%；
 分位数取桶上界并限制到真实最大值，因此存在最多约 0.4% 加 1 微秒的
-量化误差。`max` 和 stall 阈值判断保留原始时钟精度。四个直方图总计
-约 456 KiB，内存不随运行时间或窗口长度增加。UDP 合并／丢弃计数按
+量化误差。`max` 和 stall 阈值判断保留原始时钟精度。五个直方图总计
+约 570 KiB，内存不随运行时间或窗口长度增加。UDP 合并／丢弃计数按
 `--summary-ms` 收集后汇入 timing 窗口，跨越两种窗口边界时可能归入
 相邻窗口；退出时补收剩余计数。等待与批处理耗时逐包／逐批计入当前窗口。
+
+### 快照、保存与 SteamVR 输出诊断
+
+主循环约每 10ms 到期后调用 `Service::live()`，保持设备表、完整配置（含 YAML）、
+姿态和外部状态的全量克隆方式。`api_live_snapshot_ms` 只包围这次调用，不做
+增量更新，也不包含 `watch::send_replace` 或旧值析构。初始启动快照不计入
+runtime 窗口；没有 API 时次数为 0、分位数为 null。实际调用次数决定 p999 的
+样本量，不能用 `interval_samples` 代替它。
+
+持久配置保存每次产生 `config_save_timing`，包括验证、YAML 构造与序列化、
+文件操作及其内部 `sync_all()` 耗时。`outcome` 为 saved / unchanged / error；
+`files_written` 是成功写完并替换的文件数，`sync_all_calls` 是同步尝试数，
+包含 `.bak` 与正式文件。相同内容仍会验证、序列化和读取比较，但不写入或
+同步文件。错误记录保留已完成阶段，不改变错误返回或配置提交／确认顺序。
+无持久路径时不生成此记录；日志不含 YAML 正文或文件路径。初次保存记录在
+listening 后补发，以保持启动就绪事件顺序。
+
+SteamVR 主循环保留容量为 4 的队列和非阻塞 `try_send`，只有入队成功才确认
+共享状态并清除 ready。原子计数在每个 timing 窗口取走一次；IPC 线程记录
+整批消息完成写入的时刻，重连不清除尚未报告的计数。入队与写完可能跨窗口，
+各计数读取也不是原子组合快照，因此不能通过相减精确计算丢帧。written
+表示写入 IPC 成功，不保证 SteamVR 已处理、渲染或 VRChat 已显示。失败与
+取消可能已经写出部分消息；旧会话批次继续丢弃。这里统计的是驱动输出通道，
+不混入兼容输入 feeder 或 RPC 通道。
+
+这些阶段耗时均为墙钟时间，包含线程被系统抢占的时间，不是线程 CPU 时间。
+它们用于进一步定位长尾，不能单独证明某个阶段造成了历史日志中的停顿。
 
 ## 执行和状态边界
 

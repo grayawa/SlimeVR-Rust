@@ -39,13 +39,36 @@
 
 API 调试日志记录请求类型和事务号，不记录请求正文。重置只在完成时写常规日志，不逐帧写倒计时。
 
-`runtime_timing` 默认每 10 秒汇总 tick jitter 与 tick 实际耗时的 p50 / p95 / p99 / p999 / max。`runtime_stall` 字段统计实际 tick 间隔超出目标周期后严格超过 2 / 5 / 10 / 50 / 100 ms 的次数；超过 50 ms 的窗口为 warn，其余为 info。可通过 `--timing-window-ms` 调整窗口，退出时补发剩余样本。这些指标不能单独证明 CPU 饱和，口径和量化精度见 [后端架构说明](rust-backend-api-architecture.zh-CN.md#tick-延迟统计)。同一 UDP 设备重新握手时，`device_connected` 的 `session` 递增，`preserve_calibration: true` 表示保留旋转校准。排查步骤见 [重连校准修复](rust-load-reconnect.zh-CN.md)。
+`runtime_timing` 默认每 10 秒汇总 tick jitter 与 tick 实际耗时的 p50 / p95 / p99 / p999 / max。`runtime_stall` 字段统计实际 tick 间隔超出目标周期后严格超过 2 / 5 / 10 / 50 / 100 ms 的次数；超过 50 ms，或 SteamVR 输出队列满／关闭／写入失败的窗口为 warn，其余为 info。可通过 `--timing-window-ms` 调整窗口，退出时补发剩余样本。这些指标不能单独证明 CPU 饱和，口径和量化精度见 [后端架构说明](rust-backend-api-architecture.zh-CN.md#tick-延迟统计)。同一 UDP 设备重新握手时，`device_connected` 的 `session` 递增，`preserve_calibration: true` 表示保留旋转校准。排查步骤见 [重连校准修复](rust-load-reconnect.zh-CN.md)。
 
 `udp_ingress_backpressure` 按 `--summary-ms` 窗口汇总接收队列：`coalesced` 是被更新数据完整覆盖而合并掉的旧纯姿态包；`dropped_poses` 是合并后仍超过姿态容量而淘汰的最旧姿态包；`dropped_controls` 是控制队列满后丢弃的新控制包。只有合并时为 debug，发生容量丢包时为 warn；这三个计数不包含操作系统 UDP 缓冲区丢包。接收策略见 [后端架构说明](rust-backend-api-architecture.zh-CN.md#执行和状态边界)。
 
 设备快照里的 `sequence_gaps` 只表示接收器观察到的序号间隔，也会包含队列主动合并的旧包，不能直接作为网络丢包数量。
 
 `runtime_timing` 还提供 `udp_queue_delay_ms`、`udp_batch_work_ms` 的 p50 / p95 / p99 / p999 / max，以及 `udp_datagrams`、`udp_batches`、`udp_budget_yields` 和队列合并／容量丢包计数。它们在 info 下可用，避免为了性能测量开启逐帧日志。队列计数按 summary 窗口采集，可能归入相邻 timing 窗口。
+
+`runtime_timing` 新增 `api_live_snapshot_ms` 和 `api_live_snapshots`，单独测量
+`Service::live()` 全量克隆的分位数与次数；不包含 watch 发布和旧快照析构，
+也不是线程 CPU 耗时。无 API 时为 null / 0。
+
+同一记录中的 SteamVR 输出计数包括：
+
+- `steamvr_output_batches_enqueued`：成功入队的批次。
+- `steamvr_output_queue_full` / `steamvr_output_queue_closed`：非阻塞入队失败原因。
+- `steamvr_output_batches_written`：IPC 已写完全部消息的批次，不代表客户端已消费。
+- `steamvr_output_write_failed` / `steamvr_output_write_cancelled`：编码／写入／超时失败，以及连接结束取消正在发送的批次；可能已有部分消息写出。
+- `steamvr_output_stale_batches`：重连后丢弃的旧会话批次。
+
+异步入队与写完可能跨窗口，计数不能简单相减推断丢帧，也不能用 UDP 容量
+丢包为零推断 SteamVR 输出无跳帧。驱动输出保持 `try_send`，不会等待队列腾位。
+
+`config_save_timing` 按每次有持久路径的保存记录 `total_ms`、`validation_ms`、
+`serialization_ms`、`file_io_ms`、`sync_all_ms`、`serialized_bytes`、
+`files_written` 和 `sync_all_calls`。`sync_all_ms` 已包含在 `file_io_ms`，
+不能重复相加。`outcome` 为 saved / unchanged / error；error 带错误类别，
+不含路径或配置正文。正常为 info，保存超过 4ms 或失败为 warn。相同内容
+仍会构造 YAML 并读取比较，但不会写入或 fsync；无持久路径不发此记录。
+初始保存报告在 listening 后补发，耗时仍是启动保存的耗时。
 
 Receiver freshness 和 TrackerPose 的 `pose_age_ms` 对 UDP 使用 socket 接收时刻，`pose_processing_age_ms` 保留主循环处理年龄，`pose_queue_delay_ms` 显示排队延迟。状态机与 replay 的时钟仍采用处理时刻，旧录制按原时刻回退。基准命令与测量结果见 [UDP 与 runtime 性能说明](rust-udp-runtime-performance.zh-CN.md)。
 

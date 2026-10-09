@@ -2,8 +2,8 @@
 """Execute upstream AutoBone training methods, iterator, objectives, statistics and FK.
 
 Server/filesystem callbacks and recording containers are explicit adapters. Actual
-HumanSkeleton and bone-offset methods are extracted from the checkout, not ported
-into the oracle. This does not run the full Java service or read PFS/PFR files.
+HumanSkeleton and bone-offset methods are extracted directly from the reference
+checkout. The oracle executes this isolated training path with in-memory frames.
 """
 import copy
 import argparse

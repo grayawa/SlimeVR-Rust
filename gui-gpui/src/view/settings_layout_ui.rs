@@ -9,8 +9,7 @@ use slimevr_gpui::{
 };
 
 impl SlimeView {
-    // Use shaped glyph advances to wrap descriptions at the pane width, rather
-    // than letting intrinsic sizing of a nested text block expand the line.
+    // Wrap descriptions at the pane width using shaped glyph advances.
     pub(super) fn settings_text_lines(
         &self,
         text: String,

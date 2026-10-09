@@ -1,4 +1,5 @@
-//! Settings drafts survive navigation and incoming state, but are never replayed after reconnect.
+//! Settings drafts retain edits across navigation and incoming state updates.
+//! Saving is an explicit operation in the current connection session.
 use crate::{navigation::Section, rpc_generated};
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};

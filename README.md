@@ -1,6 +1,6 @@
 # SlimeVR Rust
 
-基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri 宿主。旧 Java/Kotlin 服务与 Gradle 工程已移除；算法对照数据和生成工具仍保留，参考源码从固定历史版本读取。见 [Java 工程清理说明](docs/rust-only-backend.zh-CN.md)。
+基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri 宿主。算法测试使用提交到仓库的参考数据，生成工具从固定上游版本读取源码。见 [后端与参考工具](docs/rust-only-backend.zh-CN.md)。
 
 这是独立开发的衍生项目。上游基线为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`，原作者、许可证及商标说明保留在下文。
 
@@ -11,16 +11,16 @@
 | `server-rust/` | UDP/HID 接收、姿态算法、校准、AutoBone、SteamVR、OSC/VMC、SolarXR API、YAML 配置、BVH | [后端](server-rust/README.zh-CN.md) · [算法](server-rust/README.core.zh-CN.md) · [API 架构](docs/rust-backend-api-architecture.zh-CN.md) |
 | `gui-gpui/`    | GPUI Kit 原生界面、组件库、引导、原版 Fluent 翻译                                     | [构建与使用](gui-gpui/README.zh-CN.md) · [组件库](docs/rust-gpui-components.zh-CN.md)                                                    |
 | `gui/`         | React 界面、Tauri 宿主及打包工具                                                      | [Tauri 构建](gui/README.tauri.md)                                                                                                        |
-| `docs/`        | 移植说明、功能对照、修复记录及实机测试清单                                            | [交接记录](docs/rust-completion-worklog.zh-CN.md) · [统一测试清单](docs/rust-unified-hardware-test.zh-CN.md)                             |
+| `docs/`        | 架构说明、功能契约、验证数据及实机测试清单                                            | [功能概览](docs/rust-completion-worklog.zh-CN.md) · [统一测试清单](docs/rust-unified-hardware-test.zh-CN.md)                             |
 
-后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 前端不需要 WebView2；Tauri 前端需要系统提供 WebView2。
+后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 使用原生渲染器；Tauri 使用系统 WebView2。
 
 ## 克隆与构建
 
 ```sh
 git clone --recurse-submodules https://github.com/grayawa/SlimeVR-Rust.git
 cd SlimeVR-Rust
-# 已经克隆过但没有初始化子模块时：
+# 初始化现有克隆的子模块：
 git submodule update --init --recursive
 ```
 
@@ -38,7 +38,7 @@ Windows 上可让原生界面启动刚构建的后端：
 .\gui-gpui\target\release\slimevr-gpui.exe --backend .\server-rust\target\release\slimevr-server.exe
 ```
 
-首次使用通过引导连接、批准及分配设备。启动前退出占用同一接收端口的 Java 服务。完整分发包还需要驱动、OpenVR helper 和运行库，构建脚本及打包方式见各前端说明；这些生成资源不放入 Git。
+首次使用通过引导连接、批准及分配设备。启动前退出占用同一接收端口的 Java 服务。完整分发包还需要驱动、OpenVR helper 和运行库，构建脚本及打包方式见各前端说明；生成资源由构建脚本准备并放入分发包。
 
 Tauri 版本在安装 Node.js、pnpm 和系统依赖后构建：
 
@@ -59,6 +59,6 @@ GitHub Actions 中的 **SlimeVR Checks** 自动检查 PR 和 main；**Build GPUI
 
 硬件使用和佩戴说明可参考 [SlimeVR 官方文档](https://docs.slimevr.dev/)。本项目构建包从本仓库 GitHub Actions 的 artifacts 下载。
 
-本项目维护的新增代码和修改采用 **[GPL-3.0-or-later](LICENSE)**，即 GNU GPL 第 3 版或后续版本。继承的 SlimeVR 代码仍保留 Eiren Rain 和 SlimeVR Contributors 的版权及原始 [MIT](LICENSE-MIT) / [Apache-2.0](LICENSE-APACHE) 许可；它们不是我们新增代码的替代许可。第三方代码、字体及图像沿用各自许可证。具体范围、历史版本授权及二进制源码提供方式见 [许可说明](LICENSING.md) 和 [第三方声明](THIRD_PARTY_NOTICES.md)。贡献按所修改代码的许可接受。
+本项目维护的新增代码和修改采用 **[GPL-3.0-or-later](LICENSE)**，即 GNU GPL 第 3 版或后续版本。继承的 SlimeVR 代码仍保留 Eiren Rain 和 SlimeVR Contributors 的版权及原始 [MIT](LICENSE-MIT) / [Apache-2.0](LICENSE-APACHE) 许可。新增代码按 GPL 条款授权。第三方代码、字体及图像沿用各自许可证。具体范围、历史版本授权及二进制源码提供方式见 [许可说明](LICENSING.md) 和 [第三方声明](THIRD_PARTY_NOTICES.md)。贡献按所修改代码的许可接受。
 
-SlimeVR 商标与标识的使用规则见 [TRADEMARK.md](TRADEMARK.md)。本项目不代表 SlimeVR 官方发行版。
+SlimeVR 商标与标识的使用规则见 [TRADEMARK.md](TRADEMARK.md)。本项目由独立开发者维护。

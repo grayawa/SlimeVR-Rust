@@ -1,6 +1,6 @@
 # Contributing to SlimeVR Rust
 
-This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with a Tauri host. The original Java / Gradle project has been removed. See [README.md](README.md) for project entry points and [CI checks](docs/rust-ci.zh-CN.md) for pull request validation.
+This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with a Tauri host. Production code and reference tools are organized by their current responsibilities. See [README.md](README.md) for project entry points and [CI checks](docs/rust-ci.zh-CN.md) for pull request validation.
 
 ## Prerequisites
 
@@ -36,11 +36,23 @@ Backend communication tests use `server-rust/target/debug/slimevr-server`; build
 
 `pnpm gui` starts the Tauri development window with the Rust backend. Use `pnpm tauri:rust:build` for a complete desktop build, or `pnpm web` for browser development with a separately running backend.
 
-Format each Rust workspace with `cargo fmt --manifest-path <Cargo.toml>`. React uses ESLint and Prettier. Keep behavior changes covered by relevant tests; real SteamVR / tracker validation is documented separately.
+Run `cargo fmt` inside each Rust workspace directory. From the repository root, format the backend with `cargo fmt --manifest-path server-rust/Cargo.toml -p slimevr-core -p slimevr-server`. React uses ESLint and Prettier. Keep behavior changes covered by relevant tests; real SteamVR / tracker validation is documented separately.
+
+## Documentation and comments
+
+Describe the current implementation and contract directly: what a value means,
+what an operation does, its inputs, outputs, limits and error conditions. Prefer
+concrete, affirmative wording. Keep each explanation focused on its subject.
+
+When interfaces, behavior, parameters or scope change, rewrite the affected
+passages and comments together with the code. Replace outdated semantics with
+the final contract. Use migration history, compatibility changes or deprecation
+rationale when the task specifically calls for them. Preserve exact license
+texts, copyright notices and third-party attribution.
 
 ## Upstream behavior references
 
-Ordinary Rust tests use committed golden fixtures and require no JVM. To regenerate upstream references, see [reference source handling](docs/rust-only-backend.zh-CN.md). Test-only Kotlin adapters are kept separately from production code.
+Ordinary Rust tests use committed golden fixtures with the Rust toolchain. To regenerate upstream references, see [reference source handling](docs/rust-only-backend.zh-CN.md). Test-only Kotlin adapters are kept separately from production code.
 
 ## SolarXR Protocol
 

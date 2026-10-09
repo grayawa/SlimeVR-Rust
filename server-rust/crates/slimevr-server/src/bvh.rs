@@ -1,5 +1,5 @@
 //! Port of BVHFileStream (BLENDER settings) and TickReducer.
-//! HIP-tail root, metres, ZXY degrees, 100 Hz; stream frames instead of retaining a clip.
+//! Stream frames using a HIP-tail root, metres, ZXY degrees and 100 Hz sampling.
 use slimevr_core::{
     skeleton::{BoneLinks, SkeletonPose},
     Quaternion as Q, Vector3 as V,
@@ -244,7 +244,7 @@ pub struct Recorder {
     finished: bool,
 }
 impl Recorder {
-    /// Existing directories use BVH-RecordingN.bvh. Existing files are never overwritten.
+    /// Select a free BVH-RecordingN.bvh in directories; explicit paths use exclusive creation.
     pub fn start(path: &Path, pose: &SkeletonPose) -> io::Result<Self> {
         let rig = Rig::new(pose)?;
         let (file, path) = if path.is_dir() {

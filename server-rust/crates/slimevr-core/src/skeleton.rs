@@ -108,8 +108,8 @@ pub struct SkeletonConfig {
     pub elbow_offset: f32,
     pub force_arms_from_hmd: bool,
     pub enforce_constraints: bool,
-    /// Compatibility switches: upstream's regular FK path does not invoke the general IK solver
-    /// or tracker constraint feedback. Preserve these without changing that path.
+    /// Compatibility settings retained by the configuration model. Regular pose updates
+    /// use FK with the configured constraints and fixed feedback policy.
     pub use_position: bool,
     pub correct_constraints: bool,
     pub extended_spine: bool,
@@ -694,8 +694,8 @@ impl Skeleton {
             } else {
                 Q::from_to(V::DOWN, offset)
             };
-            // A Kotlin Bone whose setRotation() has never run retains raw identity, even
-            // if its configured rotationOffset is nonidentity. Pause/unassigned spine retain it.
+            // Bones keep raw identity until setRotation() assigns their direction.
+            // Paused or unassigned spine bones retain that stored rotation.
             let mut rotation = if assigned_bones.contains(name) {
                 assigned * rotation_offset
             } else {

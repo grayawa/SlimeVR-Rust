@@ -41,8 +41,7 @@ export function StayAlignedSetup() {
   }>({});
 
   useEffect(() => {
-    // Disable Stay Aligned as soon as we enter the setup flow so that we don't
-    // adjust the trackers while trying to set up the feature
+    // Keep tracker headings stable by disabling Stay Aligned during setup.
     enableStayAligned(false, sendRPCPacket);
   }, []);
 

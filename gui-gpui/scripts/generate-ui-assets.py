@@ -10,7 +10,7 @@ for name in NAMES:
     source_name = 'UsbIcon' if name == 'USB' else 'ArrowIcons' if name == 'ArrowRightLeft' else f'{name}Icon{"s" if name == "Wrench" else ""}'
     source = (ROOT / f'gui/src/components/commons/icon/{source_name}.tsx').read_text()
     svg = re.findall(r'<svg\b[\s\S]*?</svg>', source)[-1]
-    # The disabled headset cross is an optional overlay, not the base icon.
+    # Add the disabled-headset cross as an optional icon overlay.
     svg = re.sub(r'\{disabled\s*&&\s*\([\s\S]*?\)\}', '', svg)
     svg = re.sub(r'\s(?:width|height|className|style|transform)=\{[\s\S]*?\}(?=\s|>)', '', svg)
     svg = re.sub(r'\sfill=\{[^}]+\}', '', svg)

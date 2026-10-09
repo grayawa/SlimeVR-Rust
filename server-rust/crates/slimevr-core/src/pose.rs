@@ -526,7 +526,7 @@ impl PoseEngine {
         self.advance(sample.received_at_ms)?;
         self.sample_value(sample)
     }
-    /// Restore a receiver observation after assignment without changing its freshness clock.
+    /// Restore a receiver observation after assignment using its original freshness clock.
     pub fn restore_sample(&mut self, at: u64, sample: &TrackerSample) -> Result<(), String> {
         if sample.received_at_ms > at {
             return Err("observation is in the future".into());
@@ -574,7 +574,7 @@ impl PoseEngine {
                 status => status,
             };
             if first_rotation {
-                // A new session must not extrapolate from the identity placeholder.
+                // Initialize the session filter from its first calibrated rotation.
                 s.filter.reset(calibrated, calibrated);
             } else {
                 s.filter.add(calibrated);
@@ -872,7 +872,7 @@ impl PoseEngine {
     }
     pub fn tick(&mut self, at: u64) -> Result<&PoseSnapshot, String> {
         self.advance(at)?;
-        // Preserve scheduling order for all due commands, without blocking a later immediate yaw.
+        // Execute due commands in scheduling order, including an immediate yaw after delayed commands.
         let mut due = Vec::new();
         self.pending.retain(|(time, kind)| {
             if *time <= at {
@@ -1161,7 +1161,7 @@ impl PoseEngine {
         });
         Ok(&self.last_snapshot)
     }
-    /// Changes only when exported configuration may change, never on ordinary samples/ticks.
+    /// Revision for exported configuration; advances on configuration-affecting updates.
     pub fn config_revision(&self) -> u64 {
         self.config_revision
     }
@@ -1214,7 +1214,7 @@ impl PoseEngine {
     pub fn snapshot(&self) -> &PoseSnapshot {
         &self.last_snapshot
     }
-    /// Immutable solved frame, shared with readers without cloning its maps.
+    /// Share an immutable solved frame with readers through reference-counted ownership.
     pub fn shared_snapshot(&self) -> Arc<PoseSnapshot> {
         self.last_snapshot.clone()
     }

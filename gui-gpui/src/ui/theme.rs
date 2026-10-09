@@ -9,7 +9,7 @@ pub enum Surface {
     Control,
 }
 impl Surface {
-    /// Resolve on each render/build so a theme change cannot retain old colors.
+    /// Resolve the surface color from the current theme on each render/build.
     pub fn color(self, cx: &App) -> Hsla {
         match self {
             Self::Panel => cx.theme().muted,

@@ -404,7 +404,7 @@ pub fn frame(
     })
 }
 
-/// OS inspection happens outside the pose owner; failures never report a public adapter as private.
+/// Inspect OS network state outside the pose owner, retaining unknown status on failure.
 pub async fn inspect() -> Context {
     let mut context = tokio::task::spawn_blocking(Context::detect)
         .await

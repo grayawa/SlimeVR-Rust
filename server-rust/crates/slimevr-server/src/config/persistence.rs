@@ -18,7 +18,7 @@ pub(crate) struct SaveReport {
     validation_ms: f64,
     serialization_ms: f64,
     file_io_ms: f64,
-    // Subset of file_io_ms, not an additional stage.
+    // Time spent in sync_all within the file_io_ms stage.
     sync_all_ms: f64,
     serialized_bytes: usize,
     files_written: u64,

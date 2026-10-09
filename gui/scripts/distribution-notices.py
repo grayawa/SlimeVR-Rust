@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Carry project terms and source references without replacing third-party terms."""
+"""Carry project terms, source references and retained third-party licenses."""
 import argparse
 import os
 import re
@@ -45,8 +45,8 @@ def copy_notices(root, destination, revision):
         'Fetch the recorded commit with recursive submodules; keep the pinned '
         'Cargo.lock / pnpm-lock.yaml and build scripts.\n'
         'If the binary includes local changes, provide those changes as part of '
-        'its complete corresponding source. A commit URL alone does not include '
-        'uncommitted changes.\n'
+        'its complete corresponding source, alongside the recorded commit and '
+        'build inputs.\n'
         'Reused baseline binaries and third-party components retain their '
         'original terms and provenance; consult BUILD-MANIFEST.json and licenses/.\n',
         encoding='utf-8',

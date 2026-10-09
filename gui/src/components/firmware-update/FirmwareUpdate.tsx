@@ -136,7 +136,7 @@ export function FirmwareUpdate() {
         ({ deviceId }) => deviceId === id.toString()
       );
 
-      // We skip the status as it can be old trackers still sending status
+      // Handle update status for the currently selected device.
       if (!selectedDevice) return;
 
       setStatus((last) => ({
@@ -227,8 +227,8 @@ export function FirmwareUpdate() {
             offset: 0,
           },
         ],
-        { wifi: undefined, alonePage: false, progress: 0 }, // we do not use serial
-        null // we do not use serial
+        { wifi: undefined, alonePage: false, progress: 0 }, // OTA uses the network update path.
+        null // OTA uses the network update path.
       );
 
       requests.forEach((req) => {

@@ -130,7 +130,7 @@ export function useProvideAutobone(): AutoboneContext {
   useRPCPacket(RpcMessage.AutoBoneEpochResponse, (data: AutoBoneEpochResponseT) => {
     setProgress(data.currentEpoch / data.totalEpochs);
 
-    // Probably not necessary to show to the user
+    // Log epoch statistics for training diagnostics.
     log(
       'Epoch ',
       data.currentEpoch,

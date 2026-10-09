@@ -104,7 +104,7 @@ fn six_udp_trackers_assignment_yaml_resets_and_pause_use_real_backend() {
             break value;
         }
     };
-    // Continue draining diagnostics, so the child can never block on its pipe.
+    // Drain diagnostics continuously to keep the child's output pipe writable.
     let drain = std::thread::spawn(move || {
         let mut line = String::new();
         while reader.read_line(&mut line).unwrap_or(0) > 0 {

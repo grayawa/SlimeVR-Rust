@@ -168,7 +168,7 @@ fn disconnected_client_rejects_commands_and_shutdown_cancels_connect_attempt() {
     let address = listener.local_addr().unwrap();
     let client = Client::connect(format!("ws://{address}"), LogLevel::Error).unwrap();
     assert!(client.send(Command::Pause(true)).is_err());
-    // Listener accepts TCP but never upgrades: cancellation must not wait the full 5s.
+    // A TCP-only listener exercises prompt cancellation during the WebSocket upgrade.
     std::thread::sleep(Duration::from_millis(30));
     let before = Instant::now();
     drop(client);

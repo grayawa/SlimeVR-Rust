@@ -55,7 +55,7 @@ test('old socket events queued before reconnect cannot change the new connection
   assert.equal(messages, 0);
   assert.equal(errors, 0);
   disposeOld();
-  // An unmount must invalidate callbacks even without changing the current socket.
+  // Unmount invalidates callbacks for the component's current socket.
   const queuedNew = new Map(newSocket.callbacks);
   disposeNew();
   for (const [type, callback] of queuedNew) callback(new Event(type));

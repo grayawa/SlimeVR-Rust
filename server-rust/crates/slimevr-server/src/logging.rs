@@ -14,8 +14,8 @@ pub fn enabled(level: LogLevel) -> bool {
     level as u8 <= MAX_LEVEL.load(Ordering::Relaxed)
 }
 
-// Diagnostics are expendable; replay journals and command output are not.
-// Bound both entry count and queued bytes so a blocked parent pipe cannot grow memory.
+// Diagnostic output uses bounded entry and byte capacities with overflow drops.
+// Replay journals and command output follow their own delivery contracts.
 const QUEUE_ENTRIES: usize = 512;
 const QUEUE_BYTES: usize = 4 * 1024 * 1024;
 static WRITER: std::sync::OnceLock<Result<std::sync::Arc<Queue>, String>> =
@@ -149,7 +149,7 @@ fn queue() -> Result<&'static std::sync::Arc<Queue>, io::Error> {
         .map_err(|error| io::Error::other(error.clone()))
 }
 /// Keep this guard until all live diagnostics have been submitted. Shutdown drains
-/// normally, but waits at most two seconds if the parent's pipe no longer consumes.
+/// queued entries, with a two-second shutdown limit for a blocked parent pipe.
 pub struct DrainGuard;
 pub fn start() -> io::Result<DrainGuard> {
     queue()?;
@@ -181,7 +181,7 @@ pub fn write_json(
     Ok(())
 }
 
-/// A failed diagnostic write must not terminate an API client or an operation.
+/// Submit best-effort diagnostics while preserving the caller's operation lifecycle.
 pub fn diagnostic(level: LogLevel, value: &impl Serialize) {
     let _ = write_json(level, value);
 }

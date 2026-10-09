@@ -221,8 +221,8 @@ fn hand_tracking_controller_handover_keeps_current_sources_in_solarxr_feed() {
     use slimevr_server::api::{protocol, Service};
     use tokio::sync::broadcast;
 
-    // Separate OpenVR IDs can represent the same hand. Late notifications from
-    // the old pair must not remove the pair that has already taken over.
+    // Separate OpenVR IDs can represent the same hand. Cleanup follows the
+    // active owner's ID after each hand/controller handover.
     for (hand_roles, controller_roles) in [([11, 12], [13, 14]), ([13, 14], [11, 12])] {
         for retired_event in ["disconnect", "expire", "metadata", "rotation_only"] {
             let config = FrontendConfig::default();
@@ -286,7 +286,7 @@ fn hand_tracking_controller_handover_keeps_current_sources_in_solarxr_feed() {
                     "{hand_roles:?} / {retired_event} cleared {body:?}"
                 );
             }
-            // Verify the actual list sent to both frontends, not only the pose.
+            // Verify the device list delivered to both frontends.
             engine.tick(511).unwrap();
             let frame = protocol::data_frame(
                 &protocol::Feed {
@@ -344,7 +344,7 @@ fn hand_tracking_controller_handover_keeps_current_sources_in_solarxr_feed() {
                 }
             }
             assert!(service.external.is_empty());
-            // A disconnected pair can resume without another registration.
+            // A disconnected pair resumes using its retained registration.
             for id in [3, 4] {
                 for message in [
                     envelope(M::TrackerStatus(messages::TrackerStatus {
@@ -390,7 +390,7 @@ async fn output_uses_final_computed_pose_stable_serials_and_retries_registration
     session.receive(Event::Connected(1), 0).unwrap();
     let (sender, mut output) = mpsc::channel(1);
     session.output(&config, &pose, &receiver, &sender);
-    // Occupied queue: new share changes must not be acknowledged/lost.
+    // A full queue keeps share changes pending until successful enqueue.
     config.steam_vr.trackers.insert("head".into(), false);
     session.output(&config, &pose, &receiver, &sender);
     let stats = session.output_stats().clone();

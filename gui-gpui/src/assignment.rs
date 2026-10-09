@@ -290,7 +290,7 @@ impl Motion {
             state.acceleration = linear;
         }
     }
-    /// Age the glow even when no new pose arrives, without adding network requests.
+    /// Advance the glow's age using the local UI clock.
     pub fn expire(&mut self, now: std::time::Instant) -> bool {
         let mut changed = false;
         for state in self.devices.values_mut() {

@@ -17,7 +17,7 @@ pub(super) struct Replies {
 }
 impl Replies {
     pub fn full(&mut self) -> bool {
-        // A disconnected/timed-out client must not keep a slot while disk stalls.
+        // Release slots belonging to disconnected or timed-out clients.
         self.pending.retain(|reply| !reply.sender.is_closed());
         self.pending.len() >= 32
     }

@@ -70,7 +70,7 @@ export function decodeBackendNotice(
       };
     }
   } catch {
-    /* An unrelated server text message is not a protocol packet. */
+    /* Recognized backend notifications are handled above; other text is ignored. */
   }
   return null;
 }
@@ -84,7 +84,7 @@ export function decodeSolarXR(buffer: ArrayBuffer) {
   ).unpack();
 }
 
-/** Keep read subscriptions across reconnects; never replay a user mutation. */
+/** Cache read subscriptions for restoration after reconnect. */
 export class ReadRequestCache {
   private requests = new Map<string, Uint8Array>();
   remember(key: string, frame: Uint8Array) {

@@ -75,5 +75,5 @@ strip = true
 
 
 [patch.crates-io]
-# Embed HLSL and compile from memory; never read the build host's absolute paths.
+# Embed HLSL and compile shader programs from memory on the target system.
 gpui-pre-windows = { path = "vendor/gpui-pre-windows" }

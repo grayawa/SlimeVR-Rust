@@ -269,7 +269,7 @@ export function Serial() {
   }, [consoleContent]);
 
   const saveLogToFile = async () => {
-    // Check if we have getInfos and fetch them if we don't
+    // Fetch device information when the current console is missing GET INFO output.
     if (!consoleContentRef.current.includes('GET INFO')) {
       getInfos();
       await waitUntil(

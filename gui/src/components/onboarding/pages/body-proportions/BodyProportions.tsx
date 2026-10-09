@@ -115,8 +115,7 @@ function ProportionItem({
     const newValue =
       part.unit === 'cm'
         ? (Math.round(part.value * 200) + addition * 2) / 200
-        : // In the case of unit === percent we send only the added percent and not the value with added percent to it
-          // this is so the percent added is relative to the whole group and not the bone as 1% added to the bone is not 1% of the group
+        : // Percentage changes are fractions of the whole group's length.
           addition / 100;
 
     if (part.type === 'bone') {

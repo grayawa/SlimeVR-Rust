@@ -27,7 +27,7 @@ def main():
         target = ROOT / name
         manifest = target / "driver.vrdrivermanifest"
         release = target / "release.json"
-        # Upgrade the previous staging layout without duplicating the driver root.
+        # Flatten a nested driver staging directory to the target root.
         nested = target / "slimevr"
         if (nested / "driver.vrdrivermanifest").is_file():
             for child in nested.iterdir():

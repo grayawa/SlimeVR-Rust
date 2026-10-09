@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 use slimevr_gpui::{locales, rpc_generated, ui::theme::apply_theme};
 impl SlimeView {
     pub(super) fn request_close(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        // A second close request must not hide a confirmation already on screen.
+        // Keep the displayed confirmation active during repeated close requests.
         if self.exit_confirm {
             return;
         }

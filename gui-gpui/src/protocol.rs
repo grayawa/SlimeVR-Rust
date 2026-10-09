@@ -698,7 +698,7 @@ fn decode_vrchat(s: rpc::VRCConfigStateChangeResponse<'_>) -> Vrchat {
     out
 }
 
-/// Binary file payloads stay bytes; never materialize a JSON value for every byte.
+/// Return binary file payloads as shared byte buffers.
 pub fn files(bytes: &[u8]) -> Result<Vec<std::sync::Arc<[u8]>>, String> {
     let bundle = fb::root::<sx::MessageBundle>(bytes).map_err(|e| e.to_string())?;
     files_verified(bundle)

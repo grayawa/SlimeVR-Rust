@@ -61,7 +61,7 @@ function overlapArea(rect1: Rect, rect2: Rect) {
 }
 
 function isNotInside(rect1: Rect, rect2: Rect) {
-  // Check if rect1 is not inside rect2 or rect2 is not inside rect1
+  // Test whether neither rectangle fully contains the other.
   const rect1InsideRect2 =
     rect1.left >= rect2.left &&
     rect1.left + rect1.width <= rect2.left + rect2.width &&
@@ -415,7 +415,7 @@ export function DrawerTooltip({
       };
     }
   }, []);
-  // FIXME: Completely broken not sure why. Will be solved when tooltips on mobile actually work
+  // FIXME: Verify mobile tooltip positioning and touch behavior.
 
   return (
     <>

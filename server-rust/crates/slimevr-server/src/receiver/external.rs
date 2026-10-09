@@ -1,4 +1,4 @@
-//! Positional input devices retain their own reset/filter capabilities and never enter UDP maintenance.
+//! Positional input devices use their source-specific reset, filter and maintenance capabilities.
 use super::*;
 impl Receiver {
     pub fn external(&mut self, event: &InputEvent) -> Result<bool, String> {

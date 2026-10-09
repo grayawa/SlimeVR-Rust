@@ -87,7 +87,7 @@ async fn connection<S: AsyncRead + AsyncWrite + Unpin>(
     let (mut reader, mut writer) = tokio::io::split(stream);
     let receive = async {
         loop {
-            // Keep partial reads in this future; never cancel/restart a frame on a tick.
+            // This future owns each partial frame until its read completes.
             let message = read(&mut reader).await?;
             events
                 .send(Event::Message(session, message))

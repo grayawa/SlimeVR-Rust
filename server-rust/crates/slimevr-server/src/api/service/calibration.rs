@@ -115,8 +115,8 @@ impl Service {
                     Err(e) => self.error(e),
                 }
             } else {
-                // The original GUI plays a countdown note on every STARTED frame.
-                // Match ResetTimer.kt: one notification per whole second, not 10/s.
+                // Match ResetTimer.kt: send one progress notification per whole second.
+                // The GUI uses each STARTED notification for its countdown cue.
                 let progress = (at - reset.start) / 1000 * 1000;
                 if progress > reset.last_progress - reset.start {
                     self.broadcast(protocol::reset_frame(

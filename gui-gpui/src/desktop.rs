@@ -177,7 +177,7 @@ impl SingleInstance {
                 return Err(error.to_string());
             }
             // Windows byte-range locks also block reads from the lock file.
-            // Keep the wake-up address in an unlocked sidecar instead.
+            // Store the wake-up address in a separately readable sidecar.
             let address = match std::fs::read_to_string(&address_path) {
                 Ok(address) => address,
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -222,8 +222,8 @@ impl SingleInstance {
 }
 impl Drop for SingleInstance {
     fn drop(&mut self) {
-        // Remove the sidecar while the ownership lock is still held, so a new
-        // instance cannot publish an address that this old instance deletes.
+        // Remove this instance's sidecar while holding its ownership lock.
+        // The next instance publishes its address after acquiring the lock.
         let _ = std::fs::remove_file(&self.address_path);
     }
 }

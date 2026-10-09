@@ -1,8 +1,7 @@
 # UDP 与 runtime 性能验证
 
 2026-10-08。实现提交 `110dc2de`；完整 runtime 对照基线为合入 PR #10 后的
-`6f936018`。本轮修复双时钟诊断、重复解析、配置高频导出与重配，并限制 UDP
-在两次调度之间的工作量。没有改变传感器停更时的缓存姿态策略。
+`6f936018`。被测实现使用双时钟诊断、共享解析结果、配置 revision / dirty 标志与有预算的 UDP 调度。传感器停更按缓存姿态可用性规则处理。
 
 ## 队列／解析微基准
 
@@ -12,7 +11,7 @@
 cargo test --manifest-path server-rust/Cargo.toml -p slimevr-server --release --lib runtime::ingress::bench::benchmark_udp_queue_and_cached_parse --locked -- --ignored --nocapture
 ```
 
-这个用例默认 ignored，避免在普通 CI 中用机器速度决定通过或失败。每轮
+该性能用例通过显式 `--ignored` 运行，按环境报告墙钟测量。每轮
 30,720 个包、六个来源、各两个传感器，覆盖单旋转、双传感器与加速度 bundle、
 控制消息较多的 bundle，包含正常交付和模拟 100ms 积压。每种条件重复三次，
 交替执行保留解析结果与重新解析的路径。断言两条路径的 Receiver 状态一致，
@@ -21,11 +20,10 @@ cargo test --manifest-path server-rust/Cargo.toml -p slimevr-server --release --
 
 enqueue 包含字节复制、完整解析、BTreeSet 分类、Mutex 加锁和 Queue::push；
 dispatch 包含锁内 pop、接收器处理和 effects 构造。积压用例还执行 BTreeMap
-覆盖判定。这里使用无竞争的真实 Mutex；不含网络、PoseEngine、Service 与
-调度预算，锁竞争和这些后续工作由下一个真实 runtime 基准覆盖。
+覆盖判定。这里使用无竞争的真实 Mutex；测量边界为队列 / 解析，网络、PoseEngine、Service、调度预算与锁竞争由下一个真实 runtime 基准覆盖。
 
 `raw_reparse_reference` 在同一队列中模拟再次解析，隔离第二次解析的成本，
-不是 PR #10 整个实现的逐字复制。下表是三轮 dispatch p95 的中位数，单位 µs：
+该参考用于单独测量第二次解析。下表是三轮 dispatch p95 的中位数，单位 µs：
 
 | 输入              | 正常：重解析 | 正常：复用 | 积压：重解析 | 积压：复用 |
 | ----------------- | ------------ | ---------- | ------------ | ---------- |
@@ -35,7 +33,7 @@ dispatch 包含锁内 pop、接收器处理和 effects 构造。积压用例还�
 
 复用降低了 dispatch 成本，但积压情况下整轮时间也受分类和合并主导：
 单旋转整轮中位数为 7.540 → 7.864ms，双传感器 bundle 为
-11.333 → 11.761ms。不能只凭 dispatch 变快就断言总成本下降。
+11.333 → 11.761ms。总成本需要结合 enqueue、dispatch 与合并整轮时间判断。
 
 ## 真实 UDP 与姿态 tick
 
@@ -55,14 +53,14 @@ Windows 把 backend 路径改为 `slimevr-server.exe`。`--cpu-workers` 指定�
 脚本创建临时 vrconfig.yml、身体分配和禁用的热键，使用独立 loopback 端口，
 以原 UDP 握手、SensorInfo、紧凑旋转＋加速度包驱动真实后端，启用 4ms pose
 tick 和 API Service。它持续读取 stdout / stderr，保持 info 日志级别，收集
-runtime_timing；不连接 SteamVR，也没有 HMD 输入。JSON 保留实际发送速率、
+runtime_timing；测试输入为 UDP 设备，输出为 runtime 诊断。JSON 保留实际发送速率、
 间隔样本数、所有分位数、stall 与新版本的 UDP 指标。Linux cgroup v2 下还
-记录容器 CPU 配额与整个容器的平均利用率，后者不是后端单进程的 CPU 占用。
+记录容器 CPU 配额与整个容器的平均利用率，该范围包含容器中的全部进程。
 
-本次环境为 Linux x86_64、Rust 1.99.0、可见三个逻辑 CPU、cgroup 配额两个
+测量环境为 Linux x86_64、Rust 1.99.0、可见三个逻辑 CPU、cgroup 配额两个
 CPU。基线／修改版各做三轮 10 秒测试，分别使用 0 / 2 个压力进程，共十二轮。
 实际发送速率中位数约 4,199.7 包／秒；压力条件下容器配额平均利用率约 100%。
-每轮主窗口有 2,416–2,500 个实际 tick 间隔；没有把错过的 tick 虚构成样本。
+每轮主窗口有 2,416–2,500 个实际 tick 间隔；样本按实际 tick 间隔累计。
 
 下表分位数取三轮主窗口的中位数；max 取三轮观测到的最大值，单位 ms：
 
@@ -73,10 +71,7 @@ CPU。基线／修改版各做三轮 10 秒测试，分别使用 0 / 2 个压力
 | PR #10，满配额 | 0.284      | 3.567 | 5.183 | 8.223  | 104.191 | 0.269         |
 | 修改版，满配额 | 0.286      | 2.663 | 6.815 | 11.167 | 16.942  | 0.235         |
 
-满载的 p95 与 tick work p95 较低，但 p99 / p999 较高；这组结果没有证明
-尾延迟整体改善，也不足以断言变化来自某个数据结构。最大值涉及一次偶发
-停顿，不能单独作为改进结论。两版都受操作系统调度影响，平均容器利用率中
-还包括发包器和其他进程，不能据此比较后端单进程 CPU。
+满载结果中的 p95 与 tick work p95 较低，p99 / p999 较高。结论需要结合各分位数、偶发停顿、重复轮次和系统调度；具体数据结构的成本由隔离基准测量。容器利用率覆盖发包器和其他进程，后端单进程 CPU 需单独采集。
 
 修改版满载时 UDP 等待 p99 的三轮中位数为 0.273ms，批处理耗时 p99 为
 0.007ms；批处理 max 的三轮中位数为 0.638ms。预算只在完整 datagram 边界
@@ -85,7 +80,7 @@ Wi-Fi、HMD、SteamVR 输出与 VRChat 尚需实测。
 
 原始记录和环境信息见 [测量数据](../server-rust/benchmarks/udp-runtime-2026-10-08.json)。
 后续优化 BTreeSet / BTreeMap 或 Mutex 前应保留这组对照，并在目标 Windows
-机器上测量锁竞争和后端 CPU，不能把分位数的单次变化直接当成性能回归。
+机器上测量锁竞争和后端 CPU，使用多轮相同环境结果评估分位数变化。
 
 ## API 快照共享与配置写入（2026-10-09）
 
@@ -96,10 +91,8 @@ cargo test --manifest-path server-rust/Cargo.toml -p slimevr-server --release --
 ```
 
 六台设备、每台两个传感器、12 个已分配节点，使用 `vrconfig-v15.yml` 测试
-配置。每种路径各做三轮、每轮 20,000 次，交替先后顺序。参考路径重建旧
-`Service::live()` 的全量克隆字段集合；共享路径调用新的 `Service::live()`。
-两者都包含构造和析构，不包含解算、网络、watch 发布与锁竞争。这与日志中
-不含析构的 `api_live_snapshot_ms` 测量边界不同，不应直接比较绝对值。
+配置。每种路径各做三轮、每轮 20,000 次，交替先后顺序。参考路径构造全量克隆字段集合，共享路径调用 `Service::live()`。
+两条路径都计量构造与析构。解算、网络、watch 发布和锁竞争由 runtime 指标或相应基准测量。日志的 `api_live_snapshot_ms` 从构造开始到返回结束，比较时需对齐计时边界。
 
 下表分位数取三轮中位数，max 取三轮最大观测值，单位 µs：
 
@@ -109,15 +102,13 @@ cargo test --manifest-path server-rust/Cargo.toml -p slimevr-server --release --
 | 共享快照     | 0.711  | 0.771  | 1.002   | 14.793  | 253.661  |
 
 原始记录见 [快照测量数据](../server-rust/benchmarks/live-snapshot-2026-10-09.json)。
-这个微基准证明复制开销降低，不证明 SteamVR / VRChat 的整体 p99 或 p999
-已经改善。墙钟尾延迟包含系统抢占，本轮测试期间环境还有其他测试进程。
-姿态 tick 改为创建一个共享 `Arc`，这部分新增成本不在快照微基准内。
+该微基准描述快照构造与析构的复制成本；SteamVR / VRChat 整体分位数通过完整输出场景测量。墙钟尾延迟包含系统抢占，本轮测试期间环境还有其他测试进程。
+姿态 tick 创建一个共享 `Arc`，这部分成本属于 tick 阶段测量范围。
 设备动态读数仍复制；外部追踪小表与 SteamVR 状态仍按值复制。
 
 配置保存使用独立 OS 线程，保留原子的 YAML 备份、`sync_all()` 和替换逻辑。
 慢磁盘测试用阻塞的写入函数验证：首个写入阻塞期间，生产方继续提交 99 次
 配置并推进 PoseEngine；队列只有正在写的版本和最新待写版本，释放后仅
 写入 revision 1 与 100，退出等待完成。额外测试验证保存失败的通知、失败后
-保留内存配置，以及客户端回复等待持久化 revision。阻塞替身用于稳定验证
-调度边界，不用于预测实际磁盘耗时。启动保存、离线工具、BVH 与 replay
+保留内存配置，以及客户端回复等待持久化 revision。阻塞替身用于验证调度边界，实际磁盘耗时通过保存指标测量。启动保存、离线工具、BVH 与 replay
 journal 仍使用各自原来的同步接口。

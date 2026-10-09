@@ -19,7 +19,7 @@ pub(super) async fn schedule<T>(
             value = &mut activity => Turn::Activity(value),
         }
     } else {
-        // A tick slower than its period must not starve incoming poses forever.
+        // Give ready input a turn after a tick that exceeded its period.
         tokio::select! {biased;
             value = &mut activity => Turn::Activity(value),
             _ = clock.tick() => Turn::Tick,

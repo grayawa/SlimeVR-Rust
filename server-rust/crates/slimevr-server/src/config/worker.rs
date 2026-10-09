@@ -79,7 +79,7 @@ impl Writer {
                         };
                         job
                     };
-                    // Disk and YAML work never hold the mailbox lock.
+                    // Execute disk and YAML work after releasing the mailbox lock.
                     let result = write(&job);
                     let mut state = incoming.state.lock().unwrap_or_else(|e| e.into_inner());
                     state.last_result = result.clone();
@@ -155,8 +155,8 @@ impl Writer {
 impl Drop for Writer {
     fn drop(&mut self) {
         self.close();
-        // Runtime explicitly awaits finish after ticks stop. This fallback covers
-        // early errors and library users; it never participates in a normal tick.
+        // Runtime awaits finish after ticks stop. Drop joins the worker for
+        // early-error exits and library callers that rely on RAII cleanup.
         if let Some(thread) = self.thread.take() {
             let _ = thread.join();
         }

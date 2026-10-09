@@ -12,7 +12,7 @@ const versionTag =
     .toString()
     .split('\n')[0]
     .trim();
-// If not empty then it's not clean
+// A nonempty porcelain status identifies a modified working tree.
 const gitCleanString = execSync('git status --porcelain').toString();
 const gitClean = gitCleanString ? false : true;
 

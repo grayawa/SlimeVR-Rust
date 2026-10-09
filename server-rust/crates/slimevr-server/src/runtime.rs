@@ -24,9 +24,8 @@ use tokio::{
     time::{interval, MissedTickBehavior},
 };
 
-// Firmware refreshes its server timeout on discovery heartbeats too. After a backend
-// replacement, continuous two-second broadcasts can keep an unknown tracker in its
-// old connected state forever. Leave a quiet window for its timeout and new handshake.
+// Discovery leaves a ten-second quiet window so official firmware can time out
+// its prior transport session and initiate a fresh handshake.
 const DISCOVERY_INTERVAL_MS: u64 = 10_000;
 
 enum Ready {
@@ -110,7 +109,7 @@ async fn apply_effects(
         write_json(logging::event_level(&event.kind), &event)?;
     }
     for packet in effects.outbound {
-        // Journal send intents, not delivery acknowledgements (UDP provides none).
+        // Journal each UDP send intent for deterministic reply verification.
         if let Some(journal) = recorder {
             journal.write(&Record::Send {
                 at_ms: at,

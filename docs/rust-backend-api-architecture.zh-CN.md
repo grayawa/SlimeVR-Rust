@@ -1,6 +1,6 @@
 # Rust 后端 API 模块结构
 
-日期：2026-10-07。本次将原来 2,525 行的 `api/mod.rs` 拆成按职责组织的模块。入口只保留 18 行模块声明和公共导出，调用方继续使用 `api::Service`、`api::FrontendConfig`、`api::Request`、`api::Wire`、`api::LiveState` 和 `api::serve`。
+API 按配置、传输连接、应用状态和领域请求组织模块。`api/mod.rs` 声明模块并导出公共类型，调用方使用 `api::Service`、`api::FrontendConfig`、`api::Request`、`api::Wire`、`api::LiveState` 和 `api::serve`。
 
 ## 文件职责
 
@@ -37,38 +37,35 @@
 每个 `runtime_timing` 汇总包含 `tick_kind`（`pose` 或仅接收模式的
 `receiver`）、目标周期、实际窗口长度、tick 数与间隔样本数。
 
-| 字段                                                                                              | 含义                                                                                                         |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `tick_jitter_ms`                                                                                  | 相邻 tick 的实际间隔与目标周期之差的绝对值，输出 p50 / p95 / p99 / p999 / max                                |
-| `tick_work_ms`                                                                                    | 一次主循环 tick 的实际耗时，包含状态更新、解算、输出和周期维护，输出同样的分位数；不是单独 PoseEngine 的耗时 |
-| `runtime_stall`                                                                                   | 实际间隔超出目标周期的部分，累计统计严格超过 2 / 5 / 10 / 50 / 100 ms 的次数，字段为 `gt_2ms` 等             |
-| `udp_queue_delay_ms`                                                                              | 从 socket 接收后到主循环开始处理的等待时间，包含接收任务解析与队列等待，输出同样的分位数                     |
-| `udp_batch_work_ms`                                                                               | 一次有预算的 UDP 处理实际耗时，包含接收器、effects 和可选 journal 写入，输出同样的分位数                     |
-| `udp_datagrams` / `udp_batches` / `udp_budget_yields`                                             | 本窗口处理的包数、批次数与达到预算而退出批次的次数                                                           |
-| `udp_coalesced` / `udp_dropped_poses` / `udp_dropped_controls`                                    | 汇入窗口的队列合并、姿态容量丢包与控制容量丢包数量                                                           |
-| `api_live_snapshot_ms` / `api_live_snapshots`                                                     | `Service::live()` 构造共享快照的耗时分位数与调用次数，不含 watch 发布和旧快照析构                            |
-| `steamvr_output_batches_enqueued` / `steamvr_output_batches_written`                              | 主循环成功入队批次与 IPC 写完全部消息的批次，二者分别计数                                                    |
-| `steamvr_output_queue_full` / `steamvr_output_queue_closed`                                       | `try_send` 因队列满或接收端关闭而失败的次数                                                                  |
-| `steamvr_output_write_failed` / `steamvr_output_write_cancelled` / `steamvr_output_stale_batches` | 编码／写入／超时失败、发送 future 被连接结束取消、重连后丢弃旧会话批次                                       |
+| 字段                                                                                              | 含义                                                                                                       |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `tick_jitter_ms`                                                                                  | 相邻 tick 的实际间隔与目标周期之差的绝对值，输出 p50 / p95 / p99 / p999 / max                              |
+| `tick_work_ms`                                                                                    | 一次主循环 tick 的实际耗时，包含状态更新、解算、输出和周期维护，输出同样的分位数；测量范围为完整 tick 路径 |
+| `runtime_stall`                                                                                   | 实际间隔超出目标周期的部分，累计统计严格超过 2 / 5 / 10 / 50 / 100 ms 的次数，字段为 `gt_2ms` 等           |
+| `udp_queue_delay_ms`                                                                              | 从 socket 接收后到主循环开始处理的等待时间，包含接收任务解析与队列等待，输出同样的分位数                   |
+| `udp_batch_work_ms`                                                                               | 一次有预算的 UDP 处理实际耗时，包含接收器、effects 和可选 journal 写入，输出同样的分位数                   |
+| `udp_datagrams` / `udp_batches` / `udp_budget_yields`                                             | 本窗口处理的包数、批次数与达到预算而退出批次的次数                                                         |
+| `udp_coalesced` / `udp_dropped_poses` / `udp_dropped_controls`                                    | 汇入窗口的队列合并、姿态容量丢包与控制容量丢包数量                                                         |
+| `api_live_snapshot_ms` / `api_live_snapshots`                                                     | `Service::live()` 构造共享快照的耗时分位数与调用次数，计时从构造开始到返回结束                             |
+| `steamvr_output_batches_enqueued` / `steamvr_output_batches_written`                              | 主循环成功入队批次与 IPC 写完全部消息的批次，二者分别计数                                                  |
+| `steamvr_output_queue_full` / `steamvr_output_queue_closed`                                       | `try_send` 因队列满或接收端关闭而失败的次数                                                                |
+| `steamvr_output_write_failed` / `steamvr_output_write_cancelled` / `steamvr_output_stale_batches` | 编码／写入／超时失败、发送 future 被连接结束取消、重连后丢弃旧会话批次                                     |
 
 例如目标周期 4 ms、实际间隔 7 ms，jitter 为 3 ms，stall 只增加
-`gt_2ms`；实际间隔 1 ms 时 jitter 同样为 3 ms，但不增加 stall。
-一次超过 100 ms 的 stall 同时增加五个阈值计数。首次 tick 没有上一次
-起始时间，因此不产生间隔样本；跨汇总窗口的间隔继续计入下一个窗口。
-长停顿只记一次实际观测，不虚构被跳过的 tick 样本。
+`gt_2ms`；实际间隔 1 ms 时 jitter 同样为 3 ms，stall 为 0。
+一次超过 100 ms 的 stall 同时增加五个阈值计数。间隔样本从第二次 tick 开始；跨汇总窗口的间隔继续计入下一个窗口。
+长停顿按一次实际观测计入窗口。
 
 默认窗口为 10 秒，可用 `listen --timing-window-ms 30000` 改成 30 秒。
-退出时会补发剩余的部分窗口，空窗口不发。正常汇总为 info；窗口内有
-超过 50 ms 的 stall，或 SteamVR 队列满／关闭／写入失败时为 warn。旧的单条 `runtime_stall` / 100 ms
-间隔告警已替换为这些统计。默认 4 ms 周期下，10 秒约有 2,500 个间隔
+退出时补发包含剩余样本的部分窗口。正常汇总为 info；窗口内有
+超过 50 ms 的 stall，或 SteamVR 队列满／关闭／写入失败时为 warn。调度诊断以这些窗口统计报告。默认 4 ms 周期下，10 秒约有 2,500 个间隔
 样本；不足 1,000 个样本时 p999 通常接近最大值，分析时必须同时看
 `interval_samples`、`window_ms` 和 `max`。
 
-分位数采用 nearest-rank 与固定大小的微秒直方图，不保存或逐帧排序
-原始样本。小于 512 微秒的桶按微秒分辨，之后桶宽不超过约 0.4%；
+分位数采用 nearest-rank 与固定大小的微秒直方图，按桶累计样本。小于 512 微秒的桶按微秒分辨，之后桶宽不超过约 0.4%；
 分位数取桶上界并限制到真实最大值，因此存在最多约 0.4% 加 1 微秒的
 量化误差。`max` 和 stall 阈值判断保留原始时钟精度。五个直方图总计
-约 570 KiB，内存不随运行时间或窗口长度增加。UDP 合并／丢弃计数按
+约 570 KiB，内存容量固定。UDP 合并／丢弃计数按
 `--summary-ms` 收集后汇入 timing 窗口，跨越两种窗口边界时可能归入
 相邻窗口；退出时补收剩余计数。等待与批处理耗时逐包／逐批计入当前窗口。
 
@@ -76,57 +73,45 @@
 
 主循环约每 10ms 到期后调用 `Service::live()`。完整配置（含 YAML）采用
 `SharedConfig` 的 `Arc` 写时复制，PoseEngine 发布不可变 `Arc<PoseSnapshot>`；
-普通 API 发布只增加引用计数，不再次克隆配置或姿态内部的表。设备元数据按
-设备缓存，名称、握手、会话、地址或固件日期改变时才替换；每帧只复制传感器
-读数和电量、信号等动态数据到紧凑数组，不复制 Receiver 的 ACK、请求和 ping
-内部状态。小型外部追踪表与 SteamVR 状态仍按值复制。已发布帧不会被后续
-配置、设备重连或姿态 tick 修改，SolarXR 与旧 JSON 的线上字段保持兼容。
+普通 API 发布增加配置与姿态的共享引用计数。设备元数据按
+设备缓存，名称、握手、会话、地址或固件日期改变时才替换；每帧复制传感器读数、电量和信号等动态数据到紧凑数组，Receiver 持有 ACK、请求与 ping 的内部状态。小型外部追踪表与 SteamVR 状态仍按值复制。每个已发布帧保留其构造时的配置、设备与姿态状态，SolarXR 与旧 JSON 的线上字段保持兼容。
 
-`api_live_snapshot_ms` 只包围这次构造，不包含 `watch::send_replace` 或旧值
-析构。初始启动快照不计入 runtime 窗口；没有 API 时次数为 0、分位数为 null。
-实际调用次数决定 p999 的样本量，不能用 `interval_samples` 代替它。
+`api_live_snapshot_ms` 从快照构造开始计时，到函数返回结束；watch 发布与旧值析构由后续路径执行。runtime 窗口只采集运行阶段快照；没有 API 时次数为 0、分位数为 null。
+实际调用次数决定 p999 的样本量，应结合 `api_live_snapshots` 判断样本量。
 
 运行期配置持久化由独立的 `slimevr-config-writer` OS 线程执行，包含 YAML
 构造、序列化、读取比较、备份、临时文件写入、`sync_all()` 和原子替换。
 主循环先验证并应用内存配置，再提交共享配置引用。工作队列最多保留一个
 正在写的版本和一个最新待写版本；连续修改以完整的新版本覆盖待写旧版本，
-由同一线程顺序写入，避免旧保存覆盖新保存。文件操作不持有队列锁。
-无完成结果时，主循环只检查原子标志，不每帧获取 Mutex。
+由同一线程顺序写入。取走配置后释放队列锁，再执行文件操作。主循环通过原子完成标志决定是否获取结果锁。
 
 产生配置保存的客户端请求暂存回复，主循环继续解算；完成结果覆盖请求的
 保存 revision 后才回复成功。最多暂存 32 个回复，达到上限的新请求返回错误。
 合并后较新的完整配置落盘可以确认较早的保存请求。广播反映当前内存状态，
-不会等待磁盘；保存失败通过现有错误通知和日志报告，相关请求返回错误，
-内存设置保留，不回滚已经应用的算法状态。纯读取、内存模式不等待保存。
+按内存状态即时发布；保存失败通过现有错误通知和日志报告，相关请求返回错误，
+内存设置保持已应用状态。纯读取与内存模式直接回复。
 正常退出停止 tick 后异步等待写入线程排空，并报告最后一次写入失败。
-强制结束进程不能保证完成保存，现有客户端的请求超时也仍然生效。
+完整保存需要正常退出并等待写入完成；客户端请求仍受其超时规则约束。
 
 持久配置保存每次实际执行产生 `config_save_timing`，包括验证、YAML 构造与
 序列化、文件操作及其内部 `sync_all()` 耗时。`outcome` 为 saved / unchanged /
 error；`files_written` 是成功写完并替换的文件数，`sync_all_calls` 是同步
 尝试数，包含 `.bak` 与正式文件。后台保存还带 `background: true`、`revision`
-和 `queue_delay_ms`（进入待写队列到开始执行）；排队时间不包含在 `total_ms`。
-相同内容仍会验证、序列化和读取比较，但不写入或同步文件。
-无持久路径时不生成此记录；日志不含 YAML 正文或文件路径。
+和 `queue_delay_ms`（进入待写队列到开始执行）；`total_ms` 从后台实际开始保存时计量。
+相同内容执行验证、序列化与读取比较后返回 unchanged。持久路径上的实际保存生成此记录，字段包含阶段耗时、字节数、结果与错误类别。
 启动加载及初始保存仍在追踪开始前同步完成，初次保存记录在 listening 后
 补发。离线工具的 `FrontendConfig::save()` 仍是同步接口。
 
 SteamVR 主循环保留容量为 4 的队列和非阻塞 `try_send`，只有入队成功才确认
 共享状态并清除 ready。原子计数在每个 timing 窗口取走一次；IPC 线程记录
-整批消息完成写入的时刻，重连不清除尚未报告的计数。入队与写完可能跨窗口，
-各计数读取也不是原子组合快照，因此不能通过相减精确计算丢帧。written
-表示写入 IPC 成功，不保证 SteamVR 已处理、渲染或 VRChat 已显示。失败与
-取消可能已经写出部分消息；旧会话批次继续丢弃。这里统计的是驱动输出通道，
-不混入兼容输入 feeder 或 RPC 通道。
+整批消息完成写入的时刻，计数跨重连保留至窗口采集。入队与写完可能跨窗口，各项计数独立读取，分析丢帧时需结合窗口边界和实际输出日志。written 表示整个批次写入 IPC 成功，客户端消费与显示由 SteamVR / VRChat 的后续链路完成。失败与
+取消可能已经写出部分消息；旧会话批次继续丢弃。这些计数的范围为驱动输出通道。
 
-这些阶段耗时均为墙钟时间，包含线程被系统抢占的时间，不是线程 CPU 时间。
-它们用于进一步定位长尾，不能单独证明某个阶段造成了历史日志中的停顿。
+阶段耗时使用墙钟时间，包含系统抢占。定位长尾时结合各阶段指标、线程调度和同一时段的日志。
 
 ## 执行和状态边界
 
-后端的 `main` 使用两个工作线程的 Tokio runtime。`listen` 是由主线程
-`block_on` 执行的根 future，不作为可迁移的任务启动，因此 Receiver、
-PoseEngine 和 Service 仍由同一个线程按顺序更新。`tokio::spawn` 启动的
+后端的 `main` 使用两个工作线程的 Tokio runtime。`listen` 是由主线程 `block_on` 执行的根 future，Receiver、PoseEngine 和 Service 由该线程按顺序更新。`tokio::spawn` 启动的
 WebSocket、SteamVR IPC、OSC 和 UDP 接收任务在两个工作线程上执行；它们
 通过已有的有界命令队列、watch 快照和 broadcast 通知与主循环交换数据。
 串口和 HID 沿用各自的设备线程，AutoBone 等阻塞计算沿用后台任务。
@@ -138,69 +123,56 @@ WebSocket、SteamVR IPC、OSC 和 UDP 接收任务在两个工作线程上执行
 判断：只有一个旧包的全部字段都有更新数据覆盖，才能移除这个旧包。
 
 握手、设备状态、配置确认、重置请求、遥测、解析异常，以及混合控制与姿态的
-bundle 都保留为完整有序消息。合并不会跨过同一来源的控制消息，也不会跨过
-重复／乱序序号或零与非零序号的切换。bundle 不拆写，尚未被覆盖的第二传感器
-或加速度不会因另一个字段更新而丢失。接收任务的解析结果随原始字节一起
-移交给 Receiver，不再重复解析；保留 BTreeSet / BTreeMap 的覆盖判定，
+bundle 都保留为完整有序消息。控制消息、重复 / 乱序序号及零 / 非零切换形成合并边界。bundle 保持完整；字段覆盖检查按第二传感器和加速度分别判断。接收任务将原始字节与解析结果一起移交 Receiver，接收器直接使用该结果；保留 BTreeSet / BTreeMap 的覆盖判定，
 其开销通过 [队列与 runtime 基准](rust-udp-runtime-performance.zh-CN.md) 验证。
 
 主循环每次最多处理 16 个包或 `min(1ms, tick 周期 / 4)` 的时间，到预算
-后返回调度器。剩余包留在原有有界队列中，能够继续被新姿态覆盖，不另建
-一份不可合并的积压。单个 datagram / bundle 的 effects 完整处理，不在中间
-截断；replay journal 仍记录选中的原始字节。到期 tick 优先于下一批输入；
-若一次 tick 本身已超过周期，下一轮先给就绪输入一次机会，避免连续 tick
-反而饿死接收端。输入来源之间继续使用公平选择，退出信号保持优先。
+后返回调度器。剩余包留在原有有界队列中，可以继续参与新姿态覆盖判断。单个 datagram / bundle 的 effects 完整处理；replay journal 仍记录选中的原始字节。到期 tick 优先于下一批输入；
+若一次 tick 本身已超过周期，下一轮先给就绪输入一次机会，使接收与 tick 均有执行机会。输入来源之间继续使用公平选择，退出信号保持优先。
 
-这是包边界上的软预算，不能抢占单包处理或操作系统停调；实际超时仍会
+软预算在包边界检查，单包处理与线程停调可能使批次超过预算，实际超时会
 出现在 `udp_batch_work_ms` 与 tick jitter 中。
 
 合并后仍超过姿态容量时，淘汰最旧纯姿态包以接纳新包；控制容量独立计数，
 控制队列满时丢弃新控制包并报告警告。`udp_ingress_backpressure` 区分正常合并
-与实际容量丢包。队列保持有界、不等待消费者，但操作系统收包缓冲区和线程
-调度仍可能在满载时丢包，不能保证电脑完全满载时追踪无损。
+与实际容量丢包。队列以固定容量接纳输入，满载时的实际丢包还取决于系统 UDP 缓冲区与线程调度。
 
-单个传感器停更仍沿用上游的缓存姿态行为，不增加独立姿态 TTL。上游
+单个传感器停更沿用上游的缓存姿态可用性规则。上游
 [UDPProtocolParser](https://github.com/SlimeVR/SlimeVR-Server/blob/83941fd38e91cc91ca6b360deab5c2ae986dd1b6/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPProtocolParser.kt)
-在收到同一设备的数据包时更新其所有传感器的 heartbeat；这不表示每个传感器
-都产生了新姿态。Rust 的 `pose_age_ms` / `pose_stale` 仍用于诊断，不改变
-缓存姿态参与解算、设备连接和校准的规则。
+在收到同一设备的数据包时更新其所有传感器的 heartbeat；heartbeat 表示传输活跃。`pose_age_ms` / `pose_stale` 按单个传感器的旋转时间计算诊断，解算可用性、设备连接和校准由各自状态规则决定。
 
 ## 时间与配置更新
 
 UDP 使用同一起始 Instant 的两个时刻：socket 收到包后立即捕获接收时刻，
-主循环取包时捕获处理时刻。接收时刻不包含数据在系统 UDP 缓冲区里等待的
-时间，也不能作为 tracker 到电脑的网络延迟。
+主循环取包时捕获处理时刻。接收时刻的测量边界从 socket 读取完成后开始；网络延迟和系统 UDP 缓冲区等待需由相应测量记录。
 
 - `Record::Receive.at_ms`、InputEvent 时刻、Timed 数据的旧 `received_at_ms`
   仍表示处理时刻，驱动接收器超时、滤波、校准、敲击和 replay 的单调时钟。
 - 录制的可选 `received_at_ms` 与 TrackerSample 的可选 `socket_received_at_ms`
-  保存接收时刻。允许它早于之前已经处理的 tick；不得晚于自身处理时刻。
+  保存接收时刻。允许它早于之前已经处理的 tick；有效值小于或等于自身处理时刻。
 - Receiver 的 freshness 与算法 TrackerPose 的 `pose_age_ms` / `pose_stale`
   对有 socket 时刻的旋转使用真实接收年龄。`pose_processing_age_ms` 保留
   处理年龄，`pose_queue_delay_ms` 表示两时刻之差；Receiver 的
   `udp_rotation_timing` 还保存接收／处理时刻。加速度、另一传感器、重复包
-  不会刷新这个旋转时刻。
-- 老录制没有新字段时按原来的处理时刻计算诊断。HID / SteamVR / OSC 等
-  来源沿用原来的时间，不套用 UDP 排队时间；IMU 缓存可用性不受诊断年龄影响。
+  分别更新其对应数据的时刻，旋转时刻由有效旋转样本更新。
+- 老录制没有新字段时按原来的处理时刻计算诊断。HID / SteamVR / OSC 等来源使用各自时间语义；IMU 缓存可用性由状态规则决定。
 
 PoseEngine 的 `config_revision` 只在配置可能变化时更新，覆盖元数据、
 连接／能力变化、重置、安装方向清除、自动身高校准和 configure。Service
 在 revision 改变时才调用 `export_config()`，tick 和 API 读取都能看到新配置。
-普通姿态样本与 tick 不触发导出。
+普通样本与 tick 使用当前 revision 对应的配置。
 
 热键和 OSC 使用各自的 dirty 标志：配置成功提交且相关设置改变后，在下一次
-tick 更新相应控制器。热键不再每 4ms 从内存 YAML 解析，OSC 不再每帧克隆
-并重配；验证失败的配置提交不触发更新；后台落盘失败保留已应用的更新。SteamVR 自动分享先检查较小的分享配置，
+tick 更新相应控制器。配置验证成功且对应 dirty 标志置位时解析热键或重配 OSC；后台落盘失败保留已应用的控制器设置。SteamVR 自动分享先检查较小的分享配置，
 真正改变时才克隆并保存完整配置。
 
 诊断日志由 `slimevr-log-writer` 线程写 stdout / stderr。调用方仍负责
-序列化一条 JSON，但不在实时循环里执行管道写入。队列同时限制为 512 条
+序列化一条 JSON，序列化结果进入有界队列，再由写入线程操作管道。队列同时限制为 512 条
 和 4 MiB（包含正在写的一条），满时丢弃诊断日志，写入恢复后报告
 `logging_backpressure` 及丢弃数量。正常退出会排空队列；管道一直堵塞时，
-退出最多等两秒，避免被日志消费者拖住。错误和警告仍走 stderr。
+退出最多等两秒，随后按当前退出流程结束。错误和警告仍走 stderr。
 
-UDP replay journal 和 BVH 文件写入仍在原来的路径上；配置保存已经使用
-独立、有序的文件工作队列和完成反馈，不沿用诊断日志的丢弃策略。
+UDP replay journal 和 BVH 文件写入仍在原来的路径上；配置保存使用独立、有序的文件队列与持久化完成反馈。
 
 ```mermaid
 flowchart LR
@@ -222,23 +194,23 @@ flowchart LR
     Events --> Session
 ```
 
-`Session` 持有连接自己的订阅、发送状态和主题身份，不持有 `PoseEngine`。领域处理仍通过同一个 `Service` 修改配置、记录场景变化和协调控制器；这些调用在原来的 runtime 循环内执行。拆分不新增算法状态锁，不改变 UDP 接收或解算调度，也不把每种 RPC 变成独立异步任务。
+`Session` 持有连接的订阅、发送状态和主题身份。runtime 持有 PoseEngine，Service 在同一状态线程中修改配置、记录场景变化和协调控制器。领域 RPC 按请求顺序调用，网络任务通过队列与状态所有者交互。
 
 `Service` 的内部字段保留在 `service/mod.rs`，其他文件通过同一类型的 `impl Service` 实现对应职责。跨领域的私有方法仅在 `service` 范围可见，连接侧订阅状态则由独立的 `Session` 结构体封装。
 
-## 保留的通信行为
+## 通信契约
 
 - SolarXR FlatBuffers、旧 JSON WebSocket 和原生 RPC 的公开类型及字段保持兼容。
 - 请求按批次内原顺序执行，直接响应保留事务号；异步广播继续走原来的事件通道。
-- 批次上限仍为 32。超量批次在执行前拒绝；普通批次某条请求在验证或执行时失败，停止后续请求，已经执行的操作保留，返回错误和当前设置。后台保存失败在批次执行后反馈，不撤销已执行操作。
-- 连接上限、帧大小、握手 / RPC / 发送超时以及 data feed 最小间隔不变。
+- 批次上限仍为 32。超量批次在执行前拒绝；普通批次某条请求在验证或执行时失败，停止后续请求，已经执行的操作保留，返回错误和当前设置。后台保存失败在批次执行后反馈，已执行操作保持其内存状态。
+- 连接上限、帧大小、握手 / RPC / 发送超时及 data feed 最小间隔由 transport 配置统一校验。
 - pub/sub 的订阅按连接隔离，排除向发送者回送；串口和配网通知按连接订阅过滤。
-- 原配置文件、校准计时、AutoBone / BVH 保存和此前的 UDP 重连校准修复继续生效。
+- 原配置文件、校准计时、AutoBone / BVH 保存和UDP 重连校准按会话策略执行。
 
 ## 修改入口与验证
 
 新增 RPC 时，在 `service/rpc/mod.rs` 注册所属领域，并在对应领域文件中实现；请求校验和错误包装保留在统一入口。修改设置转换优先看 `settings.rs`；修改具体协议编码优先看 `protocol.rs`；修改 UDP 或算法行为仍分别进入接收层和 `slimevr-core`。
 
-本次补充了三项跨领域批次契约测试，在拆分前后的实现上均通过，覆盖响应顺序 / 事务号、广播和 YAML 保存、失败后的执行边界、超量批次无副作用。两项真实 WebSocket 测试覆盖连接初始化、心跳、轮询和定时 data feed，以及多连接 pub/sub 隔离和发送者排除。
+自动检查覆盖批次响应顺序与事务号、广播、YAML 保存、失败执行边界和超量批次校验。真实 WebSocket 用例覆盖初始化、心跳、轮询、定时 feed、多连接 pub/sub 隔离与发送者排除。共享快照与慢磁盘测试检查已发布帧稳定性、配置合并、持久化回复和退出排空。
 
-最终验证：126 项后端测试通过；格式检查及 Linux / Windows x64 目标的全目标 Clippy（`-D warnings`）通过。六设备 UDP / WebSocket / SteamVR Unix IPC 模拟联调对照拆分前后的正常、头显中断、头显恢复和后端停顿重连四个阶段，旋转、计算点位、校准标记和会话号逐项一致。这些检查不替代 Windows / SteamVR 实机验收。
+六设备 UDP / WebSocket / SteamVR Unix IPC 模拟联调覆盖正常、HMD 中断 / 恢复和后端停顿重连。CI 在 Linux / Windows 执行检查；真实 SteamVR、管道、追踪品质和 CPU 竞争按 [实机清单](rust-unified-hardware-test.zh-CN.md) 记录。

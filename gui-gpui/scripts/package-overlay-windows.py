@@ -79,9 +79,9 @@ def main():
             '2. 启动 SteamVR，再双击 Start-Overlay.cmd。\n'
             '3. 按手柄系统键打开 SteamVR 仪表盘，选择 SlimeVR。\n'
             '4. 可操作完整 / 航向 / 安装方向重置，查看骨架及节点信息。\n\n'
-            '不包含后端，也不安装驱动。关闭面板程序不会停止后端追踪。\n'
+            '面板连接已运行的后端，驱动与追踪生命周期由后端管理。\n'
             'Demo-Overlay.cmd 只显示示例数据；Preview-Overlay.cmd 同时显示桌面预览。\n'
-            '无需 WebView2。沿用桌面程序的语言和主题；可加 --locale zh-Hans 指定中文。\n'
+            '界面使用 GPUI 原生渲染器，沿用桌面语言与主题；--locale zh-Hans 指定中文。\n'
             '日志：%APPDATA%\\dev.slimevr.SlimeVR\\logs\\overlay\\gui-gpui.log。\n'
             '功能和实机验证范围详见面板说明与测试.md。\n',
             encoding='utf-8-sig',

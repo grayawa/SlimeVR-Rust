@@ -244,7 +244,7 @@ export function TopBar({
             await setConfig({ useTray });
             setShowTrayOrExitModal(false);
 
-            // Doing this in here just in case config doesn't get updated in time
+            // Apply the close action using the current tray preference.
             if (useTray) {
               desktop.api.minimize();
               // await invoke('update_tray_text');

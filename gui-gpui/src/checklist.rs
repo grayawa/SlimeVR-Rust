@@ -1,5 +1,5 @@
 //! Match the original tracking checklist: enabled/ignored filtering precedes
-//! ordering, blocking and visibility. Session skips never change vrconfig.
+//! ordering, blocking and visibility. Session skips live in GUI session state.
 use serde_json::Value;
 use std::collections::BTreeSet;
 

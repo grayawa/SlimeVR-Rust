@@ -1,23 +1,23 @@
-# Java 工程清理
+# Rust 后端与上游参考工具
 
-生产后端统一使用 `server-rust/`。旧 `server/core`、`server/desktop`、`server/android`、Gradle wrapper / 配置和 Java 版本探测 JAR 已移除。原代码仍可从 Git 历史或 [固定的上游版本](https://github.com/SlimeVR/SlimeVR-Server/tree/83941fd38e91cc91ca6b360deab5c2ae986dd1b6) 查看。
+生产后端位于 `server-rust/`。GPUI 和 Tauri 负责启动 Rust 可执行文件，后端使用 `vrconfig.yml` / `.yaml` 与 SolarXR 协议，GUI 偏好由前端保存。
 
-Tauri 自动启动 Rust 可执行文件，沿用 `vrconfig.yml` / `.yaml`、SolarXR 和既有 GUI 设置。`--rust-server` 指定可执行文件，`--path` 指定所在目录，`--no-server` 只连接已经运行的服务。Tauri 的 `--backend auto` / `rust` 保留；Java JAR / JVM 的启动选项和打包配置已移除。关闭自己启动的后端时先关闭 stdin，让录制和 journal 正常完成；超时后终止进程。
+## Tauri 后端生命周期
 
-移植数学代码的 ktmath / jMonkeyEngine 许可证保留在 `server-rust/licenses/`，并随 Tauri、GPUI 和 Overlay 构建包分发。
+`--rust-server` 指定可执行文件，`--path` 指定所在目录，`--no-server` 连接已运行的服务。`--backend auto` 自动发现后端，`--backend rust` 要求找到 Rust 可执行文件。
 
-GPUI、Overlay、共享 React 页面、翻译、OpenVR helper 和 SteamVR 驱动资源保留。WebView2 需求仍取决于是否使用 Tauri。旧 Java / Android 构建任务已从 CI 移除，当前工作流见 [CI 说明](rust-ci.zh-CN.md)。
+退出自己启动的后端时，宿主先关闭 stdin，让录制和 journal 正常完成；等待超时后终止进程。外部服务的生命周期由其启动方式管理。完整参数见 [Tauri 指南](../gui/README.tauri.md)。
 
-Rust 算法测试继续使用已有 golden fixtures，普通构建和测试无需 Java。用于重新生成参考数据的 Kotlin 适配器仅在 `server-rust/tools/` 中使用；SolarXR 子模块保留其上游生成的各种语言协议。
+## 参考源码与 fixtures
 
-参考生成工具通过 `reference_sources.py` 从 Git 历史导出上游提交 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`，放在系统临时目录的 `slimevr-upstream-reference/<提交>/`，不恢复当前工作区的旧工程。原始文件路径和 SHA-256 仍记录在 fixtures 中。重新生成时需要 Python 3.12+、Java / Kotlin 编译环境和对应 Maven 依赖，沿用各工具原有命令。
+Rust 算法测试读取提交到仓库的 golden fixtures。参考生成工具位于 `server-rust/tools/`，通过固定的上游提交读取 Java / Kotlin 源码，并在隔离目录中构建测试适配器。参考版本为 [83941fd38e91cc91ca6b360deab5c2ae986dd1b6](https://github.com/SlimeVR/SlimeVR-Server/tree/83941fd38e91cc91ca6b360deab5c2ae986dd1b6)。
 
-浅克隆缺少参考提交时，可先获取固定版本：
+普通构建和测试使用 Rust 工具链。重新生成参考数据需要 Python、JDK 和参考依赖；生成器帮助提供源码位置、缓存及 JDK 参数。SolarXR 子模块包含上游生成的各语言协议绑定。
 
 ```sh
-git fetch https://github.com/SlimeVR/SlimeVR-Server.git 83941fd38e91cc91ca6b360deab5c2ae986dd1b6
+cargo test --manifest-path server-rust/Cargo.toml --workspace --locked
+python3 server-rust/tools/generate-core-golden.py
+python3 server-rust/tools/generate-autobone-golden.py --skip-core-build
 ```
 
-也可设置 `SLIMEVR_REFERENCE_ROOT`，指向单独的上游 Git checkout；此时记录该 checkout 的提交与实际源码哈希。普通 Rust 测试不需要执行这些生成工具，也不需要完整 Git 历史。
-
-后续已移除 Electron 宿主和上游专用集成；保留与删除的具体范围见 [仓库清理说明](repository-cleanup.zh-CN.md)。
+参考执行范围、容差和数据来源见 [核心验证](rust-core-validation.zh-CN.md) 与 [校准和 AutoBone](rust-calibration-autobone.zh-CN.md)。仓库资源和开发入口见 [仓库内容](repository-cleanup.zh-CN.md)。

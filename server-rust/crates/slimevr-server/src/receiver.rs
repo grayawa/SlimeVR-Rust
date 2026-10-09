@@ -431,7 +431,8 @@ impl Receiver {
             return None;
         }
         // Java reuses the tracker and its reset corrections on a transport retry.
-        // A missed keepalive under host load can trigger this without restarting the IMU.
+        // A missed keepalive under host load can establish a new transport session
+        // while the IMU continues using its existing reference.
         let preserve_calibration = self.devices.contains_key(&key);
         // Remove the former endpoint on MAC-stable reconnect; retain the device identity.
         let session = self
@@ -484,7 +485,7 @@ impl Receiver {
             half_rtt_ms: None,
             pending_ping: None,
         };
-        // Legacy firmware never announces SensorInfo. Current firmware must announce it.
+        // Register sensor 0 for legacy firmware; current firmware registers via SensorInfo.
         if info.protocol_version < 9 || info.firmware.as_deref().is_none_or(str::is_empty) {
             register_sensor(
                 &mut device,
@@ -581,7 +582,7 @@ impl Receiver {
             self.last_maintenance_ms = at_ms;
             self.ping_id = self.ping_id.wrapping_add(1);
             for device in self.devices.values_mut() {
-                // Retired endpoints must not receive traffic intended for their replacement.
+                // Maintain UDP devices through their current endpoint mappings.
                 if device.origin != Origin::Udp
                     || self.addresses.get(&device.address) != Some(&device.key)
                 {

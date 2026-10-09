@@ -134,7 +134,7 @@ def main():
             sent = 0
             target_rate = args.rate * args.devices
             while process.poll() is None and time.monotonic() - start < args.duration:
-                # Pace the average rate without an unlimited catch-up burst after a host stall.
+                # Pace the average rate with a bounded catch-up batch after a host stall.
                 due = int((time.monotonic() - start) * target_rate)
                 for _ in range(min(32, max(0, due - sent))):
                     device = sent % args.devices

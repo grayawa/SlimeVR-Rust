@@ -24,8 +24,9 @@ unsafe extern "C" {
     fn svro_submit(session: *mut c_void, texture: *mut c_void, width: u32, height: u32) -> i32;
     fn svro_thumbnail(session: *mut c_void, rgba: *mut c_void, width: u32, height: u32) -> i32;
 }
-/// An owned UI-thread session. The marker prevents moving OpenVR/graphics state
-/// to another thread. Closing it never shuts down SlimeVR or SteamVR itself.
+/// An OpenVR/graphics session owned by its creating UI thread.
+/// Closing releases this session's resources; SlimeVR and SteamVR retain their
+/// independent process lifecycles.
 pub struct Runtime {
     session: NonNull<c_void>,
     _thread: PhantomData<Rc<()>>,

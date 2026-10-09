@@ -156,9 +156,7 @@ export function SelectSourceSetep({
           const versionA = semver.valid(a.name);
           const versionB = semver.valid(b.name);
 
-          // if both are not valid versions:
-          //   if one is main, push that higher
-          //   otherwise, push up the one which is alphabetically sooner
+          // Order non-SemVer labels with main first, then alphabetically.
           if (versionA == null && versionB == null) {
             if (a.name == 'main') return -1;
             return a.name.localeCompare(b.name);

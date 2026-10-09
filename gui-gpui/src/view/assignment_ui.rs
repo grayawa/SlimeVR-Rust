@@ -23,8 +23,8 @@ impl SlimeView {
         )
     }
 
-    /// No role is retained after closing, navigation, or a disconnect. A tap
-    /// outside the selector can only highlight a tracker, never assign it.
+    /// The selected role lives for the selector's page and connection lifetime.
+    /// Taps assign while the selector is open and highlight elsewhere.
     pub(super) fn select_assignment(
         &mut self,
         selected: Option<TrackerKey>,

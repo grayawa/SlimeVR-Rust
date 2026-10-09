@@ -55,7 +55,7 @@ def main():
   for name,level in [('Start-SlimeVR.cmd','info'),('Start-SlimeVR-Debug.cmd','debug')]:
    (base/name).write_bytes(('@echo off\r\nsetlocal\r\ncd /d "%~dp0"\r\nstart "" "%~dp0SlimeVR.exe" --log-level '+level+' %*\r\n').encode())
   (base/'打开日志文件夹.cmd').write_bytes('@echo off\r\nstart "" "%APPDATA%\\dev.slimevr.SlimeVR\\logs"\r\n'.encode())
-  (base/'使用说明.txt').write_text('''SlimeVR Rust / GPUI — Windows x64 解压运行包
+  (base/'使用说明.txt').write_text('''SlimeVR-Rust / GPUI — Windows x64 解压运行包
 
 1. 完全退出已有前端和占用同一端口的后端，把整个文件夹解压到固定位置。
 2. 双击 SlimeVR.exe 或 Start-SlimeVR.cmd，程序自动启动随包 Rust 后端。

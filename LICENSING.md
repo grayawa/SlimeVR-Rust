@@ -1,6 +1,6 @@
 # Licensing
 
-Original contributions and modifications maintained by SlimeVR Rust are licensed
+Original contributions and modifications maintained by SlimeVR-Rust are licensed
 under **GPL-3.0-or-later**: the GNU General Public License, version 3 or, at your
 option, any later version. The complete version 3 text is in [LICENSE](LICENSE).
 This applies to our Rust backend, native GPUI frontend, OpenVR overlay wrapper,

@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
+import { Localized } from '@fluent/react';
 import { NavLink, useMatch } from 'react-router-dom';
 import {
   RpcMessage,
@@ -154,7 +155,14 @@ export function TopBar({
                   className={classNames('flex justify-around flex-col')}
                   data-desktop-drag-region
                 >
-                  <Typography>SlimeVR</Typography>
+                  <Typography>SlimeVR-Rust</Typography>
+                </div>
+              )}
+              {!isMobile && (
+                <div className="self-center text-xs text-background-30 whitespace-nowrap">
+                  <Localized id="rust-development-preview">
+                    <span>Independent Development Preview</span>
+                  </Localized>
                 </div>
               )}
               {(!doesMatchSettings || !isMobile) && <VersionTag />}

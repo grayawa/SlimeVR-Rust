@@ -116,7 +116,7 @@ def main():
         (base / 'Start-SlimeVR-Debug.cmd').write_bytes(
             b'@echo off\r\nsetlocal\r\ncd /d "%~dp0"\r\n'
             b'start "" "%~dp0SlimeVR.exe" --backend rust --log-level debug %*\r\n')
-        readme = '''SlimeVR Rust / Tauri — Windows x64 解压运行包
+        readme = '''SlimeVR-Rust / Tauri — Windows x64 解压运行包
 
 1. 把整个文件夹解压到固定位置，例如 D:\\SlimeVR-Rust-Tauri。
 2. 完全退出已有界面和占用同一端口的后端，再双击 SlimeVR.exe 或 Start-SlimeVR.cmd。

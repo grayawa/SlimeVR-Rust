@@ -299,3 +299,5 @@ native-serial-resume-scroll = Resume scrolling
 
 native-processing = Processing…
 native-firmware-build-not-ready = Firmware has not finished building.
+
+rust-development-preview = Independent Development Preview

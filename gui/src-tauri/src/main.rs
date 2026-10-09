@@ -48,6 +48,7 @@ fn main() {
             presence::set_presence,
             commands::os_stats,
             commands::install_dir,
+            commands::gui_storage_path,
             commands::i18n_override,
             commands::open_folder,
             commands::open_managed_path,
@@ -77,7 +78,7 @@ fn main() {
                         .expect("SlimeVR icon is configured")
                         .clone(),
                 )
-                .tooltip("SlimeVR")
+                .tooltip("SlimeVR-Rust — Independent Development Preview")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {

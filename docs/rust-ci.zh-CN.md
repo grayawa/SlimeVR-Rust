@@ -25,7 +25,7 @@
 | `SlimeVR-Tauri-Windows-x64`        | Tauri、Rust 后端、驱动、OpenVR helper、运行库与许可证；使用系统 WebView2 |
 | `SlimeVR-Overlay-Windows-x64`      | 仪表盘附加程序、OpenVR DLL 和运行库；连接已有后端                        |
 | `SlimeVR-AIO-Windows-x64`          | 上述三个独立 ZIP、校验文件和记录提交的合集 manifest                      |
-| `slimevr-tauri-windows-installers` | Tauri 安装包                                                             |
+| `slimevr-tauri-windows-installers` | Tauri 安装包、项目许可与构建源码记录                                     |
 | `gui-dist`                         | 用于网页部署 / 调试的生产资源                                            |
 
 解压下载的 artifact ZIP，再解压里面需要使用的应用 ZIP。GPUI 或 Tauri 二选一启动桌面服务；Overlay 单独解压，在桌面程序和 SteamVR 启动后运行。下载保留 30 天。

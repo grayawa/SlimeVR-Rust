@@ -1682,3 +1682,5 @@ steamvr-existing-driver-description = 检测到已有的 SlimeVR 驱动，已保
 
 bvh-saved-title = BVH 录制已保存
 bvh-saved-description = 已保存 { $frames } 帧，文件位于运行服务端的电脑上：
+
+rust-development-preview = 独立开发预览

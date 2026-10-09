@@ -1,6 +1,9 @@
 import importlib.util
 import os
+import hashlib
+import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -8,6 +11,11 @@ from unittest.mock import patch
 spec = importlib.util.spec_from_file_location('notices', Path(__file__).with_name('distribution-notices.py'))
 notices = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(notices)
+
+stage_spec = importlib.util.spec_from_file_location(
+    'tauri_notices', Path(__file__).with_name('prepare-tauri-notices.py'))
+tauri_notices = importlib.util.module_from_spec(stage_spec)
+stage_spec.loader.exec_module(tauri_notices)
 
 
 class DistributionNotices(unittest.TestCase):
@@ -69,6 +77,78 @@ class DistributionNotices(unittest.TestCase):
                 notices.copy_notices(root, destination, 'b' * 40)
             self.assertIn('https://github.com/example/fork/tree/' + 'b' * 40,
                           (destination / 'SOURCE-CODE.txt').read_text())
+
+
+class TauriInstallerNotices(unittest.TestCase):
+    def make_checkout(self, root):
+        DistributionNotices().make_root(root)
+        for name in ('server-rust/Cargo.lock', 'gui/src-tauri/Cargo.lock', 'pnpm-lock.yaml'):
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('locked build inputs\n')
+        (root / '.gitignore').write_text('/gui/src-tauri/resources/\n')
+        subprocess.run(['git', 'init', '-q', str(root)], check=True)
+        subprocess.run(['git', 'add', '.'], cwd=root, check=True)
+        subprocess.run(['git', '-c', 'user.name=Fixture',
+                        '-c', 'user.email=fixture@example.invalid',
+                        '-c', 'commit.gpgsign=false', 'commit', '-qm', 'fixture',
+                        '--no-verify'], cwd=root, check=True)
+        return subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+
+    def test_installer_carries_exact_licenses_and_locked_source_references(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            commit = self.make_checkout(root)
+            destination = tauri_notices.prepare(root)
+            for name in notices.PROJECT_FILES:
+                self.assertEqual((destination / name).read_bytes(), (root / name).read_bytes())
+            self.assertIn('/tree/' + commit, (destination / 'SOURCE-CODE.txt').read_text())
+            manifest = json.loads((destination / 'BUILD-SOURCE.json').read_text())
+            self.assertEqual(manifest['commit'], commit)
+            self.assertFalse(manifest['local_changes'])
+            for name, digest in manifest['lockfile_sha256'].items():
+                self.assertEqual(digest, hashlib.sha256((root / name).read_bytes()).hexdigest())
+            self.assertTrue((destination / 'licenses/fonts/Font-OFL.txt').is_file())
+            self.assertFalse((destination / 'licenses/fonts/font.ttf').exists())
+
+    def test_local_changes_are_recorded_against_the_checkout_commit(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            commit = self.make_checkout(root)
+            (root / 'LICENSE').write_text('updated project license')
+            manifest = json.loads((tauri_notices.prepare(root) / 'BUILD-SOURCE.json').read_text())
+            self.assertEqual(manifest['commit'], commit)
+            self.assertTrue(manifest['local_changes'])
+
+    def test_refresh_uses_only_the_current_license_tree(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            self.make_checkout(root)
+            destination = tauri_notices.prepare(root)
+            (destination / 'stale.txt').write_text('previous build')
+            tauri_notices.prepare(root)
+            self.assertFalse((destination / 'stale.txt').exists())
+
+    def test_incomplete_inputs_preserve_the_existing_staged_bundle(self):
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            self.make_checkout(root)
+            destination = tauri_notices.prepare(root)
+            original = (destination / 'SOURCE-CODE.txt').read_bytes()
+            (root / 'LICENSE').unlink()
+            with self.assertRaises(ValueError):
+                tauri_notices.prepare(root)
+            self.assertEqual((destination / 'SOURCE-CODE.txt').read_bytes(), original)
+
+    def test_tauri_build_hooks_stage_notices_for_all_platforms(self):
+        root = Path(__file__).resolve().parents[2]
+        config = json.loads((root / 'gui/src-tauri/tauri.conf.json').read_text())
+        scripts = json.loads((root / 'gui/package.json').read_text())['scripts']
+        for hook in ('beforeDevCommand', 'beforeBuildCommand'):
+            self.assertTrue(config['build'][hook].startswith('pnpm tauri:notices && '))
+        self.assertIn('prepare-tauri-notices.py', scripts['tauri:notices'])
+        self.assertEqual(config['bundle']['resources']['resources/notices/'], '')
 
 
 if __name__ == '__main__':

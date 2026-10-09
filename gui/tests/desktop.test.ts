@@ -67,10 +67,21 @@ test('settings and cache retain distinct files and await persistence', async () 
   const saved: number[] = [];
   mockIPC((command, rawArgs) => {
     const args = rawArgs as Record<string, unknown> | undefined;
+    if (command === 'gui_storage_path') {
+      assert.ok(args?.kind === 'settings' || args?.kind === 'cache');
+      return `/shared/dev.slimevr.SlimeVR/gui-${args.kind}.dat`;
+    }
     if (command === 'plugin:store|load') {
       paths.push(args?.path as string);
       const rid = files.size;
-      files.set(rid, new Map());
+      files.set(
+        rid,
+        new Map(
+          args?.path === '/shared/dev.slimevr.SlimeVR/gui-settings.dat'
+            ? [['config.json', '{"lang":"en"}']]
+            : []
+        )
+      );
       return rid;
     }
     const rid = args?.rid as number;
@@ -94,6 +105,7 @@ test('settings and cache retain distinct files and await persistence', async () 
   const { api } = createTauriHost();
   const settings = await api.getStorage('settings');
   const cache = await api.getStorage('cache');
+  assert.equal(await settings.get('config.json'), '{"lang":"en"}');
   await settings.set('config.json', '{"lang":"zh-CN"}');
   assert.equal(await settings.get('config.json'), '{"lang":"zh-CN"}');
   assert.equal(await cache.get('config.json'), undefined);
@@ -101,7 +113,10 @@ test('settings and cache retain distinct files and await persistence', async () 
   assert.deepEqual(saved, [0]);
   assert.equal(await settings.delete('config.json'), true);
   assert.equal(await settings.get('config.json'), undefined);
-  assert.deepEqual(paths, ['gui-settings.dat', 'gui-cache.dat']);
+  assert.deepEqual(paths, [
+    '/shared/dev.slimevr.SlimeVR/gui-settings.dat',
+    '/shared/dev.slimevr.SlimeVR/gui-cache.dat',
+  ]);
 });
 
 test('disposing before asynchronous event registration still removes the listener', async () => {

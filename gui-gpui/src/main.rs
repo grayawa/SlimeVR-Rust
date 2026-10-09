@@ -13,7 +13,10 @@ use slimevr_gpui::{
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(version, about = "Native SlimeVR frontend")]
+#[command(
+    version,
+    about = "SlimeVR-Rust native frontend — Independent Development Preview"
+)]
 struct Options {
     #[arg(long, default_value = "ws://127.0.0.1:21110")]
     url: String,
@@ -45,7 +48,7 @@ fn main() {
         eprintln!("{error}");
         #[cfg(windows)]
         {
-            let title: Vec<u16> = "SlimeVR".encode_utf16().chain(Some(0)).collect();
+            let title: Vec<u16> = "SlimeVR-Rust".encode_utf16().chain(Some(0)).collect();
             let message: Vec<u16> = error.encode_utf16().chain(Some(0)).collect();
             unsafe {
                 windows_sys::Win32::UI::WindowsAndMessaging::MessageBoxW(
@@ -156,7 +159,7 @@ fn run() -> Result<(), String> {
                 window_bounds: Some(WindowBounds::centered(size(px(1280.), px(800.)), cx)),
                 window_min_size: Some(size(px(800.), px(560.))),
                 titlebar: Some(TitlebarOptions {
-                    title: Some("SlimeVR — GPUI".into()),
+                    title: Some("SlimeVR-Rust — GPUI — Independent Development Preview".into()),
                     ..gpui_kit::component::TitleBar::title_bar_options()
                 }),
                 ..gpui_kit::component::TitleBar::window_options()

@@ -58,7 +58,7 @@ impl Tray {
                 },
             ));
             let icon = TrayIconBuilder::new()
-                .with_tooltip("SlimeVR")
+                .with_tooltip("SlimeVR-Rust — Independent Development Preview")
                 .with_menu(Box::new(menu))
                 .with_icon(icon)
                 .build()

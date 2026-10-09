@@ -1,4 +1,4 @@
-# SlimeVR Rust
+# SlimeVR-Rust
 
 基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri 宿主。算法测试使用提交到仓库的参考数据，生成工具从固定上游版本读取源码。见 [后端与参考工具](docs/rust-only-backend.zh-CN.md)。
 
@@ -65,6 +65,7 @@ GitHub Actions 中的 **SlimeVR Checks** 自动检查 PR 和 main；**Build GPUI
 - [前后端联调](docs/rust-frontend-integration.zh-CN.md) · [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)
 - [仓库清理范围](docs/repository-cleanup.zh-CN.md) · [参与开发](CONTRIBUTING.md)
 - [公开准备、许可与分发核对](docs/public-release-licensing.zh-CN.md)
+- [安全问题反馈](SECURITY.md)
 
 硬件使用和佩戴说明可参考 [SlimeVR 官方文档](https://docs.slimevr.dev/)。本项目构建包从本仓库 GitHub Actions 的 artifacts 下载。
 

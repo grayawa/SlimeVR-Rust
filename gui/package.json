@@ -1,7 +1,7 @@
 {
   "name": "slimevr-rust-tauri",
   "version": "0.0.0",
-  "author": "SlimeVR Contributors",
+  "author": "SlimeVR-Rust contributors",
   "homepage": "https://github.com/grayawa/SlimeVR-Rust",
   "type": "module",
   "scripts": {
@@ -20,6 +20,7 @@
     "test:websocket": "tsx --test tests/websocket.test.ts",
     "test:assignment-browser": "pnpm web:build && tsx --test tests/assignment-browser.test.ts",
     "tauri:drivers": "python3 scripts/fetch-steamvr-drivers.py",
+    "tauri:notices": "python3 scripts/prepare-tauri-notices.py",
     "tauri:prepare": "pnpm tauri:drivers && python3 scripts/build-bindings-provider.py",
     "tauri:rust:dev": "python3 scripts/tauri-rust.py dev",
     "tauri:rust:build": "python3 scripts/tauri-rust.py build"

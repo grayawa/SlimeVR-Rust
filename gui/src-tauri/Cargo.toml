@@ -3,7 +3,7 @@ name = "slimevr-gui"
 version = "0.1.0"
 description = "Tauri host for the SlimeVR web interface"
 authors = ["SlimeVR Team"]
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0-or-later"
 edition = "2021"
 
 [build-dependencies]

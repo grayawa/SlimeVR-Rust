@@ -1,0 +1,15 @@
+SlimeVR Rust — an independent, unofficial Rust implementation derived from SlimeVR Server.
+
+Copyright (C) 2026 SlimeVR-Rust contributors.
+Original project contributions and modifications are licensed under the GNU
+General Public License, version 3 or (at your option) any later version.
+See LICENSE and LICENSING.md for terms and scope.
+
+Inherited SlimeVR material:
+Copyright (c) 2020 Eiren Rain and SlimeVR Contributors.
+Original portions retain their MIT OR Apache-2.0 licensing and attribution.
+See LICENSE-MIT, LICENSE-APACHE and THIRD_PARTY_NOTICES.md.
+
+Third-party code, fonts, graphics, drivers and system runtimes retain their own
+licenses. No trademark permission is granted. This project is not an official
+SlimeVR distribution and is not affiliated with or endorsed by SlimeVR B.V.

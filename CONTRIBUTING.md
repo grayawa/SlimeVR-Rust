@@ -48,6 +48,8 @@ SolarXR is the WebSocket / FlatBuffers protocol shared by the backend and GUI. U
 
 ## Licensing and upstream contributions
 
-Preserve the original MIT / Apache-2.0 license files, copyright notices and applicable dependency licenses. See [README.md](README.md) and [TRADEMARK.md](TRADEMARK.md).
+By submitting contributions to project-owned code, you agree to license them under **GPL-3.0-or-later**, unless explicitly agreed otherwise. Changes in separately licensed vendor/submodule code retain its applicable license.
+
+Preserve the original MIT / Apache-2.0 license files, copyright notices and all applicable third-party licenses. See [LICENSING.md](LICENSING.md), [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [TRADEMARK.md](TRADEMARK.md). GPL-only changes need an additional compatible grant from the relevant rights holders before incorporation into permissively licensed SlimeVR upstream.
 
 When submitting changes to SlimeVR upstream, follow [its contribution policies](https://github.com/SlimeVR/.github/blob/main/profile/CONTRIBUTING.md) and repository instructions.

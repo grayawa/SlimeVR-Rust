@@ -1,4 +1,4 @@
-//! Read only the glTF JSON chunk; embedded textures and meshes are not needed for avatar scale.
+//! Extract avatar scale from the glTF JSON chunk.
 use serde_json::Value;
 use std::io::{Read, Seek, SeekFrom};
 pub fn read(path: &std::path::Path) -> Result<String, String> {

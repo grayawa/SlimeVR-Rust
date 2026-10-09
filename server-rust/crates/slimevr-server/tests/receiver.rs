@@ -82,7 +82,7 @@ fn delayed_arrival_is_diagnostic_only_and_is_not_refreshed_by_other_sensor_or_ac
     assert_eq!(s["freshness"][0]["pose_processing_age_ms"], 50);
     assert_eq!(s["freshness"][0]["pose_queue_delay_ms"], 100);
     assert_eq!(s["freshness"][1]["pose_age_ms"], 45);
-    r.tick(1200); // Transport timeout still uses the processing heartbeat, not the arrival clock.
+    r.tick(1200); // Transport timeout uses the state machine's processing heartbeat.
     assert!(!r.devices[MAC].transport_timed_out);
     r.receive_timed(
         addr(1111),

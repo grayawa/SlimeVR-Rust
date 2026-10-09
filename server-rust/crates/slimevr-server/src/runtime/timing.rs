@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::time::{Duration, Instant};
 
 // Microsecond buckets: exact below 512 us, then <= 1/256 relative bucket width.
-// Covers all u64 microseconds without an overflow bucket hiding long stalls.
+// Cover the full u64 microsecond range, preserving long-stall quantiles.
 const LINEAR: usize = 512;
 const SUB_BUCKETS: usize = 256;
 const BUCKETS: usize = LINEAR + (64 - 9) * SUB_BUCKETS;
@@ -232,7 +232,7 @@ impl Timing {
         self.live_snapshot.clear();
         self.udp_loss = [0; 3];
         self.window_start = now;
-        // Keep previous: a stall crossing a reporting boundary must still count.
+        // Preserve the previous tick start to measure intervals across windows.
         Some(report)
     }
 }
@@ -379,7 +379,7 @@ mod tests {
             ],
             [1; 5]
         );
-        tick(&mut timing, 120); // short catch-up tick is jitter, not a stall
+        tick(&mut timing, 120); // A short catch-up tick contributes jitter with zero stall.
         let last = timing
             .report(start + Duration::from_millis(120), 120, true)
             .unwrap();

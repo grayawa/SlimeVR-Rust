@@ -157,7 +157,7 @@ export function useManualProportions({ type }: { type: 'linear' | 'ratio' }): {
         const oldGroupTotal = skeleton.skeletonParts
           .filter(({ bone }) => group.includes(bone))
           .reduce((acc, cur) => cur.value + acc, 0);
-        let newValue = part.value + oldGroupTotal * params.newValue; // the new ratio is computed from the group size and not the bone
+        let newValue = part.value + oldGroupTotal * params.newValue; // Compute the ratio change relative to the whole group.
         if (newValue <= 0)
           // Prevent ratios from getting below zero
           newValue = 0;

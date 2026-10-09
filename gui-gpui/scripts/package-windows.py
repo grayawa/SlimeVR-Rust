@@ -55,7 +55,28 @@ def main():
   for name,level in [('Start-SlimeVR.cmd','info'),('Start-SlimeVR-Debug.cmd','debug')]:
    (base/name).write_bytes(('@echo off\r\nsetlocal\r\ncd /d "%~dp0"\r\nstart "" "%~dp0SlimeVR.exe" --log-level '+level+' %*\r\n').encode())
   (base/'打开日志文件夹.cmd').write_bytes('@echo off\r\nstart "" "%APPDATA%\\dev.slimevr.SlimeVR\\logs"\r\n'.encode())
-  (base/'使用说明.txt').write_text('''SlimeVR Rust / GPUI — Windows 11 x64 解压运行测试包\n\n1. 退出旧前端及原版 Java 服务，将整个文件夹解压到固定位置。\n2. 双击 SlimeVR.exe 或 Start-SlimeVR.cmd，程序自动启动随包 Rust 后端。\n3. 连接追踪器并做完整 / 安装方向重置。已有 SlimeVR SteamVR 驱动可继续使用。\n\n可选的 SlimeVR-Components.exe 是组件预览窗口，交互只保存在内存中，不连接后端或读写配置。正常使用请运行 SlimeVR.exe。\n\n无需 Java、Rust、Node、Electron 或 WebView2。包含原生界面、Rust 后端、官方 SteamVR 驱动、Bindings Provider 与运行依赖。\n沿用 %APPDATA%\\dev.slimevr.SlimeVR\\vrconfig.yml / vrconfig.yaml 及既有 GUI 偏好。\n如果你的原配置在其他位置，可使用 SlimeVR.exe --config "D:\\原位置\\vrconfig.yml" 启动。\n日志：%APPDATA%\\dev.slimevr.SlimeVR\\logs\\gui-gpui.log。\n默认 info / warn / error；排查时完全退出后运行 Start-SlimeVR-Debug.cmd，正常启动恢复 info。\n已有服务运行时默认连接该服务；--attach 仅连接。只会退出自己启动的后端。\n\n配置和日志保存在应用数据目录，不在解压目录。包里没有个人配置或日志。\n若防火墙提示出现，请允许私有网络访问。SteamVR 登记驱动后保持解压目录位置不变。\n固件构建需已有构建服务；Discord 功能需本机 Discord。\n\n自动测试、真实后端模拟联调和 Linux 窗口操作已验证。Windows x64 构建及 DLL / ZIP 检查已通过；Windows 11 实机、SteamVR / VRChat、真实串口刷写和音频由统一测试确认。内存改善尚未在 Windows 实测。\n详见 功能与测试说明.md、后端实机测试清单.md。\n''',encoding='utf-8-sig')
+  (base/'使用说明.txt').write_text('''SlimeVR Rust / GPUI — Windows x64 解压运行包
+
+1. 完全退出已有前端和占用同一端口的后端，把整个文件夹解压到固定位置。
+2. 双击 SlimeVR.exe 或 Start-SlimeVR.cmd，程序自动启动随包 Rust 后端。
+3. 连接追踪器，确认左右佩戴与分配，执行完整 / 安装方向重置。
+
+本包包含原生界面、Rust 后端、固定版本 SteamVR 驱动、Bindings Provider 和运行依赖。
+已有 SlimeVR 驱动可继续使用。界面使用 GPUI 原生渲染器，运行依赖由包和系统提供。
+SlimeVR-Components.exe 是使用内存示例值的组件预览；正常使用运行 SlimeVR.exe。
+
+配置：%APPDATA%\\dev.slimevr.SlimeVR\\vrconfig.yml / vrconfig.yaml。
+GUI 偏好沿用既有应用数据目录。自定义配置可用 --config "D:\\SlimeVR\\vrconfig.yml"。
+日志：%APPDATA%\\dev.slimevr.SlimeVR\\logs\\gui-gpui.log。
+默认 info；排查时完全退出后运行 Start-SlimeVR-Debug.cmd，正常启动恢复默认级别。
+端口已有服务时连接该服务；--attach 指定连接已有后端。退出回收自己启动的后端。
+
+防火墙提示出现时允许私有网络，以便接收 UDP。注册驱动后保持解压目录位置。
+固件构建使用配置的构建服务；Discord Presence 使用本机 Discord 客户端。
+构建提交、文件校验与资源来源见 BUILD-MANIFEST.json、SOURCE-CODE.txt 和 licenses/。
+自动检查范围见 功能与测试说明.md；真实设备与平台行为按 后端实机测试清单.md 验收。
+CPU 与内存结论通过等价场景的实机测量记录。
+''',encoding='utf-8-sig')
   files=[]
   for path in sorted(base.rglob('*')):
    if not path.is_file():continue

@@ -1,4 +1,4 @@
-//! Preserve normal samples, but compact stale pose backlogs without crossing controls.
+//! Preserve normal samples and compact stale poses within control-message boundaries.
 use crate::protocol::{self, Packet};
 use std::{
     collections::{BTreeMap, BTreeSet, VecDeque},
@@ -59,7 +59,7 @@ impl Pending {
                         fields.insert((*sensor_id, 3));
                     }
                     // Mixed bundles, errors, telemetry, handshakes and malformed data
-                    // remain whole ordered messages; never partially rewrite packets.
+                    // remain whole ordered messages.
                     _ => return None,
                 }
             }
@@ -105,7 +105,7 @@ impl Queue {
             self.compact(stats);
             if self.poses > POSE_CAPACITY {
                 // Only cardinality/barriers can still fill the pose reservoir.
-                // Evict an old pose, never an ordered control, and admit the new one.
+                // Evict the oldest pure pose and admit the new pose.
                 let oldest = self
                     .pending
                     .iter()
@@ -129,8 +129,8 @@ impl Queue {
             let (sequence, newer_fields) = covered
                 .entry(peer)
                 .or_insert_with(|| (packet.sequence, BTreeSet::new()));
-            // Zero sequences are accepted in arrival order; do not compact across
-            // zero/nonzero transitions, duplicates, or reordered positive sequences.
+            // Compact ordered runs: zero sequences retain arrival order; zero/nonzero
+            // transitions, duplicates and reordered positive sequences form barriers.
             let ordered = (*sequence == 0 && packet.sequence == 0)
                 || (packet.sequence > 0 && *sequence > packet.sequence);
             if !ordered {

@@ -1,4 +1,4 @@
-//! Opt-in release microbenchmark; never assert wall-clock speed in CI.
+//! Opt-in release microbenchmark reporting wall-clock costs by environment.
 use super::{
     tests::{bundle, handshake, peer, rotation, wire},
     *,

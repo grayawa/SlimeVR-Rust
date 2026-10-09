@@ -52,7 +52,7 @@ export const ASSIGNMENT_RULES: Partial<
   [BodyPart.HIP]: [BodyPart.CHEST],
   [BodyPart.WAIST]: [BodyPart.CHEST],
   // TODO chest OR upperChest.
-  //  Also don't warn if no legs.
+  // TODO: Apply the leg warning to layouts with leg trackers.
 };
 
 const COMMONS = [BodyPart.HEAD, ...HANDS_PARTS];

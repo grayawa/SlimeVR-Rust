@@ -1,4 +1,4 @@
-//! Connection-local feed, topic and serial subscriptions; never owns the pose engine.
+//! Connection-local feed, topic and serial subscriptions. The runtime owns the pose engine.
 use super::{backend_info, ConnectionError, Socket};
 use crate::api::{protocol, pubsub, LiveState, Request, Wire};
 use futures_util::SinkExt;

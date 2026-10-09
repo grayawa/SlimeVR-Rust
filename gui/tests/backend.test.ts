@@ -381,7 +381,7 @@ test('existing-driver information uses Fluent translations and the English fallb
     return value;
   };
   const english = await bundle('en');
-  // These messages are plain text; Node does not need a DOM markup parser.
+  // Parse these messages as plain text in the Node test environment.
   const chinese = new ReactLocalization([await bundle('zh-Hans'), english], null);
   assert.equal(
     chinese.getString('steamvr-existing-driver-title'),
@@ -737,7 +737,7 @@ test(
             e.adjustedSkeletonParts.length > 0
         )
       );
-      // Sparse polls must not leak unrequested tracker fields.
+      // Sparse polls return the tracker fields selected by their component mask.
       const sparse = new sx.DataFeedConfigT();
       const mask = new sx.TrackerDataMaskT();
       mask.status = true;
@@ -812,7 +812,7 @@ test(
       assert.equal(replay.status, 0, replay.stderr);
       const replayed = JSON.parse(replay.stdout.trim().split('\n')[0]);
       const livePose = { ...last };
-      delete livePose.level; // Severity is a live diagnostic envelope, not pose data.
+      delete livePose.level; // Strip the live diagnostic severity envelope before comparing pose data.
       assert.deepEqual(replayed, livePose);
       const saved = await readFile(state, 'utf8');
       assert.equal((saved.match(/designation: body:/g) ?? []).length, 5);
@@ -831,7 +831,7 @@ test(
           sx.RpcMessage.SettingsResponse
         );
         assert.equal(restored.filtering.type, sx.FilteringType.SMOOTHING);
-        // Restarted training can reuse LastABRecording without live trackers or HMD.
+        // Restarted training loads tracker and HMD data from LastABRecording.
         reconnected.sendRPC(
           sx.RpcMessage.AutoBoneProcessRequest,
           new sx.AutoBoneProcessRequestT(sx.AutoBoneProcessType.PROCESS)
@@ -944,7 +944,7 @@ test(
         assert.equal(values.length, channels);
         assert.ok(values.every(Number.isFinite));
         assert.ok(Math.abs(values[0] - 0.2) < 0.00001);
-        assert.ok(values[1] > 0.5 && values[1] < 2); // Metres, not centimetres.
+        assert.ok(values[1] > 0.5 && values[1] < 2); // Position values use metres.
       }
       return count;
     };
@@ -1026,7 +1026,7 @@ test(
       assert.equal(await realpath(changed.file.path), await realpath(explicit));
       await assertClip(explicit, changed.file.frames);
       assert.equal((await status(client)).recording, false);
-      // Ctrl-C finalizes the current count without a stop RPC.
+      // Ctrl-C finalizes the current recording's frame count.
       assert.equal((await record(client, false)).recording, true);
       await delay(70);
       await server.stop();

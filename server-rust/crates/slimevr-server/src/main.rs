@@ -105,17 +105,17 @@ enum Command {
         no_driver_install: bool,
         #[arg(long)]
         no_steamvr_restart: bool,
-        /// Additional serial ports (including adapters not recognized by USB IDs).
+        /// Additional serial ports specified explicitly alongside USB discovery.
         #[arg(long = "serial-port")]
         serial_ports: Vec<String>,
     },
-    /// Replay locally and check exact receiver reply bytes; never opens a socket.
+    /// Replay recorded events locally and verify exact receiver reply bytes.
     Replay {
         file: PathBuf,
         #[arg(long)]
         events: bool,
     },
-    /// Decode one hexadecimal UDP datagram without registering a device.
+    /// Parse one hexadecimal UDP datagram and print its decoded fields.
     Decode { hex: String },
     /// Solve a server-space algorithm scene with explicit samples, head poses, resets and ticks.
     Solve {
@@ -247,7 +247,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             .await?;
         }
         Command::Replay { file, events } => {
-            // Propagate stdout failures instead of panicking inside the replay callback.
+            // Capture stdout failures for propagation after the replay callback.
             let mut output_error = None;
             let result = recording::replay(&file, |e| {
                 if output_error.is_none() && (events || !e.kind.is_noisy()) {

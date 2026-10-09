@@ -268,7 +268,7 @@ export function TrackerSettingsPage() {
                         <Typography id="tracker-settings-update-incompatible" />
                       )}
                       {needUpdate === 'blocked' && (
-                        // This happens only if no update is available and or the user is not in the current stagged
+                        // Show the staged-release eligibility status.
                         <Typography id="tracker-settings-update-blocked" />
                       )}
                       {needUpdate === 'low-battery' &&

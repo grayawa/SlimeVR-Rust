@@ -106,8 +106,8 @@ impl Writer {
     }
 }
 
-/// Stream names are transport details, not severities. Honor typed backend levels;
-/// retain Java/plain-text stderr as warnings and fatal process failures as errors.
+/// Use typed backend levels when available. Classify plain stderr as warnings
+/// and fatal process failures as errors; stream names identify output channels.
 pub fn status_level(kind: &str, message: &str) -> LogLevel {
     match kind {
         "error" | "terminated" => LogLevel::Error,

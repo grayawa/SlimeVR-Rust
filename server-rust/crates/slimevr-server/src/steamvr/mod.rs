@@ -1,4 +1,4 @@
-//! SteamVR driver protocol v2. The runtime owns pose changes; IPC never solves.
+//! SteamVR driver protocol v2. IPC transports messages; the runtime owns pose updates.
 pub mod manager;
 mod output_stats;
 pub mod transport;

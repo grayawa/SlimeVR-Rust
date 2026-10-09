@@ -103,8 +103,8 @@ impl Player {
                 }
                 return;
             };
-            // Decode once on the audio worker, never at a reset boundary or in
-            // Rodio's real-time mixer. Playback only clones prepared PCM buffers.
+            // Decode clips when the audio worker starts. Playback clones the
+            // prepared PCM buffers for Rodio's real-time mixer.
             let mut clips = std::collections::HashMap::new();
             for cue in [
                 Cue::Initial(1),

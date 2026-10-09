@@ -3,7 +3,8 @@
 
 External tracker/server callbacks are isolated. Arms, fingers, constraints,
 LegTweaks, StayAligned, Localizer, derived velocity and AutoBone frame shuffling are included.
-AutoBone training and the full Java service are not executed. Inputs are synthetic.
+This oracle executes the listed core paths with synthetic inputs. The AutoBone
+training oracle is provided by generate-autobone-golden.py.
 """
 import argparse
 from concurrent.futures import ThreadPoolExecutor

@@ -167,7 +167,7 @@ pub enum ReplayInput<'a> {
     PoseSetup(&'a slimevr_core::pose::PoseConfig),
 }
 
-/// Observer sees events before the corresponding solve tick. It may fail without panicking.
+/// Observer sees events before the corresponding solve tick and returns failures through Result.
 pub fn replay_observed(
     path: &Path,
     mut observe: impl FnMut(ReplayInput<'_>) -> Result<(), String>,

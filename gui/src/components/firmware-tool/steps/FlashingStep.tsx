@@ -96,7 +96,7 @@ export function FlashingStep({
         ({ deviceId }) => deviceId == id.toString()
       );
 
-      // We skip the status as it can be old trackers still sending status
+      // Handle update status for the currently selected device.
       if (!selectedDevice) return;
 
       setStatus((last) => ({

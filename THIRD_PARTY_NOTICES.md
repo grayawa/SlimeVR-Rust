@@ -1,10 +1,10 @@
 # Third-party notices
 
 This is an attribution and license-scope index for the principal inherited
-components and embedded assets. It is not a replacement for dependency license
-texts or a complete inventory of every platform's linked dependency graph.
-Preserve the accompanying notices and use each locked dependency's source and
-license when redistributing a build.
+components and embedded assets. Each build's complete dependency inventory
+is determined by its target, features and lockfiles. Preserve the accompanying
+license texts and use each locked dependency's source and license when
+redistributing a build.
 
 | Material                                                  | Source / copyright                                                                                        | License / notice                                                                             |
 | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -23,14 +23,13 @@ license when redistributing a build.
 | Microsoft VC runtime DLLs                                 | Microsoft                                                                                                 | Original redistributable terms; `VC-Runtime-LICENSE.rtf` and source provenance in the bundle |
 
 Font sources and conversions are recorded in `gui-gpui/assets/fonts/SOURCES.md`.
-Fonts and graphics are separately licensed assets; the project's GPL declaration
-does not replace their terms. Twemoji graphics are not relicensed under the MIT
-license of the npm packaging wrapper. Include their attribution when redistributing
-those graphics.
+Fonts and graphics retain their separate asset licenses. Twemoji graphics use
+CC-BY-4.0; their npm packaging wrapper uses MIT. Include the graphics attribution
+when redistributing those graphics.
 
 Rust dependencies are pinned in each Cargo.lock; npm dependencies are pinned in
 pnpm-lock.yaml. An `OR` expression permits choosing a compatible alternative;
 `AND` requires satisfying both sets of terms. MPL-2.0 dependencies retain their
-source/notice obligations; build tools and separate data assets do not become
-GPL simply because the application is GPL. Generated protocol bindings retain
-the protocol's notices. GPL does not relicense SteamVR, WebView2 or Windows.
+source/notice obligations. Build tools, separate data assets, SteamVR, WebView2
+and Windows retain their own terms. Generated protocol bindings retain the
+protocol's notices.

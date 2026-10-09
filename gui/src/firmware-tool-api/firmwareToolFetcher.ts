@@ -85,7 +85,7 @@ export async function firmwareToolFetch<
     if (response.headers.get('content-type')?.includes('json')) {
       return await response.json();
     } else {
-      // if it is not a json response, assume it is a blob and cast it to TData
+      // Read the remaining response content types as a blob payload.
       return (await response.blob()) as unknown as TData;
     }
   } catch (e) {

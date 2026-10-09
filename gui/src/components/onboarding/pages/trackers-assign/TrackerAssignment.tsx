@@ -82,8 +82,8 @@ export function TrackersAssignPage() {
         ignoreIfDisconnected: true,
       });
     };
-    // SettingsResponse is a notification, not a reason to write settings again.
-    // Enter/leave the page (or restore its connection) without replaying stale tap values.
+    // Set setupMode from the page and connection lifecycle.
+    // Settings responses update read state; other tap values remain server-owned.
     setSetupMode(true);
     return () => setSetupMode(false);
   }, [isConnected]);

@@ -1,4 +1,4 @@
-//! Deterministic input and pose algorithms, without sockets or a desktop host.
+//! Deterministic pose algorithms driven by input events and an explicit clock.
 pub mod calibration;
 pub mod filtering;
 pub mod math;
@@ -55,7 +55,7 @@ impl Vector3 {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Timed<T> {
     pub value: T,
-    /// Milliseconds on the receiver's monotonic clock, not an IMU sample time.
+    /// Milliseconds at state-machine processing on the receiver's monotonic clock.
     pub received_at_ms: u64,
 }
 
@@ -140,8 +140,8 @@ pub enum EventKind {
         address: String,
         firmware: Option<String>,
         session: u64,
-        /// A transport handshake is not evidence that the IMU reference restarted.
-        /// Default false preserves the semantics of older recordings and other sources.
+        /// Retain calibration when a known UDP identity establishes a new transport session.
+        /// Default false initializes calibration for sources using the default session policy.
         #[serde(default)]
         preserve_calibration: bool,
     },

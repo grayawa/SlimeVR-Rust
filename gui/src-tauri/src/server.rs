@@ -28,7 +28,7 @@ pub enum Backend {
 #[derive(Clone, Debug, Parser)]
 #[command(name = "slimevr-gui", about = "SlimeVR Tauri interface")]
 pub struct LaunchOptions {
-    /// Connect to an existing backend without starting a child process.
+    /// Attach to an existing backend managed by its original launcher.
     #[arg(long)]
     pub no_server: bool,
     /// Diagnostic verbosity for the frontend, desktop and owned Rust backend.

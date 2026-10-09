@@ -98,7 +98,7 @@ export function SettingSelectorMobile() {
         }))}
         variant="tertiary"
         direction="down"
-        // There is always an option selected placholder is not used
+        // Navigation always supplies the selected option.
         placeholder=""
         name="link"
       />

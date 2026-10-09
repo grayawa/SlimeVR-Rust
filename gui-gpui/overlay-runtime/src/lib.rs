@@ -97,7 +97,7 @@ pub struct Pointer {
     buttons: u32,
 }
 impl Pointer {
-    /// Releases outside the UI to cancel, rather than click, an interrupted press.
+    /// Cancel an interrupted press by moving outside the UI before releasing.
     pub fn cancel(&mut self) -> Vec<Input> {
         let position = [-10_000., -10_000.];
         let mut events = vec![Input::Move {

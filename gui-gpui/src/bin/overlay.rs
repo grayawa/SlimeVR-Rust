@@ -41,7 +41,7 @@ struct Options {
     /// Show a desktop window too, for layout and interaction verification.
     #[arg(long)]
     preview: bool,
-    /// Show sample data only; never connects to or changes a backend.
+    /// Show in-memory sample data for a standalone UI demonstration.
     #[arg(long)]
     demo: bool,
     #[arg(long)]
@@ -110,7 +110,7 @@ impl Panel {
         if stamp == self.preferences_stamp {
             return;
         }
-        // Keep retrying partial writes instead of marking unreadable data as seen.
+        // Retry loading after partial writes until a complete preferences file is available.
         match Preferences::load(&self.paths) {
             Ok(preferences) => {
                 let changed = tracker_list::Settings::from_preferences(&preferences.value)

@@ -90,7 +90,7 @@ fn timeout_fences_late_ack_and_reboot_reapplies_native_preferences() {
     c.tick(&mut r, &config, 10004);
     assert_eq!(c.outbound.len(), 2);
     assert!(!c.outbound[1].0.enabled);
-    // A new firmware session cannot acknowledge an old pending operation.
+    // Pending operations accept acknowledgements from their own firmware session.
     let mut reboot = init();
     reboot.devices.get_mut(MAC).unwrap().session = r.devices[MAC].session + 1;
     let completed = c.tick(&mut reboot, &config, 10005);

@@ -44,8 +44,7 @@ export function VerticalStep({
     setShouldAnimate(true);
   }, [active]);
 
-  // Make it so it wont try to animate the size
-  // if we are not changing active step
+  // Limit size animation to active-step transitions.
   useDebouncedEffect(
     () => {
       setShouldAnimate(false);

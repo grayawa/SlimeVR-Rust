@@ -65,9 +65,7 @@ export function computeHeight(
     : null;
 }
 
-// The headset height is not the full height! This value compensates for the
-// offset from the headset height to the user full height
-// From Drillis and Contini (1966)
+// Ratio of headset eye height to full body height, from Drillis and Contini (1966).
 export const EYE_HEIGHT_TO_HEIGHT_RATIO = 0.936;
 
 // Based on average human height (1.65m)

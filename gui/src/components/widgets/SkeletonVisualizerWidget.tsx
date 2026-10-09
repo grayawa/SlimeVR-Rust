@@ -31,7 +31,7 @@ import { EyeIcon } from '@/components/commons/icon/EyeIcon';
 
 const GROUND_COLOR = '#2c2c6b';
 
-// Just need to know the length of the total body, so don't need right legs
+// Estimate body height from one vertical chain through the left leg.
 const Y_PARTS = [
   BodyPart.NECK,
   BodyPart.UPPER_CHEST,
@@ -134,7 +134,7 @@ function initializePreview(
 
   const computeSkeletonOffset = (bones: Map<BodyPart, BoneT>) => {
     const hmd = bones.get(BodyPart.HEAD);
-    // If I know the head position, don't use an offset
+    // A positive HMD height provides the preview's absolute vertical anchor.
     if (hmd?.headPositionG?.y !== undefined && hmd.headPositionG?.y > 0) {
       return 0;
     }
@@ -231,7 +231,7 @@ function initializePreview(
       skeletonHelper.dispose();
       if (!renderer) return;
       renderer.dispose();
-      renderer = null; // Very important for js to free the WebGL context. dispose does not to it alone
+      renderer = null; // Release the renderer reference so its WebGL context can be collected.
     },
     addView: ({
       left,

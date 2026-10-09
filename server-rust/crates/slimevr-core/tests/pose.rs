@@ -64,7 +64,7 @@ fn delayed_udp_arrival_changes_diagnostics_without_rewinding_filter_or_state_clo
     assert_eq!(p.pose_age_ms, Some(2400));
     assert_eq!(p.pose_queue_delay_ms, Some(100));
     assert_eq!(p.pose_stale, Some(true));
-    assert!(p.usable()); // Diagnostic age never disables upstream cached IMU poses.
+    assert!(p.usable()); // Cached IMU availability follows upstream status rules; age is diagnostic.
 }
 
 #[test]

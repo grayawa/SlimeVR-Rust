@@ -2,7 +2,7 @@ use crate::ui::theme::{self, Surface};
 use gpui_kit::component::{ActiveTheme, StyledExt};
 use gpui_kit::{prelude::FluentBuilder as _, *};
 
-/// An undecorated surface: callers compose layout without repeating theme roles.
+/// A themed surface on which callers compose their content layout.
 pub fn card(surface: Surface, cx: &App) -> Div {
     div().rounded(theme::CARD_RADIUS).bg(surface.color(cx))
 }

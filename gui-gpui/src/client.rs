@@ -139,8 +139,8 @@ impl Shared {
                 }
             }
         });
-        // Deliver audio feedback on the receive thread, outside the snapshot lock.
-        // A slow/minimized GUI must not delay or coalesce countdown cues.
+        // Deliver each countdown cue from the receive thread, outside the snapshot
+        // lock, so audio progresses independently of GUI refresh.
         let listener = self
             .reset_listener
             .lock()
@@ -316,7 +316,7 @@ impl Client {
         })
     }
     /// Register a nonblocking observer for accepted reset packets. It runs on
-    /// the receive thread; dispatch playback without doing audio I/O here.
+    /// the receive thread; dispatch playback to an audio worker.
     pub fn on_reset(&self, listener: impl Fn(u64, &ResetProgress) + Send + Sync + 'static) {
         *self
             .shared
@@ -501,7 +501,7 @@ async fn run(
         let error = match connection {
             Ok(Ok((mut socket, _))) => {
                 shared.events_overflow.store(false, Ordering::Relaxed);
-                // Startup only restores reads and subscriptions. Mutations never live across sessions.
+                // Restore reads and subscriptions for this connection session.
                 let mut startup = vec![
                     protocol::subscribe_config(
                         shared.telemetry_ms.load(Ordering::Relaxed),

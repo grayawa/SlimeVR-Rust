@@ -3,7 +3,7 @@ use slimevr_gpui::{client::Client, log_level::LogLevel};
 use std::time::{Duration, Instant};
 
 #[derive(Parser)]
-#[command(about = "Read-only SolarXR diagnostic probe; does not change configuration")]
+#[command(about = "Read-only SolarXR diagnostic probe")]
 struct Options {
     #[arg(long, default_value = "ws://127.0.0.1:21110")]
     url: String,

@@ -49,7 +49,7 @@ export function DeviceCardContent({ deviceNames, status }: DeviceCardProps) {
           {l10n.getString(firmwareUpdateStatusLabel[status])}
         </Typography>
       ) : (
-        <Typography> </Typography> // placeholder so the size of the component does not change if there is no status
+        <Typography> </Typography> // Reserve status space to keep the card size stable.
       )}
     </div>
   );

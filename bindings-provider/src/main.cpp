@@ -103,23 +103,11 @@ static void signal_handler(int signal) {
 int main() {
     auto &logger = Logger::get();
 
-    // Steam and SteamVR respectively set these environment variables on applications that
-    // they spawn, which the SteamVR client library (vrclient) will then use as the
-    // application key when initiating the connection with vrserver. This may not
-    // be ideal if we are launched by another Steam or OpenVR application, as we will inherit
-    // their app key through the environment, which means SteamVR will load the wrong bindings.
-    // A real-world example of this is if someone uses an application such as OpenVR-Autostarter
-    // to start the SlimeVR Server. OpenVR-Autostarter installs an application manifest with the
-    // app key "dreiekk.openvr-autostarter", so when it starts SlimeVR Server, which then starts us,
-    // the STEAMVR_APPKEY="dreiekk.openvr-autostarter" environment variable will be set.
-    //
-    // We want SteamVR to use the appkey of the Steam version of our application if possible.
-    // Unfortunately, we cannot install an application vrmanifest to force the app key,
-    // as SteamVR requires a binary path in the manifest to consider it valid. We do not want to install
-    // a manifest with a binary path because we want the SlimeVR Server to start us when the
-    // driver initiates a connection, rather than getting auto-started by SteamVR.
-    //
-    // This is not documented anywhere publicly, see CVRClient::SendConnectMessage in vrclient instead.
+    // vrclient reads SteamAppId and STEAMVR_APPKEY when connecting to vrserver.
+    // Set both to the SlimeVR Steam identity so SteamVR selects its bindings,
+    // including when a launcher supplies another application's environment.
+    // The SlimeVR Server owns this helper's startup after the driver connects.
+    // Reference: CVRClient::SendConnectMessage in vrclient.
 
     constexpr const char *STEAM_APPID = "3245490";
     constexpr const char *STEAMVR_APPKEY = "steam.overlay.3245490";
@@ -167,9 +155,8 @@ int main() {
         fs::path actionManifestPath;
         std::tie(std::ignore, actionManifestPath) = VRUtils::initialiseManifest();
 
-        // We don't want our app key to randomly change if SteamVR decides to honour
-        // application manifests with no binary path. Instead let it generate an
-        // app key based on the executable name (system.generated.[lowercase executable name])
+        // Keep the selected Steam identity. Application-manifest registration
+        // remains disabled in this server-managed helper.
 #if false
         if (auto err = app->AddApplicationManifest(appManifestPath.string().data(), true);
             err != vr::VRApplicationError_None) {

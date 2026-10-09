@@ -1,5 +1,5 @@
-//! SlimeVR's vrconfig.yml is the persistent source. Runtime structs are an adapter,
-//! not a second configuration file. Keep unmapped YAML fields when saving.
+//! SlimeVR's vrconfig.yml is the persistent source. Runtime structs adapt its
+//! fields for the service; saving preserves unmapped YAML fields.
 mod persistence;
 mod worker;
 use crate::{api::FrontendConfig, receiver::normalize_mac};
@@ -296,7 +296,7 @@ pub fn load(path: &Path) -> io::Result<FrontendConfig> {
     let bytes = fs::read(path)?;
     let mut root: Value =
         serde_yaml_ng::from_slice(&bytes).map_err(|e| error(format!("{}: {e}", path.display())))?;
-    // Read previous development state once. All subsequent writes are YAML.
+    // Convert a version-1 development state document into the YAML configuration model.
     if !root["pose"].is_null() && root["version"].as_u64() == Some(1) {
         let config: FrontendConfig =
             serde_yaml_ng::from_value(root).map_err(|e| error(e.to_string()))?;

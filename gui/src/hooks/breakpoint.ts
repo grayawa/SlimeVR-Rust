@@ -7,8 +7,8 @@ const fullConfig = resolveConfig(tailwindConfig as any);
 type BreakpointKey = keyof typeof tailwindConfig.theme.screens;
 
 export function useBreakpoint<K extends BreakpointKey>(breakpointKey: K) {
-  // FIXME There is a flickering issue caused by this, because isMobile is not resolved fast enough
-  // one solution would be to have this solved only once on the appProvider and reuse the value all the time
+  // FIXME: Initial media-query resolution can cause layout flicker.
+  // A shared AppProvider value could centralize breakpoint initialization.
   const bool = useMediaQuery({
     query: fullConfig.theme.screens[breakpointKey].raw
       ? fullConfig.theme.screens[breakpointKey].raw

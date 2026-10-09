@@ -1,19 +1,19 @@
 # SlimeVR 检查、独立构建与发布
 
-日常检查与应用构建分开。PR 和 main 的代码修改自动运行 **SlimeVR Checks**，不编译所有桌面应用、不生成 AIO 合集。需要测试包时，在 Actions 选择对应的独立构建，点击 **Run workflow** 并选择分支。
+日常检查与应用构建分开。PR 和 main 的代码修改自动运行 **SlimeVR Checks**。需要测试包时，在 Actions 选择对应的独立构建，点击 **Run workflow** 并选择分支。
 
 | 工作流                    | 触发方式                       | 产物与范围                                                       |
 | ------------------------- | ------------------------------ | ---------------------------------------------------------------- |
 | **SlimeVR Checks**        | PR、main 代码修改，或手动      | Linux / Windows 后端和无窗口 GPUI 检查、React 检查、网页生产资源 |
-| **Build Windows Backend** | 手动，或被应用工作流调用       | Rust 后端 release EXE；作为构建中间产物，不是完整运行包          |
+| **Build Windows Backend** | 手动，或被应用工作流调用       | Rust 后端 release EXE、许可与源码通知；供单独运行或应用打包      |
 | **Build GPUI**            | 手动                           | GPUI 桌面、组件预览、探针和后端的完整 Windows 解压包             |
 | **Build Tauri**           | 手动                           | Tauri 完整 Windows 解压包和安装包；可额外选择其他平台            |
-| **Build Overlay**         | 手动                           | SteamVR 仪表盘附加包；不编译或附带后端                           |
+| **Build Overlay**         | 手动                           | SteamVR 仪表盘附加包；连接已运行的后端                           |
 | **SlimeVR AIO Release**   | 推送 `v*` 标签，或手动发布打包 | 检查、三个独立 Windows 应用包及 AIO 合集                         |
 
-独立应用构建完成就上传自己的 artifact，不需要等待另一个应用。AIO 只为发布使用：检查与构建并行，后端编译一次，GPUI 与 Tauri 下载同一份后端 EXE 后并行构建；Overlay 无需等待后端。合集 job 等待检查和三个应用构建成功，再下载同一次运行的包，核对 SHA-256 与 ZIP CRC 并合并。
+独立应用构建完成后上传自己的 artifact。AIO 只为发布使用：检查与构建并行，后端编译一次，GPUI 与 Tauri 下载同一份后端 EXE 后并行构建；Overlay 独立构建。合集 job 等待检查和三个应用构建成功，再下载同一次运行的包，核对 SHA-256 与 ZIP CRC 并合并。
 
-`windows-app.yml` 是内部复用工作流，不是手动入口。它供独立构建和 AIO 共用，避免两套构建步骤逐渐不一致。驱动、OpenVR helper 和微软运行库仍由原有脚本准备及校验，不依赖旧压缩包。工作流只上传 artifacts，不自动创建或发布 GitHub Release。
+`windows-app.yml` 是独立构建和 AIO 共用的内部工作流，手动入口为对应的 Build 工作流。驱动、OpenVR helper 和微软运行库由构建脚本准备及校验。工作流产物上传到 artifacts，GitHub Release 由维护者发布。
 
 ## 下载
 
@@ -30,14 +30,14 @@
 
 解压下载的 artifact ZIP，再解压里面需要使用的应用 ZIP。GPUI 或 Tauri 二选一启动桌面服务；Overlay 单独解压，在桌面程序和 SteamVR 启动后运行。下载保留 30 天。
 
-**Build Tauri** 手动运行时勾选 `other_tauri_platforms`，会另外构建 Linux x64、Linux ARM64 和 macOS Tauri 包。该选项从 AIO 移至 Tauri 工作流；AIO 发布合集面向 Windows。GPUI 桌面包不需要 WebView2，Tauri 不附 WebView2 Runtime。
+**Build Tauri** 手动运行时勾选 `other_tauri_platforms`，会另外构建 Linux x64、Linux ARM64 和 macOS Tauri 包。AIO 发布合集面向 Windows。GPUI 使用原生渲染器，Tauri 使用系统 WebView2 Runtime。
 
 ## 检查范围
 
 **SlimeVR Checks** 中工作流／打包工具、React、Linux Rust 和 Windows Rust 并行检查。工作流检查使用固定版本及 SHA-256 的 actionlint。网页检查执行类型、ESLint、Prettier、桌面适配和 WebSocket 测试及生产构建。Rust 检查执行后端测试与 Clippy、GPUI 无窗口状态／通信／音效／帧节流测试与 Clippy、Overlay 输入测试、真实后端回环；Linux Rust job 复用刚编译的后端执行 React 的真实通信测试。格式检查包含 Tauri 源码。
 
-完整 GPUI / Overlay 原生 feature 的 Clippy 与单元测试随各自的 Windows 构建执行；GPUI 包还运行真实后端联调。Tauri 构建执行 Windows React 通信测试与 Tauri 原生命令测试。日常 PR 检查不编译 GPUI 渲染器和 Tauri 原生宿主；修改这些部分时，应另外运行对应应用构建。各包继续校验着色器、PE / DLL 依赖、许可来源、ZIP CRC 和 SHA-256。
+完整 GPUI / Overlay 原生 feature 的 Clippy 与单元测试随各自的 Windows 构建执行；GPUI 包还运行真实后端联调。Tauri 构建执行 Windows React 通信测试与 Tauri 原生命令测试。日常 PR 检查覆盖后端、无窗口 GPUI 与 React；修改 GPUI 渲染器或 Tauri 原生宿主时另外运行对应应用构建。各包继续校验着色器、PE / DLL 依赖、许可来源、ZIP CRC 和 SHA-256。
 
-后端、GPUI / Overlay、Tauri 和日常检查使用各自的 Rust 缓存，Tauri 与 React 复用 pnpm 缓存。首次构建仍需要下载和编译依赖，拆分主要缩短等待目标应用的时间。同一个 PR 或 main 分支的新提交会取消旧检查；手动构建及发布构建不会被自动取消。
+后端、GPUI / Overlay、Tauri 和日常检查使用各自的 Rust 缓存，Tauri 与 React 复用 pnpm 缓存。首次构建仍需要下载和编译依赖，拆分主要缩短等待目标应用的时间。同一个 PR 或 main 分支的新提交会取消旧检查；手动及发布构建保留独立的运行生命周期。
 
-CI 不执行真实设备或 VRChat 实测，重置音效、头显显示及 CPU 满载表现仍按 [实机清单](rust-unified-hardware-test.zh-CN.md) 验证。
+真实设备、VRChat、重置音效、头显显示及 CPU 满载表现按 [实机清单](rust-unified-hardware-test.zh-CN.md) 验证。

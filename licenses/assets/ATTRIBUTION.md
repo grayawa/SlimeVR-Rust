@@ -9,5 +9,5 @@ See `Twemoji-CC-BY-4.0.txt` for the complete terms.
 The application obtains SVGs through `@twemoji/svg` 15.0.0. Its packaging and
 optimization code is Copyright (c) 2023 Samuel Kopp and MIT-licensed separately;
 see `Twemoji-SVG-MIT.txt`. SVG optimization may modify the original graphics.
-Our use does not imply endorsement by the authors. Graphical resources keep
-their original license and do not inherit the application code's GPL declaration.
+The graphics authors remain independent of this application. Graphical resources
+retain their original CC-BY-4.0 license.

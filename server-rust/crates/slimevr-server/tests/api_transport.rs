@@ -1,4 +1,4 @@
-//! Exercise real WebSocket connections rather than just encoding or router helpers.
+//! Exercise the API lifecycle over real WebSocket connections.
 use futures_util::{SinkExt, StreamExt};
 use slimevr_core::pose::PoseEngine;
 use slimevr_server::{

@@ -1,4 +1,4 @@
-/** Extract original settings structure and control metadata, without executing React. */
+/** Extract settings structure and control metadata from the React source AST. */
 const fs = require('fs'); const path = require('path'); const { createRequire } = require('module');
 const root = path.resolve(__dirname, '../..'); const ts = createRequire(path.join(root,'gui/package.json'))('typescript');
 const generated=fs.readFileSync(path.join(root,'gui-gpui/src/rpc_generated.rs'),'utf8');

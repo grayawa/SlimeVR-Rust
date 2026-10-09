@@ -116,34 +116,30 @@ def main():
         (base / 'Start-SlimeVR-Debug.cmd').write_bytes(
             b'@echo off\r\nsetlocal\r\ncd /d "%~dp0"\r\n'
             b'start "" "%~dp0SlimeVR.exe" --backend rust --log-level debug %*\r\n')
-        readme = '''SlimeVR Rust / Tauri — Windows 11 x64 解压运行包
+        readme = '''SlimeVR Rust / Tauri — Windows x64 解压运行包
 
 1. 把整个文件夹解压到固定位置，例如 D:\\SlimeVR-Rust-Tauri。
-2. 完全退出旧 SlimeVR 界面和后端，再双击 SlimeVR.exe 或 Start-SlimeVR.cmd。
+2. 完全退出已有界面和占用同一端口的后端，再双击 SlimeVR.exe 或 Start-SlimeVR.cmd。
 3. 连接追踪器；使用 SteamVR 时按界面步骤注册 / 启用驱动。
-切换后端后设备暂未出现时，等待约 10 秒；仍未出现则重启对应追踪器，让它重新握手。
+切换后端时设备暂未出现，等待约十秒；仍未出现则重启对应设备以重新握手。
 
-本包包含 Tauri 界面、Rust 后端、官方 SteamVR 驱动、Bindings Provider 和驱动需要的 VC++ DLL。
-本包由 SlimeVR AIO 从同一提交构建，具体提交与文件校验值见 BUILD-MANIFEST.json。
-使用 Windows 11 系统已有的 WebView2；未附 WebView2 Runtime。无需安装 Java、Node 或 Rust。
-若包中附带 WebView2Loader.dll，请保留它；MSVC 构建将加载库静态链接。
+本包包含 Tauri 界面、Rust 后端、固定版本 SteamVR 驱动、Bindings Provider 和运行库。
+Tauri 使用系统 WebView2 Runtime。Windows 10 用户可安装微软 Evergreen WebView2 Runtime：
+https://developer.microsoft.com/microsoft-edge/webview2/
+包中的 WebView2Loader.dll 是加载库，请保留；MSVC 构建采用静态加载库。
 
-配置沿用 %APPDATA%\\dev.slimevr.SlimeVR\\vrconfig.yml / vrconfig.yaml。
-已有配置会被读取；保存保留原有字段并生成 .bak。GUI 偏好和日志也在相应应用目录。
-日志路径：%APPDATA%\\dev.slimevr.SlimeVR\\logs\\gui-tauri.log。
-默认记录 info / warn / error。排查时先完全退出，再双击 Start-SlimeVR-Debug.cmd。
-调试启动会额外记录姿态和设备快照；再次正常启动恢复默认级别。
-单个日志约 10 MiB，保留当前文件和 4 个历史文件。提交日志时请压缩整个 logs 文件夹。
-详见 日志说明.md。
-这是免安装包，配置仍按原 SlimeVR 路径保存，不要求放在解压目录内。
+配置：%APPDATA%\\dev.slimevr.SlimeVR\\vrconfig.yml / vrconfig.yaml。
+GUI 偏好和日志保存到应用数据目录。配置保存保留未知字段并生成 .bak。
+日志：%APPDATA%\\dev.slimevr.SlimeVR\\logs\\gui-tauri.log，默认 info。
+排查时完全退出，再运行 Start-SlimeVR-Debug.cmd。正常启动恢复默认级别。
+日志按约十 MiB 轮转，保留当前文件和四个历史文件；收集时压缩整个 logs 文件夹。
+详细步骤见 日志说明.md。
 
-SteamVR 会登记解压目录里的驱动路径，注册后请保持该目录位置不变。
-Windows 防火墙提示出现时允许私有网络访问，以便接收追踪器 UDP 数据。
-
-本包已验证：Windows x64 交叉编译、PE 架构 / DLL 依赖、生产网页资源嵌入及 ZIP 完整性。
-本环境未执行 Windows 11 实机运行。真实追踪器 / SteamVR 验收请按随包测试清单执行。
-代码来源 SlimeVR-Server 83941fd38e91cc91ca6b360deab5c2ae986dd1b6 加当前 Rust / Tauri 改动。
-构建与第三方来源、文件校验值见 BUILD-MANIFEST.json 和 licenses/。
+SteamVR 注册使用解压目录中的驱动路径，注册后保持目录位置。
+防火墙提示出现时允许私有网络，以便接收追踪器 UDP 数据。
+构建提交、文件哈希与资源来源见 BUILD-MANIFEST.json、SOURCE-CODE.txt 和 licenses/。
+打包检查覆盖 PE / DLL、生产网页资源、许可与 ZIP 完整性；实机按随包清单验收。
+参考源码 SlimeVR-Server：83941fd38e91cc91ca6b360deab5c2ae986dd1b6。
 '''
         (base / '使用说明.txt').write_text(readme, encoding='utf-8-sig')
         shutil.copy2(ROOT / 'docs/rust-unified-hardware-test.zh-CN.md', base / '实机测试清单.md')

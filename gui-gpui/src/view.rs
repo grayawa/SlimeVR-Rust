@@ -360,7 +360,7 @@ impl SlimeView {
         }
         self.navigation.go(page);
         self.ui_error = None;
-        // Navigation only reads data; it never echoes settings or writes setupMode.
+        // Opening VRChat warnings requests the current settings for display.
         if page == Page::VrchatWarnings && self.snapshot.connection == Connection::Connected {
             let _ = self.client.send(Command::ReadVrchat);
         }

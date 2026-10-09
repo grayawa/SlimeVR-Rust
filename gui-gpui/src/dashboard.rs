@@ -18,8 +18,8 @@ pub fn saved_width(settings: &serde_json::Value) -> f32 {
         .filter(|w| valid_width(*w))
         .unwrap_or(DEFAULT_WIDTH)
 }
-/// Reload the latest desktop preferences before changing only the dashboard
-/// key: an older dashboard snapshot must not overwrite a GUI layout change.
+/// Reload the latest desktop preferences and update the dashboard width key,
+/// preserving the desktop's current layout settings.
 pub fn save_width(paths: &Paths, width: f32) -> Result<Preferences, String> {
     if !valid_width(width) {
         return Err("Overlay width must be between 0.5 and 3 meters".into());

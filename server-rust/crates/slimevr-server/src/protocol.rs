@@ -101,7 +101,7 @@ pub enum Packet {
         protocol: u8,
         version: u8,
     },
-    /// Bytes are retained in recordings; serial content is not printed by default.
+    /// Retain serial bytes in recordings and expose text through detailed diagnostics.
     Serial {
         text: String,
     },

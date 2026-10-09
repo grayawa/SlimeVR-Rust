@@ -202,8 +202,8 @@ export function GeneralSettings() {
       label: l10n.getString(`body_part-${BodyPart[value]}`),
     }));
   const blockHandsWarning = useRef(false);
-  // If not null, warning will be shown, and showHandsWarning will
-  // hold which hands should be toggled ([leftHand, rightHand])
+  // A [leftHand, rightHand] value opens the warning for those hand toggles.
+  // null represents a closed warning.
   const [showHandsWarning, setShowHandsWarning] = useState<
     [boolean, boolean] | null
   >(null);

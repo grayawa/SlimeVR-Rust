@@ -1,4 +1,4 @@
-//! An isolated clone-cost reference, not an end-to-end runtime comparison.
+//! An isolated benchmark of live snapshot construction and destruction costs.
 use super::*;
 use std::{hint::black_box, time::Instant};
 

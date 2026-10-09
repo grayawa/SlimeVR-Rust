@@ -14,7 +14,7 @@ pub struct AppPaths {
 
 impl AppPaths {
     pub fn new(app: &AppHandle) -> Result<Self, Box<dyn std::error::Error>> {
-        let gui = app.path().app_data_dir()?;
+        let gui = app.path().data_dir()?.join(CONFIG_IDENTIFIER);
         let server = app.path().config_dir()?.join(CONFIG_IDENTIFIER);
         let logs = gui.join("logs");
         for dir in [&gui, &server, &logs] {

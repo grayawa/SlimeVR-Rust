@@ -63,11 +63,13 @@ pnpm tauri:build
 
 输出在 `gui/src-tauri/target/release/`，安装包位于其 `bundle/` 目录。各平台使用对应的 `tauri.rust*.conf.json`，后端使用 Rust 可执行文件。直接调用 `tauri dev/build` 前执行 `pnpm --dir gui tauri:prepare`，准备脚本和完整构建脚本会选择目标平台资源。
 
+Tauri 的开发与构建钩子先执行 `tauri:notices`，把项目许可、版权通知、字体与图像声明、源码引用准备到 `gui/src-tauri/resources/notices/`。安装包将其放入资源根目录，`BUILD-SOURCE.json` 记录实际 checkout 的 commit、本地修改标记、递归子模块状态和锁文件 SHA-256。Windows 和其他平台的 workflow 共用这套钩子；安装包 artifact 也提供这份声明目录。源码获取和分发要求见 [许可说明](../LICENSING.md)。
+
 Windows 解压包由 [GitHub Actions](../docs/rust-ci.zh-CN.md) 构建，WebView2 使用系统安装。已有 SlimeVR 驱动可直接复用，程序保留现有注册；固件升级功能仍然保留。软件包从本仓库 artifacts 获取。
 
 ## 配置、桌面功能与日志
 
-浏览器把界面偏好保存在 localStorage，Tauri 使用 `gui-settings.dat` / `gui-cache.dat`，保持原有文件名、JSON 格式和应用标识 `dev.slimevr.SlimeVR`。读取和保存保留未知偏好字段。后端直接读写原版 YAML，见 [兼容范围](../docs/rust-config-compatibility.zh-CN.md)。
+发行名称为 `SlimeVR-Rust`，安装应用标识为 `io.github.grayawa.slimevr-rust`。窗口、托盘和界面标明独立开发预览。浏览器把界面偏好保存在 localStorage，Tauri 从原有 `dev.slimevr.SlimeVR` 数据目录读取和保存 `gui-settings.dat` / `gui-cache.dat`。读取和保存保留未知偏好字段。后端直接读写原版 YAML，见 [兼容范围](../docs/rust-config-compatibility.zh-CN.md)。
 
 | 系统    | Tauri 界面数据目录                                  | 默认后端配置目录                       |
 | ------- | --------------------------------------------------- | -------------------------------------- |
@@ -75,7 +77,7 @@ Windows 解压包由 [GitHub Actions](../docs/rust-ci.zh-CN.md) 构建，WebView
 | macOS   | `~/Library/Application Support/dev.slimevr.SlimeVR` | 同左                                   |
 | Linux   | `$XDG_DATA_HOME/dev.slimevr.SlimeVR`                | `$XDG_CONFIG_HOME/dev.slimevr.SlimeVR` |
 
-Linux 未设置 XDG 变量时使用 `~/.local/share/` 与 `~/.config/`。窗口位置由 window-state 插件管理，托盘提供显示、隐藏和退出。原生文件对话框、外链、配置/日志目录、Discord Rich Presence 均通过 Tauri 适配层提供；浏览器使用相应回退行为。`override.ftl` 从后端配置目录加载。
+Linux 未设置 XDG 变量时使用 `~/.local/share/` 与 `~/.config/`。窗口位置由 window-state 插件按安装应用标识管理，托盘提供显示、隐藏和退出。原生文件对话框、外链、配置/日志目录、Discord Rich Presence 均通过 Tauri 适配层提供；浏览器使用相应回退行为。`override.ftl` 从后端配置目录加载。
 
 界面日志为数据目录下的 `logs/gui-tauri.log`，默认级别 `info`，可用 `--log-level debug` 或 `SLIMEVR_LOG_LEVEL` 调整。约 10 MiB 轮转，保留四份历史文件。便携包带 `Start-SlimeVR-Debug.cmd`；详细收集方法见 [日志说明](../docs/rust-logging.zh-CN.md)。问题排查使用本地日志。
 

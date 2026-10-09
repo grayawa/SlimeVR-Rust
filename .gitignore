@@ -27,3 +27,4 @@ __pycache__/
 # Downloaded drivers and built OpenVR helpers
 /gui/src-tauri/resources/drivers/
 /gui/src-tauri/resources/bindings/
+/gui/src-tauri/resources/notices/

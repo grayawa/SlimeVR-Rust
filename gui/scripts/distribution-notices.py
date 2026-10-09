@@ -37,7 +37,7 @@ def copy_notices(root, destination, revision):
         'No exact source commit recorded. Supply the complete source used for this build.'
     )
     (destination / 'SOURCE-CODE.txt').write_text(
-        f'SlimeVR Rust: GPL-3.0-or-later (see LICENSE and LICENSING.md).\n'
+        f'SlimeVR-Rust: GPL-3.0-or-later (see LICENSE and LICENSING.md).\n'
         f'Build reference: {revision}\nSource reference: {source}\n'
         f'Repository: {repository}\n\n'
         'Build instructions are in README.md, server-rust/README.zh-CN.md, '

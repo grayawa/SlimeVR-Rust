@@ -19,6 +19,32 @@ pub fn install_dir(paths: State<'_, AppPaths>) -> String {
     paths.resources.to_string_lossy().into_owned()
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum GuiStorage {
+    Settings,
+    Cache,
+}
+
+impl GuiStorage {
+    fn filename(&self) -> &'static str {
+        match self {
+            Self::Settings => "gui-settings.dat",
+            Self::Cache => "gui-cache.dat",
+        }
+    }
+}
+
+/// Resolve a GUI preference file within the shared compatibility data directory.
+#[tauri::command]
+pub fn gui_storage_path(paths: State<'_, AppPaths>, kind: GuiStorage) -> String {
+    paths
+        .gui
+        .join(kind.filename())
+        .to_string_lossy()
+        .into_owned()
+}
+
 #[tauri::command]
 pub fn i18n_override(paths: State<'_, AppPaths>) -> Result<Value, String> {
     match std::fs::read_to_string(paths.server.join("override.ftl")) {
@@ -126,6 +152,17 @@ pub async fn github_get(options: GithubRequest) -> Result<Value, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn gui_storage_requests_select_the_shared_preference_files() {
+        for (kind, filename) in [("settings", "gui-settings.dat"), ("cache", "gui-cache.dat")] {
+            let request: GuiStorage = serde_json::from_value(json!(kind)).unwrap();
+            assert_eq!(request.filename(), filename);
+        }
+        for kind in ["../vrconfig.yml", "logs", "settings.json"] {
+            assert!(serde_json::from_value::<GuiStorage>(json!(kind)).is_err());
+        }
+    }
 
     #[test]
     fn firmware_asset_scope_rejects_unrelated_hosts_and_paths() {

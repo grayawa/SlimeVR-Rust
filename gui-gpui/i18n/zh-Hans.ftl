@@ -299,3 +299,5 @@ native-serial-resume-scroll = 继续滚动
 
 native-processing = 处理中…
 native-firmware-build-not-ready = 固件尚未构建完成。
+
+rust-development-preview = 独立开发预览

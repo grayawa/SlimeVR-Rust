@@ -32,7 +32,7 @@ use std::{
 };
 
 #[derive(Parser)]
-#[command(about = "SlimeVR SteamVR dashboard: resets, skeleton and tracker status")]
+#[command(about = "SlimeVR-Rust dashboard — Independent Development Preview")]
 struct Options {
     #[arg(long, default_value = "ws://127.0.0.1:21110")]
     url: String,
@@ -600,7 +600,12 @@ impl Render for Panel {
                     .flex_shrink_0()
                     .items_center()
                     .gap_3()
-                    .child(div().font_bold().flex_1().min_w_0().child("SlimeVR"))
+                    .child(div().font_bold().flex_1().min_w_0().child("SlimeVR-Rust"))
+                    .child(
+                        div()
+                            .text_sm()
+                            .child(self.l10n.text("rust-development-preview")),
+                    )
                     .child(
                         div()
                             .h_flex()
@@ -851,7 +856,9 @@ fn run() -> Result<(), String> {
                     focus: preview,
                     window_min_size: Some(size(px(1000.), px(680.))),
                     titlebar: Some(TitlebarOptions {
-                        title: Some("SlimeVR — Dashboard".into()),
+                        title: Some(
+                            "SlimeVR-Rust — Dashboard — Independent Development Preview".into(),
+                        ),
                         ..Default::default()
                     }),
                     ..Default::default()

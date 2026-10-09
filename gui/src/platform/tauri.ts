@@ -53,13 +53,11 @@ export function createTauriHost(): DesktopHost {
       setTranslations: () => {},
       i18nOverride: () => invoke<string | false>('i18n_override'),
       getStorage: async (type) => {
-        const store = await load(
-          type === 'settings' ? 'gui-settings.dat' : 'gui-cache.dat',
-          {
-            defaults: {},
-            autoSave: type === 'settings' ? 1000 : 100,
-          }
-        );
+        const path = await invoke<string>('gui_storage_path', { kind: type });
+        const store = await load(path, {
+          defaults: {},
+          autoSave: type === 'settings' ? 1000 : 100,
+        });
         return {
           get: <T>(key: string) => store.get<T>(key),
           set: (key, value) => store.set(key, value),

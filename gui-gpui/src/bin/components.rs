@@ -226,7 +226,9 @@ fn main() {
                     window_bounds: Some(bounds),
                     window_min_size: Some(size(px(480.), px(400.))),
                     titlebar: Some(TitlebarOptions {
-                        title: Some("SlimeVR — Components".into()),
+                        title: Some(
+                            "SlimeVR-Rust — Components — Independent Development Preview".into(),
+                        ),
                         ..Default::default()
                     }),
                     ..Default::default()

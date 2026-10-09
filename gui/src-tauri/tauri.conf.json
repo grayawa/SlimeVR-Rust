@@ -1,19 +1,19 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "SlimeVR",
+  "productName": "SlimeVR-Rust",
   "version": "0.1.0",
-  "identifier": "dev.slimevr.SlimeVR",
+  "identifier": "io.github.grayawa.slimevr-rust",
   "build": {
-    "beforeDevCommand": "pnpm web:dev",
+    "beforeDevCommand": "pnpm tauri:notices && pnpm web:dev",
     "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": "pnpm web:build",
+    "beforeBuildCommand": "pnpm tauri:notices && pnpm web:build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
         "label": "main",
-        "title": "SlimeVR",
+        "title": "SlimeVR-Rust — Independent Development Preview",
         "width": 1289,
         "height": 709,
         "minWidth": 393,
@@ -29,13 +29,11 @@
     "active": true,
     "targets": "all",
     "category": "Utility",
-    "shortDescription": "SlimeVR full-body tracking interface",
+    "shortDescription": "Independent development preview for SlimeVR-compatible full-body tracking",
     "icon": ["icons/128x128.png", "icons/icon.ico", "icons/icon.icns"],
     "resources": {
       "resources/69-slimevr-devices.rules": "69-slimevr-devices.rules",
-      "../../LICENSE-MIT": "LICENSE-MIT",
-      "../../LICENSE-APACHE": "LICENSE-APACHE",
-      "../../server-rust/licenses/": "licenses/rust-backend/",
+      "resources/notices/": "",
       "resources/drivers/": "drivers/",
       "resources/bindings/": "bindings/"
     }

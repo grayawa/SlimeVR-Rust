@@ -75,7 +75,7 @@ def main():
             ).encode('ascii'))
         (base / '使用说明.txt').write_text(
             'SlimeVR SteamVR 仪表盘附加程序\n\n'
-            '1. 解压整个文件夹；先启动现有 SlimeVR Rust 程序并连接追踪器。\n'
+            '1. 解压整个文件夹；先启动现有 SlimeVR-Rust 程序并连接追踪器。\n'
             '2. 启动 SteamVR，再双击 Start-Overlay.cmd。\n'
             '3. 按手柄系统键打开 SteamVR 仪表盘，选择 SlimeVR。\n'
             '4. 可操作完整 / 航向 / 安装方向重置，查看骨架及节点信息。\n\n'

@@ -47,7 +47,7 @@ impl SlimeView {
                     .size(px(32.))
                     .text_color(cx.theme().primary),
             )
-            .child(div().font_bold().child("SlimeVR"))
+            .child(div().font_bold().child("SlimeVR-Rust"))
             .child(
                 div()
                     .px_3()
@@ -55,7 +55,11 @@ impl SlimeView {
                     .rounded_lg()
                     .bg(rgb(0x10352f))
                     .text_color(rgb(0x50e897))
-                    .child(format!("{} · GPUI test16", env!("CARGO_PKG_VERSION"))),
+                    .child(format!(
+                        "{} · {}",
+                        env!("CARGO_PKG_VERSION"),
+                        self.text("rust-development-preview")
+                    )),
             )
             .child(div().flex_1())
             .child(

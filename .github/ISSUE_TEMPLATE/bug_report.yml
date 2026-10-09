@@ -1,0 +1,42 @@
+name: 问题反馈 / Bug report
+description: 提交可复现的问题与脱敏日志 / Report a reproducible problem
+title: '[Bug] '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        SlimeVR-Rust 是独立维护的开发预览项目。请填写下面的信息，方便复现问题。
+        上传前遮蔽 Wi-Fi 凭据、个人路径和设备标识。安全问题的报告方式见 [SECURITY.md](https://github.com/grayawa/SlimeVR-Rust/blob/main/SECURITY.md)。
+  - type: input
+    id: build
+    attributes:
+      label: 版本与构建提交 / Version and commit
+      description: 从版本标签、SOURCE-CODE.txt 或 BUILD-MANIFEST.json 获取。
+      placeholder: 0.1.0 / commit / GPUI、Tauri 或 Overlay
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 运行环境 / Environment
+      description: 操作系统、设备与固件版本；涉及 SteamVR / VRChat 时填写其版本。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 按顺序描述操作，并写明发生问题的时间。
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 预期结果与实际表现 / Expected and observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 脱敏日志与补充信息 / Sanitized logs and details
+      description: 可拖入附件。日志收集步骤见 docs/rust-logging.zh-CN.md。

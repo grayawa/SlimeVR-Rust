@@ -121,6 +121,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: slimevr-tauri-windows-installers
-          path: gui/src-tauri/target/release/bundle/**
+          path: |
+            gui/src-tauri/target/release/bundle/**
+            gui/src-tauri/resources/notices/**
           retention-days: 30
           if-no-files-found: error

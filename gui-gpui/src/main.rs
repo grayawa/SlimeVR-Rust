@@ -81,7 +81,10 @@ fn run() -> Result<(), String> {
     slimevr_gpui::logging::write(
         LogLevel::Info,
         "startup",
-        "SlimeVR GPUI 0.1.0 — embedded Windows shaders / shared settings components (test14-components1)",
+        &format!(
+            "SlimeVR-Rust GPUI {} — Independent Development Preview",
+            env!("CARGO_PKG_VERSION")
+        ),
     );
     std::panic::set_hook(Box::new(|info| {
         slimevr_gpui::logging::write(LogLevel::Error, "panic", &info.to_string());

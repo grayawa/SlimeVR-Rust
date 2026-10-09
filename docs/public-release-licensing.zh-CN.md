@@ -29,6 +29,14 @@
   版本的许可记录核对，面向公开发行的下载入口使用新的构建产物。
 - 文档整理 PR #15 已合并，React、打包工具及 Linux / Windows Rust 检查全部通过。
   当前仓库仍为私有，GitHub Releases 列表为空。
+- 安装许可、独立开发预览标识及配置目录兼容处理已通过 PR #16 合并。
+  提交 `b22ba48a` 的日常 CI 和 Tauri、GPUI、Overlay 独立 Windows 构建全部
+  通过；Tauri 构建还执行了原生命令与 GUI 偏好读取测试。
+- 检查了这次构建生成的三套 Windows 解压包：Tauri 87 个、GPUI 88 个、
+  Overlay 40 个归档条目，私人配置 / 日志 / 私钥文件名候选项和密钥规则
+  匹配数均为零。Tauri 解压包中的七份项目许可与通知文本与源码一致，
+  `SOURCE-CODE.txt` 和 `BUILD-MANIFEST.json` 对应同一构建提交。安装器
+  已由 workflow 生成，Windows 安装与运行体验按实机清单验收。
 
 ## 当前许可与分发文件
 

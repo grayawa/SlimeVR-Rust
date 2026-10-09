@@ -4,6 +4,14 @@
 
 这是独立开发的衍生项目。上游基线为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`，原作者、许可证及商标说明保留在下文。
 
+## 开发状态
+
+**项目处于开发预览阶段（Development Preview），欢迎参与测试与反馈。** 后端、GPUI、Tauri 和 SteamVR Overlay 持续迭代，界面、配置处理和接口可能随版本调整。
+
+自动测试覆盖算法参考数据、协议和状态行为；真实追踪效果、设备组合、CPU 满载表现和平台兼容性通过实机验收记录确认。当前覆盖与测试入口见 [功能状态](docs/rust-remaining-feature-gaps.zh-CN.md) 和 [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)。
+
+试用前备份 `vrconfig.yml` / `.yaml` 和 GUI 偏好文件，保留可回退的版本。反馈问题请在 [本仓库 Issues](https://github.com/grayawa/SlimeVR-Rust/issues) 中附上构建 commit、系统与固件版本、复现步骤及相关日志；上传前遮蔽 Wi-Fi 凭据、个人路径、设备标识和其他私人信息。
+
 ## 项目入口
 
 | 目录           | 内容                                                                                  | 说明                                                                                                                                     |
@@ -56,6 +64,7 @@ GitHub Actions 中的 **SlimeVR Checks** 自动检查 PR 和 main；**Build GPUI
 - [原版 YAML 配置兼容](docs/rust-config-compatibility.zh-CN.md) · [BVH 导出](docs/rust-bvh-export.zh-CN.md)
 - [前后端联调](docs/rust-frontend-integration.zh-CN.md) · [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)
 - [仓库清理范围](docs/repository-cleanup.zh-CN.md) · [参与开发](CONTRIBUTING.md)
+- [公开准备、许可与分发核对](docs/public-release-licensing.zh-CN.md)
 
 硬件使用和佩戴说明可参考 [SlimeVR 官方文档](https://docs.slimevr.dev/)。本项目构建包从本仓库 GitHub Actions 的 artifacts 下载。
 

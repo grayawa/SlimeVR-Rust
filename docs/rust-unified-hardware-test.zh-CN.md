@@ -45,6 +45,8 @@
 - [ ] Discord Presence 开启 / 更新 / 关闭及 Discord 迟启动 / 重启；托盘、保存对话框、日志、正常退出和异常重启，Rust 后端 / 刷写子进程均被回收。
 - [ ] 旧式 JSON WebSocket 客户端：11 个 config / pos，HMD 输入与校准 / 暂停动作。
 - [ ] Windows / Linux / macOS 对应安装包启动；按平台支持范围测试。软件包从本仓库 Actions artifacts 获取。
+- [ ] Linux GPUI：X11 / Wayland 分别启动；StatusNotifier 托盘显示、最小化、恢复、切换语言和退出；启用托盘后关闭窗口保持后端运行。托盘服务退出后，窗口关闭走正常退出流程。
+- [ ] Linux 解压目录含空格时启动，配置和日志写入 XDG 目录；驱动注册后，头显 / 控制器输入与追踪器输出在 SteamVR / VRChat 中验收。
 
 ## 持续运行与问题记录
 

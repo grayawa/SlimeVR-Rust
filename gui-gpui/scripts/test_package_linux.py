@@ -59,7 +59,7 @@ class LinuxPackage(unittest.TestCase):
                              "bindings/linux64/slimevr-bindings-provider"]:
                     self.assertEqual(archive.getmember(prefix + name).mode, 0o755)
                 for name in ["LICENSE", "SOURCE-CODE.txt", "licenses/ksni-UNLICENSE", "licenses/OpenVR-LICENSE",
-                             "drivers/LICENSE-MIT", "drivers/LICENSE-APACHE"]:
+                             "drivers/LICENSE-MIT", "drivers/LICENSE-APACHE", "69-slimevr-devices.rules"]:
                     self.assertTrue(archive.getmember(prefix + name).isfile())
                 source = archive.extractfile(prefix + "SOURCE-CODE.txt").read().decode()
                 self.assertIn("/tree/" + "a" * 40, source)

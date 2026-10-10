@@ -33,6 +33,13 @@ Linux x64 完整包以 Ubuntu 24.04 为构建基线。下载 `SlimeVR-GPUI-Linux
 
 Linux 配置与 GUI 偏好位于 `${XDG_CONFIG_HOME:-$HOME/.config}/dev.slimevr.SlimeVR/`，日志在其中的 `logs/gui-gpui.log`。界面通过 Vulkan 在 X11 / Wayland 上渲染。托盘使用桌面会话的 StatusNotifier/D-Bus 服务；GNOME 可启用 AppIndicator 扩展。托盘的显示、最小化和退出菜单沿用 GUI 语言。启用托盘且桌面托盘可用时，关闭窗口会最小化并保持后端运行；其余情况下按退出流程回收自己启动的后端。
 
+随包的 `69-slimevr-devices.rules` 为串口和 SlimeNRF HID 设备提供当前桌面用户的访问规则。出现设备权限提示时，从解压目录执行以下命令，然后重新插入设备：
+
+```sh
+sudo install -m 644 69-slimevr-devices.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+```
+
 Linux 自动验证覆盖 X11 软件 Vulkan 渲染、托盘 D-Bus 注册与菜单、语言更新、图标像素格式、真实后端回环和分发文件校验。Wayland 桌面、物理音频设备、SteamVR / VRChat 与无线追踪器按 [实机清单](../docs/rust-unified-hardware-test.zh-CN.md) 验收。SteamVR 仪表盘的纹理提交使用 Windows D3D11；Linux 的 Overlay 可用于桌面预览。
 
 `SlimeVR-Components.exe` 使用内存示例值展示组件。正常使用运行 `SlimeVR.exe`。独立的 `slimevr-ui` crate 位于 `ui/`，由桌面、Overlay 和预览共用；组件接口见 [组件库](../docs/rust-gpui-components.zh-CN.md)。

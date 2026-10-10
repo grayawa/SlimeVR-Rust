@@ -70,6 +70,7 @@ def build_package(args):
         shutil.copy2(bindings_dir.parent / "OPENVR-LICENSE", base / "licenses/OpenVR-LICENSE")
         shutil.copy2(ROOT / "gui-gpui/assets/GPUI-Kit-LICENSE-APACHE", base / "licenses/GPUI-Kit-LICENSE-APACHE")
         shutil.copy2(ROOT / "gui-gpui/README.zh-CN.md", base / "原生前端说明.md")
+        shutil.copy2(ROOT / "gui/src-tauri/resources/69-slimevr-devices.rules", base / "69-slimevr-devices.rules")
         (base / "Start-SlimeVR.sh").write_text(
             '#!/bin/sh\nset -eu\ncd -- "$(dirname -- "$0")"\nexec ./slimevr-gpui "$@"\n', encoding="utf-8"
         )
@@ -80,6 +81,8 @@ def build_package(args):
             "程序会启动随包 Rust 后端；本机已有后端时连接该服务。\n"
             "系统需要 Vulkan 驱动、ALSA、Fontconfig、X11/Wayland、桌面 D-Bus 会话。\n"
             "托盘使用 StatusNotifier；GNOME 用户可以启用 AppIndicator 扩展。\n"
+            "USB/HID 设备需要权限规则时，执行 sudo install -m 644 69-slimevr-devices.rules /etc/udev/rules.d/，\n"
+            "再执行 sudo udevadm control --reload-rules，随后重新插入设备。\n"
             "SteamVR 配合 Linux SlimeVR 驱动输出姿态。真实头显跟踪按实机清单验收。\n"
             "配置和日志位于 ${XDG_CONFIG_HOME:-$HOME/.config}/dev.slimevr.SlimeVR/。\n"
             "slimevr-gpui-components 提供内存示例组件预览；slimevr-gpui-probe 提供诊断。\n"

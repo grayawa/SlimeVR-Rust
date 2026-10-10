@@ -8,7 +8,9 @@ impl SlimeView {
         if self.exit_confirm {
             return;
         }
-        if cfg!(windows) && self.preferences.value["useTray"] == true && self.tray.is_some() {
+        if self.preferences.value["useTray"] == true
+            && self.tray.as_ref().is_some_and(|tray| tray.available())
+        {
             slimevr_gpui::tray::visible(window, false);
         } else {
             self.request_exit(cx);

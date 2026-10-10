@@ -7,6 +7,8 @@ concurrency:
   group: build-gpui-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  linux:
+    uses: ./.github/workflows/linux-gpui.yml
   backend:
     uses: ./.github/workflows/build-backend.yml
   gpui:

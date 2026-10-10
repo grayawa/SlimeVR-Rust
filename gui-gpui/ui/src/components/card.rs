@@ -1,4 +1,4 @@
-use crate::ui::theme::{self, Surface};
+use crate::theme::{self, Surface};
 use gpui_kit::component::{ActiveTheme, StyledExt};
 use gpui_kit::{prelude::FluentBuilder as _, *};
 
@@ -7,7 +7,7 @@ pub fn card(surface: Surface, cx: &App) -> Div {
     div().rounded(theme::CARD_RADIUS).bg(surface.color(cx))
 }
 
-/// The existing settings pane, including its heading badge and content column.
+/// A settings pane with a heading badge and content column.
 pub struct SettingsPane {
     title: SharedString,
     icon: AnyElement,

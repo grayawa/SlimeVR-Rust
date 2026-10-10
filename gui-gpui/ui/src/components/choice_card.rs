@@ -1,4 +1,4 @@
-use crate::ui::theme::{self, Surface};
+use crate::theme::{self, Surface};
 use gpui_kit::component::{
     ActiveTheme, Disableable, StyledExt,
     button::{Button, ButtonVariants},

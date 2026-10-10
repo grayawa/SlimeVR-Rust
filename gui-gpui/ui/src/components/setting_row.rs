@@ -1,5 +1,5 @@
 use super::card;
-use crate::ui::theme::{self, Surface};
+use crate::theme::{self, Surface};
 use gpui_kit::component::{ActiveTheme, Disableable, StyledExt, switch::Switch};
 use gpui_kit::{prelude::FluentBuilder as _, *};
 

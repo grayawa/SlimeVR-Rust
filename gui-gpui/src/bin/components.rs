@@ -1,4 +1,4 @@
-//! Interactive component catalogue. No backend, preferences or user files are opened.
+//! Interactive component catalogue with state held in the preview window.
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 use clap::Parser;
 use gpui_kit::component::{
@@ -7,13 +7,8 @@ use gpui_kit::component::{
     switch::Switch,
 };
 use gpui_kit::{prelude::FluentBuilder as _, *};
-use slimevr_gpui::{
-    i18n::Localizer,
-    ui::{
-        components::{ChoiceCard, NumberSelector, SettingsPane, SwitchRow},
-        theme,
-    },
-};
+use slimevr_gpui::{i18n::Localizer, theme};
+use slimevr_ui::components::{ChoiceCard, NumberSelector, SettingsPane, SwitchRow};
 
 #[derive(Parser)]
 #[command(about = "SlimeVR component preview; all interactions stay in memory")]

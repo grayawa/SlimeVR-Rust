@@ -18,13 +18,10 @@ use slimevr_gpui::{
     i18n::Localizer,
     log_level::LogLevel,
     protocol::{Bone, Command, Feed, ResetKind, Tracker},
-    tracker_list,
-    ui::{
-        components::card,
-        theme::{self, Surface},
-    },
+    theme, tracker_list,
     visualization::Camera,
 };
+use slimevr_ui::{components::card, theme::Surface};
 use solarxr_protocol::datatypes::{BodyPart, TrackerStatus};
 use std::{
     path::{Path, PathBuf},

@@ -29,7 +29,7 @@ Windows 完整解压包中双击 `SlimeVR.exe`。同目录的 `slimevr-server.ex
 
 自己启动的后端在退出时通过 stdin EOF 完成录制并关闭；外部服务由原启动方式管理。重连恢复读取与订阅，用户操作按当前会话确认。退出提醒针对在线且未超时的 IMU 追踪器，Esc 或遮罩点击可返回当前页面并保留草稿。
 
-`SlimeVR-Components.exe` 使用内存示例值展示组件。正常使用运行 `SlimeVR.exe`。组件接口见 [内部组件库](../docs/rust-gpui-components.zh-CN.md)。
+`SlimeVR-Components.exe` 使用内存示例值展示组件。正常使用运行 `SlimeVR.exe`。独立的 `slimevr-ui` crate 位于 `ui/`，由桌面、Overlay 和预览共用；组件接口见 [组件库](../docs/rust-gpui-components.zh-CN.md)。
 
 ## 构建与生成
 
@@ -37,7 +37,7 @@ Windows 完整解压包中双击 `SlimeVR.exe`。同目录的 `slimevr-server.ex
 
 ```sh
 cargo test --manifest-path gui-gpui/Cargo.toml --no-default-features --locked
-cargo clippy --manifest-path gui-gpui/Cargo.toml --all-targets --locked -- -D warnings
+cargo clippy --manifest-path gui-gpui/Cargo.toml --workspace --all-targets --locked -- -D warnings
 cargo build --manifest-path gui-gpui/Cargo.toml --release --locked
 ```
 
@@ -52,7 +52,7 @@ python gui-gpui/scripts/generate-i18n.py
 python gui-gpui/scripts/generate-meshes.py
 python gui-gpui/scripts/generate-ui-assets.py
 node gui-gpui/scripts/generate-settings-layout.cjs
-cargo fmt --manifest-path gui-gpui/Cargo.toml
+cargo fmt --manifest-path gui-gpui/Cargo.toml -p slimevr-gpui -p slimevr-ui
 ```
 
 设置布局生成需要已安装仓库 Node 依赖。字体来源与转换记录见 [SOURCES.md](assets/fonts/SOURCES.md)，结构与开发边界见 [前端架构](../docs/rust-gpui-frontend-plan.zh-CN.md)。

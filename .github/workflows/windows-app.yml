@@ -74,7 +74,7 @@ jobs:
       - name: Native GPUI checks
         if: inputs.app != 'Tauri'
         run: |
-          cargo clippy --manifest-path gui-gpui/Cargo.toml --release --features vr-dashboard --all-targets --locked -- -D warnings
+          cargo clippy --manifest-path gui-gpui/Cargo.toml --workspace --release --features vr-dashboard --all-targets --locked -- -D warnings
           cargo test --manifest-path gui-gpui/Cargo.toml --release --features vr-dashboard --lib --locked
       - name: GPUI real-backend checks
         if: inputs.app == 'GPUI'

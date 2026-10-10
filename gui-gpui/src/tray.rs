@@ -1,4 +1,6 @@
-use std::sync::mpsc::{self, Receiver};
+#[cfg(any(windows, all(target_os = "linux", feature = "desktop")))]
+use std::sync::mpsc;
+use std::sync::mpsc::Receiver;
 #[derive(Clone, Copy)]
 pub enum TrayAction {
     Show,
@@ -11,7 +13,15 @@ pub struct Tray {
     items: Vec<tray_icon::menu::MenuItem>,
     receiver: Receiver<TrayAction>,
 }
-#[cfg(not(windows))]
+#[cfg(all(target_os = "linux", feature = "desktop"))]
+mod linux;
+#[cfg(all(target_os = "linux", feature = "desktop"))]
+pub struct Tray {
+    handle: ksni::blocking::Handle<linux::Notifier>,
+    online: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    receiver: Receiver<TrayAction>,
+}
+#[cfg(not(any(windows, all(target_os = "linux", feature = "desktop"))))]
 pub struct Tray {
     receiver: Receiver<TrayAction>,
 }
@@ -69,11 +79,23 @@ impl Tray {
                 receiver,
             })
         }
-        #[cfg(not(windows))]
+        #[cfg(all(target_os = "linux", feature = "desktop"))]
+        {
+            use ksni::blocking::TrayMethods;
+            let (sender, receiver) = mpsc::channel();
+            let online = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+            let notifier = linux::Notifier::new(labels, sender, online.clone())?;
+            let handle = notifier.spawn().map_err(|error| error.to_string())?;
+            Ok(Self {
+                handle,
+                online,
+                receiver,
+            })
+        }
+        #[cfg(not(any(windows, all(target_os = "linux", feature = "desktop"))))]
         {
             let _ = labels;
-            let (_sender, receiver) = mpsc::channel();
-            Ok(Self { receiver })
+            Err("System tray requires Windows or a Linux StatusNotifier host".into())
         }
     }
     pub fn action(&self) -> Option<TrayAction> {
@@ -84,8 +106,31 @@ impl Tray {
         for (item, label) in self.items.iter().zip(labels) {
             item.set_text(label);
         }
-        #[cfg(not(windows))]
+        #[cfg(all(target_os = "linux", feature = "desktop"))]
+        self.handle.update(|notifier| notifier.labels = labels);
+        #[cfg(not(any(windows, all(target_os = "linux", feature = "desktop"))))]
         let _ = labels;
+    }
+    /// Reports whether the desktop host can expose this tray's actions.
+    pub fn available(&self) -> bool {
+        #[cfg(windows)]
+        {
+            true
+        }
+        #[cfg(all(target_os = "linux", feature = "desktop"))]
+        {
+            self.online.load(std::sync::atomic::Ordering::Acquire) && !self.handle.is_closed()
+        }
+        #[cfg(not(any(windows, all(target_os = "linux", feature = "desktop"))))]
+        {
+            false
+        }
+    }
+}
+#[cfg(all(target_os = "linux", feature = "desktop"))]
+impl Drop for Tray {
+    fn drop(&mut self) {
+        self.handle.shutdown();
     }
 }
 #[cfg(all(windows, feature = "desktop"))]
@@ -132,6 +177,6 @@ pub fn is_visible(window: &gpui_kit::Window) -> bool {
     true
 }
 #[cfg(all(not(windows), feature = "desktop"))]
-pub fn is_visible(_window: &gpui_kit::Window) -> bool {
-    true
+pub fn is_visible(window: &gpui_kit::Window) -> bool {
+    window.is_visible()
 }

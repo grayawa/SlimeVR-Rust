@@ -17,7 +17,7 @@ gpui-kit = "=0.7.1"
 
 [features]
 default = ["desktop"]
-desktop = ["dep:gpui-kit", "dep:gpui-windows", "dep:smol", "dep:rodio", "dep:slimevr-ui"]
+desktop = ["dep:gpui-kit", "dep:gpui-windows", "dep:smol", "dep:rodio", "dep:slimevr-ui", "dep:ksni"]
 vr-dashboard = ["desktop", "dep:slimevr-openvr-overlay", "gpui-windows?/overlay-output"]
 
 [dependencies]
@@ -52,6 +52,12 @@ windows-sys = { version = "0.61", features = ["Win32_UI_WindowsAndMessaging"] }
 
 [dev-dependencies]
 tempfile = "3"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+ksni = { version = "=0.3.3", default-features = false, features = ["async-io", "blocking"], optional = true }
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
 
 [target.'cfg(windows)'.dev-dependencies]
 windows = { version = "0.62", features = ["Win32_Graphics_Direct3D_Fxc", "Win32_UI_WindowsAndMessaging"] }

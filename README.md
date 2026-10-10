@@ -21,7 +21,7 @@
 | `gui/`         | React 界面、Tauri 宿主及打包工具                                                      | [Tauri 构建](gui/README.tauri.md)                                                                                                        |
 | `docs/`        | 架构说明、功能契约、验证数据及实机测试清单                                            | [功能概览](docs/rust-completion-worklog.zh-CN.md) · [统一测试清单](docs/rust-unified-hardware-test.zh-CN.md)                             |
 
-后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 使用原生渲染器；Tauri 使用系统 WebView2。
+后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 使用原生渲染器；Tauri 在 Windows 使用 WebView2，在 Linux 使用 WebKitGTK。
 
 ## 克隆与构建
 
@@ -45,6 +45,8 @@ Windows 上可让原生界面启动刚构建的后端：
 ```powershell
 .\gui-gpui\target\release\slimevr-gpui.exe --backend .\server-rust\target\release\slimevr-server.exe
 ```
+
+Linux x64 用户可从 **Build GPUI** 下载 `SlimeVR-GPUI-Linux-x64`，解压后执行 `./Start-SlimeVR.sh`。完整包以 Ubuntu 24.04 为构建基线，系统依赖与托盘说明见 [原生前端说明](gui-gpui/README.zh-CN.md)。
 
 首次使用通过引导连接、批准及分配设备。启动前退出占用同一接收端口的 Java 服务。完整分发包还需要驱动、OpenVR helper 和运行库，构建脚本及打包方式见各前端说明；生成资源由构建脚本准备并放入分发包。
 

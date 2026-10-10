@@ -159,6 +159,7 @@ fn run() -> Result<(), String> {
             })
             .detach();
             let options = WindowOptions {
+                app_id: Some("dev.slimevr.SlimeVRRust".into()),
                 window_bounds: Some(WindowBounds::centered(size(px(1280.), px(800.)), cx)),
                 window_min_size: Some(size(px(800.), px(560.))),
                 titlebar: Some(TitlebarOptions {

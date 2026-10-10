@@ -25,6 +25,10 @@ def copy_notices(root, destination, revision):
     destination.mkdir(parents=True, exist_ok=True)
     for name in PROJECT_FILES:
         shutil.copy2(root / name, destination / name)
+    tray_license = root / 'gui-gpui/assets/ksni-UNLICENSE'
+    if tray_license.is_file():
+        (destination / 'licenses').mkdir(exist_ok=True)
+        shutil.copy2(tray_license, destination / 'licenses/ksni-UNLICENSE')
     for source, target, ignore in [
         ('server-rust/licenses', 'licenses/rust-backend', None),
         ('gui-gpui/assets/fonts', 'licenses/fonts', shutil.ignore_patterns('*.ttf')),

@@ -76,6 +76,7 @@ jobs:
       - run: python -m unittest discover -s server-rust/tools -p test_reference_sources.py
       - run: python -m unittest discover -s gui/scripts -p test_package_aio.py
       - run: python -m unittest discover -s gui/scripts -p test_distribution_notices.py
+      - run: python -m unittest discover -s gui-gpui/scripts -p test_package_linux.py
   web:
     name: React checks and web build
     runs-on: ubuntu-latest

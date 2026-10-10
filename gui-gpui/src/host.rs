@@ -55,6 +55,8 @@ impl Backend {
         let resources = executable.parent().unwrap_or_else(|| Path::new("."));
         let driver = resources.join("drivers").join(if cfg!(windows) {
             "slimevr-openvr-driver-win64"
+        } else if cfg!(target_arch = "aarch64") {
+            "slimevr-openvr-driver-aarch64-linux"
         } else {
             "slimevr-openvr-driver-x64-linux"
         });
@@ -63,7 +65,13 @@ impl Backend {
         }
         let provider = resources
             .join("bindings")
-            .join(if cfg!(windows) { "win64" } else { "linux64" })
+            .join(if cfg!(windows) {
+                "win64"
+            } else if cfg!(target_arch = "aarch64") {
+                "linuxarm64"
+            } else {
+                "linux64"
+            })
             .join(if cfg!(windows) {
                 "SlimeVR-Bindings-Provider.exe"
             } else {

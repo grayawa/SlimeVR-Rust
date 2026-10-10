@@ -1,3 +1,5 @@
+> 该项目重度使用 AI，但是正在进行 Code review，且产物已经经过测试。如果您认为这不很妥当，请使用[上游项目](https://github.com/SlimeVR/SlimeVR-Server)。
+
 # SlimeVR-Rust
 
 基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri 宿主。算法测试使用提交到仓库的参考数据，生成工具从固定上游版本读取源码。见 [后端与参考工具](docs/rust-only-backend.zh-CN.md)。

@@ -147,7 +147,7 @@ pnpm --dir gui test:backend
 
 ## 桥接验证
 
-协议固定为 SlimeVR/SlimeVR-OpenVR-Driver 提交 `dcc0f56bcb2a3196d6f92b1ed1d029faa425b931` 的 `src/bridge/ProtobufMessages.proto`，保留原 MIT 声明；Rust 由 prost-build 生成类型。描述符与本仓库提交 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6` 的 `ProtobufMessages.java` 一致，仅忽略编译器补充的 JSON 名称和源码定位。
+协议固定为 SlimeVR/SlimeVR-OpenVR-Driver 提交 `dcc0f56bcb2a3196d6f92b1ed1d029faa425b931` 的 `src/bridge/ProtobufMessages.proto`；Rust 由 prost-build 生成类型。描述符与本仓库提交 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6` 的 `ProtobufMessages.java` 一致，仅忽略编译器补充的 JSON 名称和源码定位。
 
 Rust 桥接测试覆盖实际 Java 生成的 20 类消息逐字节编码、分包/非法帧、状态与超时、最终输出、背压、socket 保护与重连、辅助进程回收、真实 CLI/本地 RPC/共享配置，可选速度字段，以及在线发布帧与回放逐帧一致。前端协议联调覆盖 SteamVR 能力、原版消息输入、连接步骤、共享修改及 YAML 写回。
 

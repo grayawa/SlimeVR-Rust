@@ -82,7 +82,7 @@ Fluent 翻译、原素材、RPC 适配和设置字段布局通过仓库生成脚
 
 ## 平台与分发
 
-Windows 渲染器通过 `runtime-shaders` 嵌入 HLSL 和共享 include，在内存中编译优化 shader。`vr-dashboard` 为仪表盘程序提供 D3D11 共享纹理提交。本地补丁及原 Apache 许可位于 `vendor/gpui-pre-windows/`。
+Windows 渲染器通过 `runtime-shaders` 嵌入 HLSL 和共享 include，在内存中编译优化 shader。`vr-dashboard` 为仪表盘程序提供 D3D11 共享纹理提交。渲染器补丁位于 `vendor/gpui-pre-windows/`。
 
 **Build GPUI** 构建独立桌面测试包，**Build Overlay** 构建仪表盘附加包，**SlimeVR AIO Release** 构建发布合集。完整流程见 [构建与分发](rust-distribution.zh-CN.md)。Windows / Linux 完整桌面包附带后端、驱动、OpenVR helper、许可证和源码版本说明。Linux 的原生构建、Vulkan 依赖、StatusNotifier 托盘和 udev 权限规则见 [前端 README](../gui-gpui/README.zh-CN.md)。
 

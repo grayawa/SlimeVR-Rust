@@ -28,7 +28,7 @@
 | [GPUI 组件库](rust-gpui-components.zh-CN.md)             | 独立 crate、组件接口、主题和组件预览              |
 | [算法验证](rust-core-validation.zh-CN.md)                | 固定上游参考、生成工具、fixtures、容差和复现      |
 | [runtime 性能](rust-udp-runtime-performance.zh-CN.md)    | 微基准、负载测试、测量环境与原始结果              |
-| [发布核对](release-checklist.zh-CN.md)                   | 发行身份、许可、对应源码、公开资料与发布验收      |
+| [发布核对](release-checklist.zh-CN.md)                   | 发行身份、构建产物、公开资料与发布验收            |
 
 源码构建参数见 [后端 README](../server-rust/README.zh-CN.md)、[算法 README](../server-rust/README.core.zh-CN.md)、[GPUI README](../gui-gpui/README.zh-CN.md) 和 [Tauri README](../gui/README.tauri.md)。参与开发见 [CONTRIBUTING.md](../CONTRIBUTING.md)。
 

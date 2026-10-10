@@ -5,6 +5,7 @@ import datetime
 import hashlib
 import importlib.util
 import json
+import platform
 from pathlib import Path
 import re
 import shutil
@@ -107,7 +108,9 @@ def build_package(args):
                     entry["needed"] = sorted(set(re.findall(r"^\s*(\S+)\s+=>", output.stdout, re.M)))
             files.append(entry)
         manifest = {"app_version": "0.1.0", "build_revision": args.build_revision,
-                    "target": f"Linux {args.arch}", "build_baseline": "Ubuntu 24.04",
+                    "target": f"Linux {args.arch}",
+                    "build_host": platform.freedesktop_os_release().get("PRETTY_NAME", "Linux"),
+                    "build_libc": dict(zip(["name", "version"], platform.libc_ver())),
                     "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     "system_libraries_audited": args.audit_system_libs, "files": files}
         (base / "BUILD-MANIFEST.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

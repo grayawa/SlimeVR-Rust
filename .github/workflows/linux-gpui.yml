@@ -21,7 +21,7 @@ jobs:
       - name: Install native build and smoke-test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-14 cmake ninja-build pkg-config libfontconfig-dev libasound2-dev libxkbcommon-dev libxcb1-dev libwayland-dev libvulkan-dev libudev-dev libssl-dev mesa-vulkan-drivers xvfb x11-utils imagemagick dbus-x11
+          sudo apt-get install -y g++-14 cmake ninja-build pkg-config libfontconfig-dev libasound2-dev libxkbcommon-dev libxkbcommon-x11-dev libxcb1-dev libwayland-dev libvulkan-dev libudev-dev libssl-dev mesa-vulkan-drivers xvfb x11-utils imagemagick dbus-x11
           echo 'CXX=g++-14' >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@v2
         with:

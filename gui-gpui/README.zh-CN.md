@@ -49,7 +49,7 @@ Linux 自动验证覆盖 X11 软件 Vulkan 渲染、托盘 D-Bus 注册与菜单
 使用 Rust 1.92+；Windows 建议 MSVC、Visual Studio C++ Build Tools、Windows SDK 和 CMake，系统依赖见 [GPUI Kit 安装说明](https://gpui-kit.com/docs/installation)。Ubuntu 24.04 的 Linux 构建依赖可通过以下命令安装：
 
 ```sh
-sudo apt-get install g++-14 cmake ninja-build pkg-config libfontconfig-dev libasound2-dev libxkbcommon-dev libxcb1-dev libwayland-dev libvulkan-dev libudev-dev libssl-dev
+sudo apt-get install g++-14 cmake ninja-build pkg-config libfontconfig-dev libasound2-dev libxkbcommon-dev libxkbcommon-x11-dev libxcb1-dev libwayland-dev libvulkan-dev libudev-dev libssl-dev
 ```
 
 运行时需要系统 Vulkan 驱动（例如发行版的 Mesa 或厂商驱动）、ALSA、Fontconfig、X11 / Wayland 和桌面 D-Bus 会话。

@@ -1,6 +1,6 @@
-# Rust 校准分支与 AutoBone 训练对照
+# 校准、AutoBone 与训练录制
 
-日期：2026-10-04。原版参考提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
+原版参考提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
 
 ## 校准行为
 
@@ -12,7 +12,7 @@
 
 ## StayAligned 字段与参考
 
-当前原版 RPC 明确把 `extraYawCorrection` 标记为 deprecated，返回 false，修改请求不读取该字段。Rust 接受并忽略该字段，返回 false，保持参考 RPC 的兼容语义。
+`extraYawCorrection` 是原版 RPC 的兼容保留字段，修改请求接受后忽略，读取返回 false。Rust 沿用这一协议语义。
 
 站立、坐姿、躺姿的腿部参考 yaw 偏移已有实现。参考集合包含三组各 360 帧的非零大腿、小腿和脚部偏移对照，验证左右侧符号及逐帧状态。另有三组实际 Kotlin HMD 复位序列，覆盖 pitch/roll、连续样本、重复复位及开关变化。
 
@@ -27,6 +27,19 @@
 
 结果中的 `final_error` 表示用于接受判断的累计训练均值；`evaluation_error` 表示使用最终骨长按时间顺序重新评估的误差，便于和 `initial_error` 比较拟合改善。每个 epoch 保留对应骨长快照。GUI 实时接收每轮统计及对应骨长；应用与导出要求结果通过接受阈值。
 
+## PFS / PFR 录制与保存
+
+- 录制完成或提前停止且至少有三帧时，写入 `AutoBone Recordings/LastABRecording.pfs`，完成消息在文件落盘后发送。原子替换最后一次录制。
+- `autoBone.saveRecordings: true` 另外生成 `ABRecording1.pfs` 等编号文件；设置已支持原版 SolarXR 读写。SAVE 请求使用未占用的编号路径；录制中的 SAVE 等待本次录制结束，取消／不足三帧停止会结束待保存操作并报告失败。
+- PROCESS 优先使用 `Load AutoBone Recordings` 中按文件名排序的 `.pfs`／`.pfr`，其次使用当前内存录制；重启后可回退到 `LastABRecording.pfs`。最后一项是 Rust 增加的复用行为。多个导入录制分别训练并推送进度，最终应用最后一份结果，沿用原版行为；应用要求训练成功并通过接受阈值。
+- 默认配置路径沿用 SlimeVR 平台目录。指定 `--config` 时，两个录制目录跟随该配置文件所在目录；原 Java 按平台默认配置目录处理。
+- CLI `autobone` 同样支持 PFS/PFR 输入；GUI 生成 PFS，解码器与编码器均支持 PFR。目录导入有上限：64 个文件，每文件 16 MiB，256 个 tracker、5000 帧；错误格式、非法数值及不满足训练要求的文件明确报错，原版可能跳过部分损坏文件。
+- 编码沿用 Java 大端整数／float、modified UTF-8 和 TrackerPosition ID，包含间隔、部位、旋转、位置、加速度及原始旋转标志。原版文件中的可选字段可保留；当前 GUI 录制主要保存校准后的未滤波旋转和位置，调试遥测由各自诊断记录保存。加载沿用原播放器的短 tracker 最后一帧和缺省字段继承语义。
+
+PFS/PFR 的字节参考运行实际 Kotlin `PfsIO`、`PfrIO`、`PfsPackets` 及 TrackerFrame getter；仅录制容器、配置和日志采用显式适配器。测试涵盖中文、空字符、emoji、全部标志、手臂／手指、空帧及长度不同的 tracker。fixture 记录参考提交、实际源码和适配器哈希，普通 Rust 测试读取已提交的 fixture。
+
+原版参考生成：先运行 `server-rust/tools/generate-autobone-golden.py` 生成共享核心参考类，再运行 `server-rust/tools/generate-pose-recording-golden.py`。默认缓存为 `/tmp/slimevr-udp-oracle`，需要 Python、Java 和首次 Maven 下载。
+
 ## 参考执行范围
 
 `tools/generate-autobone-golden.py` 原样提取实际 `AutoBone` 训练方法，编译实际帧迭代器、帧播放器、统计、骨贡献和七类误差。FK 与骨骼偏移方法也来自当前 checkout。服务、配置和录制容器是显式适配器；骨架参考保持跨帧状态。生成文件记录参考提交、实际源码及适配器 SHA-256。
@@ -35,11 +48,11 @@
 
 离散值要求一致：帧筛选数量、轮数、累计步数和接受／拒绝。每轮均值、SD 和高度按 `3e-6 × (1 + abs(expected))` 验证；逐轮及最终骨长按绝对 `0.1 mm` 验证；仅 HMD 用例使用 `1 mm`，均值 / SD / 高度使用 `1e-5 × (1 + abs(expected))`。七组基础数据实测最大骨长差约 `0.093 mm`、最大统计差约 `0.0000032`。严格候选比较会放大底层 f32 FK 舍入差异，因而骨长采用独立物理单位阈值。
 
-训练参考覆盖上述完整循环与受控输入，真实录制与其他部位组合按样本验收；PFS / PFR 由独立字节参考验证，见 [日常流程实施](rust-daily-workflow.zh-CN.md)。flex 已有九组 Kotlin 差分；tap、身高校准仍主要使用功能测试；真实 SteamVR 和追踪器表现仍待验收。
+训练参考覆盖上述完整循环与受控输入，真实录制与其他部位组合按样本验收；PFS / PFR 由独立字节参考验证，见上文的 PFS / PFR 录制与保存契约。flex 已有九组 Kotlin 差分；tap、身高校准仍主要使用功能测试；真实 SteamVR 和追踪器表现仍待验收。
 
 ## 验证与重建
 
-后端与前端检查覆盖 HMD 状态、默认／显式安装复位、YAML 读写、真实 CLI 的 SolarXR 设置兼容和原有 UDP/回放/SteamVR 链路。Clippy、前端类型检查、常规设置页面 lint、Vite 构建、Linux release 构建和 Windows GNU 后端交叉编译通过。实际追踪和平台交互按实机清单记录。
+后端与前端检查覆盖 HMD 状态、默认／显式安装复位、YAML 读写、真实 CLI 的 SolarXR 设置兼容及 UDP / 回放 / SteamVR 链路。对应提交的 CI 结果见 Actions；实际追踪和平台交互按实机清单记录。
 
 ```sh
 cd server-rust

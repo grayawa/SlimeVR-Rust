@@ -65,7 +65,7 @@ pnpm tauri:build
 
 Tauri 的开发与构建钩子先执行 `tauri:notices`，把项目许可、版权通知、字体与图像声明、源码引用准备到 `gui/src-tauri/resources/notices/`。安装包将其放入资源根目录，`BUILD-SOURCE.json` 记录实际 checkout 的 commit、本地修改标记、递归子模块状态和锁文件 SHA-256。Windows 和其他平台的 workflow 共用这套钩子；安装包 artifact 也提供这份声明目录。源码获取和分发要求见 [许可说明](../LICENSING.md)。
 
-Windows 解压包由 [GitHub Actions](../docs/rust-ci.zh-CN.md) 构建，WebView2 使用系统安装。已有 SlimeVR 驱动可直接复用，程序保留现有注册；固件升级功能仍然保留。软件包从本仓库 artifacts 获取。
+Windows 解压包由 [GitHub Actions](../docs/rust-distribution.zh-CN.md) 构建，WebView2 使用系统安装。已有 SlimeVR 驱动可直接复用，程序保留现有注册；固件升级功能仍然保留。软件包从本仓库 artifacts 获取。
 
 ## 配置、桌面功能与日志
 

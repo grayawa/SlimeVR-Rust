@@ -2,7 +2,7 @@
 
 # SlimeVR-Rust
 
-基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri 宿主。算法测试使用提交到仓库的参考数据，生成工具从固定上游版本读取源码。见 [后端与参考工具](docs/rust-only-backend.zh-CN.md)。
+基于 [SlimeVR/SlimeVR-Server](https://github.com/SlimeVR/SlimeVR-Server) 的 Rust 重写项目。包含 Rust 后端、GPUI Kit 原生前端，以及共用原版 React 界面的 Tauri 宿主。算法测试使用提交到仓库的参考数据，生成工具从固定上游版本读取源码。见 [后端架构](docs/rust-backend-architecture.zh-CN.md) 和 [算法验证](docs/rust-core-validation.zh-CN.md)。
 
 这是独立开发的衍生项目。上游基线为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`，原作者、许可证及商标说明保留在下文。
 
@@ -10,7 +10,7 @@
 
 **项目处于开发预览阶段（Development Preview），欢迎参与测试与反馈。** 后端、GPUI、Tauri 和 SteamVR Overlay 持续迭代，界面、配置处理和接口可能随版本调整。
 
-自动测试覆盖算法参考数据、协议和状态行为；真实追踪效果、设备组合、CPU 满载表现和平台兼容性通过实机验收记录确认。当前覆盖与测试入口见 [功能状态](docs/rust-remaining-feature-gaps.zh-CN.md) 和 [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)。
+自动测试覆盖算法参考数据、协议和状态行为；真实追踪效果、设备组合、CPU 满载表现和平台兼容性通过实机验收记录确认。当前覆盖与测试入口见 [功能状态](docs/rust-feature-status.zh-CN.md) 和 [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)。
 
 试用前备份 `vrconfig.yml` / `.yaml` 和 GUI 偏好文件，保留可回退的版本。反馈问题请在 [本仓库 Issues](https://github.com/grayawa/SlimeVR-Rust/issues) 中附上构建 commit、系统与固件版本、复现步骤及相关日志；上传前遮蔽 Wi-Fi 凭据、个人路径、设备标识和其他私人信息。
 
@@ -21,7 +21,7 @@
 | `server-rust/` | UDP/HID 接收、姿态算法、校准、AutoBone、SteamVR、OSC/VMC、SolarXR API、YAML 配置、BVH | [后端](server-rust/README.zh-CN.md) · [算法](server-rust/README.core.zh-CN.md) · [API 架构](docs/rust-backend-api-architecture.zh-CN.md) |
 | `gui-gpui/`    | GPUI Kit 原生界面、组件库、引导、原版 Fluent 翻译                                     | [构建与使用](gui-gpui/README.zh-CN.md) · [组件库](docs/rust-gpui-components.zh-CN.md)                                                    |
 | `gui/`         | React 界面、Tauri 宿主及打包工具                                                      | [Tauri 构建](gui/README.tauri.md)                                                                                                        |
-| `docs/`        | 架构说明、功能契约、验证数据及实机测试清单                                            | [功能概览](docs/rust-completion-worklog.zh-CN.md) · [统一测试清单](docs/rust-unified-hardware-test.zh-CN.md)                             |
+| `docs/`        | 架构说明、功能契约、验证数据及实机测试清单                                            | [文档目录](docs/README.md) · [功能状态](docs/rust-feature-status.zh-CN.md)                                                               |
 
 后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 使用原生渲染器；Tauri 在 Windows 使用 WebView2，在 Linux 使用 WebKitGTK。
 
@@ -60,15 +60,15 @@ pnpm install --frozen-lockfile
 pnpm tauri:rust:build
 ```
 
-GitHub Actions 中的 **SlimeVR Checks** 自动检查 PR 和 main；**Build GPUI**、**Build Tauri**、**Build Overlay** 可分别手动构建测试包。**SlimeVR AIO Release** 仅用于发布标签或手动发布打包，详见 [CI 说明](docs/rust-ci.zh-CN.md)。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
+GitHub Actions 中的 **SlimeVR Checks** 自动检查 PR 和 main；**Build GPUI**、**Build Tauri**、**Build Overlay** 可分别手动构建测试包。**SlimeVR AIO Release** 仅用于发布标签或手动发布打包，详见 [CI 说明](docs/rust-distribution.zh-CN.md)。硬件、SteamVR/VRChat 实测范围和待验证项以文档为准。
 
 ## 文档与许可
 
 - [SteamVR 驱动桥接](docs/rust-steamvr-bridge.zh-CN.md) · [SteamVR 仪表盘 Overlay](docs/rust-steamvr-dashboard.zh-CN.md)
 - [原版 YAML 配置兼容](docs/rust-config-compatibility.zh-CN.md) · [BVH 导出](docs/rust-bvh-export.zh-CN.md)
 - [前后端联调](docs/rust-frontend-integration.zh-CN.md) · [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)
-- [仓库清理范围](docs/repository-cleanup.zh-CN.md) · [参与开发](CONTRIBUTING.md)
-- [公开准备、许可与分发核对](docs/public-release-licensing.zh-CN.md)
+- [文档目录](docs/README.md) · [变更记录](CHANGELOG.md) · [参与开发](CONTRIBUTING.md)
+- [发布核对与维护](docs/release-checklist.zh-CN.md)
 - [安全问题反馈](SECURITY.md)
 
 硬件使用和佩戴说明可参考 [SlimeVR 官方文档](https://docs.slimevr.dev/)。本项目构建包从本仓库 GitHub Actions 的 artifacts 下载。

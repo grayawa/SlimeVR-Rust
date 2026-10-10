@@ -1,6 +1,6 @@
 # Rust 直接复用原版 SlimeVR 配置
 
-日期：2026-10-04。参考上游提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
+参考上游提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
 
 Rust 后端直接读取并写回原版 `vrconfig.yml` / `vrconfig.yaml`。设备绑定和算法设置以原版 YAML 字段为准。前端修改设置、分配设备、保存安装校准、应用 AutoBone 结果时，更新同一份 YAML。
 
@@ -48,7 +48,7 @@ Tauri 使用其原有 `AppPaths.server` 服务目录中的 `vrconfig.yml`。两�
 | `server.trackerPort`                  | UDP 接收端口                                                                       |
 | `server.useMagnetometerOnAllTrackers` | 全局磁力计开关，与单 tracker 偏好共同控制原版设备配置命令                          |
 
-UDP 配置键使用原版形式 `udp://AA:BB:CC:DD:EE:FF/0`，末尾数字为 sensor ID；身体部位使用 `designation: body:chest` 等原版值。MAC 统一为大写，已有小写配置键按同一 MAC 复用。缺少安装方向时采用原版各身体部位的默认安装方向，。
+UDP 配置键使用原版形式 `udp://AA:BB:CC:DD:EE:FF/0`，末尾数字为 sensor ID；身体部位使用 `designation: body:chest` 等原版值。MAC 统一为大写，已有小写配置键按同一 MAC 复用。缺少安装方向时采用原版各身体部位的默认安装方向。
 
 SteamVR 头显/控制器来源由驱动桥自动注册，共享设置取自 `bridges.steamvr`，详见 [桥接说明](rust-steamvr-bridge.zh-CN.md)。HID、OSC / VRChat / VMC 与通用 SteamVR tracker 已接入；绑定和自定义名称使用原 trackers 条目，来源映射补充在 rust 节点。OSC、VRM、HID、快捷键、overlay 与 VRChat 配置均可通过原 RPC 修改并保存。drift compensation 字段按参考版本的关闭状态保存。
 
@@ -78,4 +78,4 @@ CI 的配置和通信检查覆盖加载、校验、修改与保存。迁移预�
 
 实现入口：`server-rust/crates/slimevr-server/src/config.rs`；配置 fixture：`server-rust/crates/slimevr-server/tests/fixtures/vrconfig-v15.yml`。前后端启动和功能范围见 [联调说明](rust-frontend-integration.zh-CN.md)。
 
-AutoBone 的 `saveRecordings`、PFS/PFR 文件及磁力计配置／ACK 流程详见 [日常流程说明](rust-daily-workflow.zh-CN.md)。
+AutoBone 的 `saveRecordings` 与 PFS / PFR 文件见 [校准与录制](rust-calibration-autobone.zh-CN.md#pfs--pfr-录制与保存)；磁力计配置 / ACK 见 [设备操作](rust-device-operations.zh-CN.md#磁力计控制)。

@@ -127,6 +127,6 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 
 CI 在 Linux / Windows 检查后端。前端通信、SteamVR 协议 2 和配置共用当前服务；真实动作、设备和 SteamVR 输出按实机清单记录。
 
-可选派生速度已接入最终计算位置、SteamVR、原版 YAML 与现有设置页面；边界与阶段差异见 [说明](../docs/rust-derived-velocity.zh-CN.md)。
+可选派生速度已接入最终计算位置、SteamVR、原版 YAML 与现有设置页面；边界与阶段差异见 [派生速度](../docs/rust-steamvr-bridge.zh-CN.md#派生速度)。
 
-剩余日常流程、外围功能与集中测试场景见 [功能差异清单](../docs/rust-remaining-feature-gaps.zh-CN.md)。AutoBone 已逐轮推送统计及当轮骨长。
+剩余日常流程、外围功能与集中测试场景见 [功能状态](../docs/rust-feature-status.zh-CN.md)。AutoBone 已逐轮推送统计及当轮骨长。

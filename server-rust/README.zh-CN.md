@@ -6,7 +6,7 @@
 
 源码基线是 SlimeVR-Server `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。接收层使用已有 fused quaternion 协议，适配资料中的 `protocol=22 / firmware=good / IMU=13` 字段。固件版本（包括 `good`）按握手字符串保存。
 
-CLI 提供接收、实时解算和回放命令。原 YAML 迁移、SteamVR / HID / OSC 输入输出、串口 / 固件、SolarXR API 与 Tauri 后端集成已接入，见 [当前交接说明](../docs/rust-completion-worklog.zh-CN.md)。
+CLI 提供接收、实时解算和回放命令。原 YAML 迁移、SteamVR / HID / OSC 输入输出、串口 / 固件、SolarXR API 与 Tauri 后端集成已接入，见 [功能状态](../docs/rust-feature-status.zh-CN.md)。
 
 ## 启动
 

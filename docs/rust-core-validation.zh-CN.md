@@ -1,6 +1,12 @@
-# Rust 算法核心验证记录
+# Rust 算法验证与参考数据
 
-日期：2026-10-04。参考提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。结果描述相同合成输入下的移植差异及功能验证；实机精度按真实动作与定位参考测量。
+参考提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。结果描述相同合成输入下的移植差异及功能验证；实机精度按真实动作与定位参考测量。
+
+## 参考源码与 fixtures
+
+Rust 算法测试读取提交到仓库的 golden fixtures。参考生成工具位于 `server-rust/tools/`，通过固定的上游提交读取 Java / Kotlin 源码，并在隔离目录中构建测试适配器。参考版本为 [83941fd38e91cc91ca6b360deab5c2ae986dd1b6](https://github.com/SlimeVR/SlimeVR-Server/tree/83941fd38e91cc91ca6b360deab5c2ae986dd1b6)。
+
+普通构建和测试使用 Rust 工具链。重新生成参考数据需要 Python、JDK 和参考依赖；生成器帮助提供源码位置、缓存及 JDK 参数。SolarXR 子模块包含上游生成的各语言协议绑定。
 
 ## Kotlin 参考如何生成
 
@@ -43,11 +49,11 @@
 | 位置差异（mm） | 2990 |  0.0000149012 |             0 |             0 |
 | 方向差异（°）  | 1495 | 0.00000683019 | 0.00000341509 | 0.00000354599 |
 
-骨架测试要求每个位置 `<1 mm`、方向 `<0.05°`；所有参考帧通过。后处理对照覆盖原始/修正位置、方向、速度、加速度、接触状态、质心、数值状态及根位置。
+骨架测试要求每个位置 `<1 mm`、方向 `<0.05°`；上述参考帧满足此阈值。四组单腿抬起用例检查左右腿及约束开关，脚锁定状态逐帧一致，最大位置差小于 `0.001 mm`，接触评分使用独立浮点容差。后处理对照覆盖原始/修正位置、方向、速度、加速度、接触状态、质心、数值状态及根位置。
 
 ## 功能与运行链路
 
-Rust 测试涵盖核心参考、算法 / 校准状态、AutoBone、接收协议、串口 / OTA / HID、OSC、外部来源、场景回放、BVH、YAML 和 SteamVR。Node 前端 / 桌面和 Tauri 检查覆盖通信及宿主行为，见 [实施交接](rust-completion-worklog.zh-CN.md)。
+Rust 测试涵盖核心参考、算法 / 校准状态、AutoBone、接收协议、串口 / OTA / HID、OSC、外部来源、场景回放、BVH、YAML 和 SteamVR。Node 前端 / 桌面和 Tauri 检查覆盖通信及宿主行为，见 [功能状态](rust-feature-status.zh-CN.md)。
 
 - 实际 UDP socket：六台模拟设备、双 sensor、重复/乱序、紧凑包、截断包、回复校验；在线解算与 journal 回放的最终 `PoseSnapshot` 完全一致，重复回放逐字节一致。
 - 核心状态：采样/tick 分离、过期姿态、缺失来源、重启会话、复位延迟、暂停、安装修正导出/加载/重连恢复、带位置头部与外部来源移除。
@@ -76,4 +82,4 @@ SLIMEVR_CORE_METRICS=/tmp/core-metrics.json cargo test -p slimevr-core --test go
 
 BVH 参考使用实际 Kotlin 导出器、原样骨架装配与 TickReducer 对照，见 [BVH 导出验证](rust-bvh-export.zh-CN.md)。
 
-派生速度已接通原版配置和 SteamVR，并验证真实 CLI 在线发布帧与回放逐帧一致；阶段时序差异见 [派生速度说明](rust-derived-velocity.zh-CN.md)。
+派生速度已接通原版配置和 SteamVR，并验证真实 CLI 在线发布帧与回放逐帧一致；阶段时序差异见 [派生速度说明](rust-steamvr-bridge.zh-CN.md#派生速度)。

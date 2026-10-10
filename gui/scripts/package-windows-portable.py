@@ -133,7 +133,7 @@ GUI 偏好和日志保存到应用数据目录。配置保存保留未知字段�
 日志：%APPDATA%\\dev.slimevr.SlimeVR\\logs\\gui-tauri.log，默认 info。
 排查时完全退出，再运行 Start-SlimeVR-Debug.cmd。正常启动恢复默认级别。
 日志按约十 MiB 轮转，保留当前文件和四个历史文件；收集时压缩整个 logs 文件夹。
-详细步骤见 日志说明.md。
+详细步骤见 docs/rust-logging.zh-CN.md。
 
 SteamVR 注册使用解压目录中的驱动路径，注册后保持目录位置。
 防火墙提示出现时允许私有网络，以便接收追踪器 UDP 数据。
@@ -142,14 +142,7 @@ SteamVR 注册使用解压目录中的驱动路径，注册后保持目录位置
 参考源码 SlimeVR-Server：83941fd38e91cc91ca6b360deab5c2ae986dd1b6。
 '''
         (base / '使用说明.txt').write_text(readme, encoding='utf-8-sig')
-        shutil.copy2(ROOT / 'docs/rust-unified-hardware-test.zh-CN.md', base / '实机测试清单.md')
-        shutil.copy2(ROOT / 'docs/rust-windows-fix1.zh-CN.md', base / '修复说明-fix1.md')
-        shutil.copy2(ROOT / 'docs/rust-windows-fix2.zh-CN.md', base / '修复说明-fix2.md')
-        shutil.copy2(ROOT / 'docs/rust-windows-fix3.zh-CN.md', base / '修复说明-fix3.md')
-        shutil.copy2(ROOT / 'docs/rust-windows-fix4.zh-CN.md', base / '修复说明-fix4.md')
-        shutil.copy2(ROOT / 'docs/rust-logging.zh-CN.md', base / '日志说明.md')
-        shutil.copy2(ROOT / 'docs/rust-windows-fix5.zh-CN.md', base / '更新说明-fix5.md')
-        shutil.copy2(ROOT / 'docs/rust-steamvr-hand-handover.zh-CN.md', base / '手部切换修复说明.md')
+        notices.copy_documentation(ROOT, base, args.build_revision)
         files = []
         for path in sorted(base.rglob('*')):
             if not path.is_file():

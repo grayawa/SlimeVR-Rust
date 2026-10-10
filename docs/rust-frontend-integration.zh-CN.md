@@ -38,7 +38,7 @@ Tauri 参数：
 - `--bindings-provider <路径>` / `--no-bindings-provider`：指定或关闭原版辅助程序。
 - `--no-server`：连接已运行的服务。
 
-Rust 查找范围为应用资源目录、GUI 可执行文件同目录、`--path` 目录；开发构建还查找仓库 `server-rust/target/release` 和 `debug`。本地 21110 端口已占用时复用已有服务。GUI 自己启动的子进程在正常退出时回收，外部服务由原启动方式管理。
+Rust 查找范围为应用资源目录、GUI 可执行文件同目录、`--path` 目录；开发构建还查找仓库 `server-rust/target/release` 和 `debug`。本地 21110 端口已占用时复用已有服务。GUI 正常退出时关闭自己启动的后端 stdin，让录制和 journal 收尾；等待超时后终止进程。外部服务由原启动方式管理。
 
 后端直接使用原版 `vrconfig.yml` / `.yaml`。Tauri 默认采用 `AppPaths.server/vrconfig.yml`，Linux 通常位于 `~/.config/dev.slimevr.SlimeVR/`；GUI 界面偏好仍由现有桌面适配器管理。保存保留未映射的 YAML 字段，备份上一版为 `.bak`，使用同目录临时文件和原子替换；非法配置拒绝加载，非法修改返回错误并保留已接受的设置。若没有 YAML 而同目录存在旧 `rust-backend.json`，自动迁入 YAML，旧文件作为迁移来源保留。字段映射、默认路径与兼容范围见 [原版配置复用说明](rust-config-compatibility.zh-CN.md)。
 
@@ -75,6 +75,16 @@ Windows 改用 `src-tauri/tauri.rust.windows.conf.json`。两个配置分别打�
 
 WebSocket 最多 16 个客户端，每个客户端最多 8 个订阅，单个输入消息上限 8 MiB，数据订阅最短间隔 10 ms。前端默认约 10 Hz 设备数据和 40 Hz 骨架；核心默认每 4 ms 解算，发布频率和日志频率分别控制。慢客户端通过最新状态快照、发送超时和有界事件队列处理。
 
+## 连接与分配页面生命周期
+
+每个 WebSocket 连接持有并清理自己的监听器。回调根据连接身份和组件生命周期判断有效性，当前连接事件更新当前状态。界面依据断开码、原因与超时提示连接状态。后端连接任务失败产生 `api_connection_error`，包含客户端编号、地址与原因；对应连接结束后其他客户端和接收器继续运行。
+
+分配页面按挂载、卸载与连接恢复切换敲击分配模式，写入请求只包含 `setupMode`。其他敲击参数以服务端当前值为准；SettingsResponse 更新读取状态。断开连接后的卸载按连接状态清理，恢复连接后按当前页面重建分配模式。稳定页面维持当前模式。
+
+重置进度遵循 `ResetTimer.kt` 的整秒规则，每个整秒通知一次，完成进度等于设定倒计时时长。前端按操作、阶段和秒数去重。GPUI 播放由独立音频线程执行，React / Tauri 使用原声音素材与进度处理。
+
+自动检查覆盖连接事件竞态、卸载、错误序列化、非法帧，以及真实网页在分配页停留、离页、重新进入、断线恢复和参数保留。实机按 [统一清单](rust-unified-hardware-test.zh-CN.md) 验收。
+
 ## 外部头显与控制器输入
 
 SteamVR 驱动协议 2 的头显/控制器输入和计算追踪器输出已接入，Linux/Windows API 模式默认启用，详见 [SteamVR 桥接说明](rust-steamvr-bridge.zh-CN.md)。也保留独立的 WebSocket 文本输入，时间由服务端单调时钟分配；单位为米，使用核心坐标 `+X` 右、`+Y` 上、`+Z` 后：
@@ -103,7 +113,7 @@ pnpm --dir gui web:build
 
 `test:backend` 使用实际 Rust CLI、六个 UDP socket、WebSocket 和前端生成的 TypeScript FlatBuffers 绑定，验证批准、传感器编号 0、分配和命名、骨架、复位、设置和骨长修改、暂停、外部 HMD、组件订阅掩码、非法请求回滚、临时腿部设置、删除设备、重启保存与实时/回放一致。YAML 联调覆盖已有绑定、读取设置、修改和恢复默认值写回、备份及未知字段保留。可通过 `SLIMEVR_RUST_BINARY` 指定待测可执行文件。另有核心测试覆盖热配置保留校准、原始样本 age、局部复位和临时设置。CI 检查运行后端、React 与 GPUI 状态 / 通信测试；原生宿主和打包检查随应用构建执行，结果以对应 Actions 运行记录为准。
 
-驱动安装、OSC / OSCQuery / VMC、VRChat、USB HID、串口 / 固件、磁力计、快捷键、overlay、Discord 及原 AutoBone SAVE / PFS-PFR 录制复用均已接通。AutoBone 取消操作作用于录制阶段，处理阶段按训练生命周期完成并返回结果。实现与集中实机验收见 [交接记录](rust-completion-worklog.zh-CN.md) 和 [测试清单](rust-unified-hardware-test.zh-CN.md)。Windows / macOS 原生运行仍需验收。
+驱动安装、OSC / OSCQuery / VMC、VRChat、USB HID、串口 / 固件、磁力计、快捷键、overlay、Discord 及原 AutoBone SAVE / PFS-PFR 录制复用均已接通。AutoBone 取消操作作用于录制阶段，处理阶段按训练生命周期完成并返回结果。实现与集中实机验收见 [功能状态](rust-feature-status.zh-CN.md) 和 [测试清单](rust-unified-hardware-test.zh-CN.md)。Windows / macOS 原生运行仍需验收。
 
 BVH 已按原版导出方法接通。浏览器默认写入后端状态目录的 `recordings/`，桌面沿用保存对话框；Tauri 自有 Rust 后端通过父管道 EOF 正常收尾。导出规则、采样和参考验证见 [BVH 使用说明](rust-bvh-export.zh-CN.md)。
 
@@ -119,6 +129,6 @@ BVH 已按原版导出方法接通。浏览器默认写入后端状态目录的 
 - `gui/src/platform/solarxr.ts`：协议解码、后端通知和有界订阅缓存。
 - `gui/src-tauri/src/server.rs`：后端选择、定位、启动和退出回收。
 
-派生速度已实现，算法、时序与校验见 [说明](rust-derived-velocity.zh-CN.md)。
+派生速度已实现，算法、时序与校验见 [派生速度说明](rust-steamvr-bridge.zh-CN.md#派生速度)。
 
 HMD 俯仰复位和默认脚部安装校准已通过 `extended_calibration` 能力开放原设置页面，沿用 `resetsConfig`。`extraYawCorrection` 按原版作为废弃字段忽略；AutoBone 初始误差与骨架高度设置可读写，详见 [校准与训练对照](rust-calibration-autobone.zh-CN.md)。

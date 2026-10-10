@@ -1,6 +1,6 @@
 # Contributing to SlimeVR Rust
 
-This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with a Tauri host. Production code and reference tools are organized by their current responsibilities. See [README.md](README.md) for project entry points and [CI checks](docs/rust-ci.zh-CN.md) for pull request validation.
+This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with a Tauri host. Production code and reference tools are organized by their current responsibilities. See [README.md](README.md) for project entry points and [CI checks](docs/rust-distribution.zh-CN.md) for pull request validation.
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ texts, copyright notices and third-party attribution.
 
 ## Upstream behavior references
 
-Ordinary Rust tests use committed golden fixtures with the Rust toolchain. To regenerate upstream references, see [reference source handling](docs/rust-only-backend.zh-CN.md). Test-only Kotlin adapters are kept separately from production code.
+Ordinary Rust tests use committed golden fixtures with the Rust toolchain. To regenerate upstream references, see [reference source handling](docs/rust-core-validation.zh-CN.md#参考源码与-fixtures). Test-only Kotlin adapters are kept separately from production code.
 
 ## SolarXR Protocol
 

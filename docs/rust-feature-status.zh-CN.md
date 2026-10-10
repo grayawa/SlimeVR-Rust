@@ -1,6 +1,6 @@
 # 功能状态与验收范围
 
-后端与两套桌面界面实现现有 SlimeVR 的常用接收、算法、设备管理和输出流程。功能入口见 [项目概览](rust-completion-worklog.zh-CN.md)，参考版本为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
+后端与两套桌面界面实现现有 SlimeVR 的常用接收、算法、设备管理和输出流程。使用与开发入口见 [文档目录](README.md)，参考版本为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
 
 ## 功能与实机项目
 
@@ -19,13 +19,26 @@
 ## 当前契约与测试边界
 
 - 核心 fixture 含 99 组参考，AutoBone 完整训练含 14 组。tap 与身高校准主要使用状态测试，flex 使用 Kotlin 差分。具体输入与容差见 [核心验证](rust-core-validation.zh-CN.md)。
-- Rust 默认 tick 为 4ms，实际调度由操作系统决定。派生速度使用最终后处理位置和毫秒时钟，参考 Java 路径在 FK 阶段使用微秒时钟。见 [速度说明](rust-derived-velocity.zh-CN.md)。
+- Rust 默认 tick 为 4ms，实际调度由操作系统决定。派生速度使用最终后处理位置和毫秒时钟，参考 Java 路径在 FK 阶段使用微秒时钟。见 [速度说明](rust-steamvr-bridge.zh-CN.md#派生速度)。
 - 世界坐标输出要求有效锚点；地面初始化后执行脚部修正。单 sensor 停更沿用缓存姿态可用性规则，年龄指标用于诊断。
 - `usePosition` / `correctConstraints` 按普通 FK 的兼容语义保存；约束反馈和 reset-history drift compensation 保持参考路径的关闭状态。`extraYawCorrection` 接受后忽略，协议包 200 按参考规则忽略。
 - YAML 保存保留未映射字段，序列化器生成排版。运行期以加载并更新的内存树为配置来源，同一配置文件由一个后端管理。
 - 输入和队列按大小校验：VRM JSON 最大 4MiB，SolarXR WebSocket 最大 8MiB。AutoBone 导入、固件下载与控制队列使用各自的容量限制。
-- SteamVR 桌面桥支持 Windows / Linux，全局快捷键支持 Windows。Tauri 的 Linux / macOS 构建使用独立平台选项，具体范围见 [CI](rust-ci.zh-CN.md)。
+- SteamVR 桌面桥支持 Windows / Linux；仪表盘纹理提交使用 Windows D3D11，Linux Overlay 可用于桌面预览。GPUI 的 Linux 包以 Ubuntu 24.04 为基线，自动窗口检查覆盖 X11 软件 Vulkan。全局快捷键支持 Windows。Tauri 的 Linux / macOS 构建使用独立平台选项，具体范围见 [CI](rust-distribution.zh-CN.md)。
 - 软件包通过本仓库 Actions artifacts 获取，设备固件通过固件服务更新。性能结论来自相同场景的实测数据，见 [基准](rust-udp-runtime-performance.zh-CN.md)。
+
+## 源码入口
+
+| 范围                 | 入口                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| 接收与调度           | `server-rust/crates/slimevr-server/src/receiver.rs`、`receiver/`、`runtime/`               |
+| 算法与校准           | `server-rust/crates/slimevr-core/src/`                                                     |
+| 通信、配置与设备操作 | 服务端 `api/`、`config.rs`、`config/`、`serial/`、`firmware.rs`、`hid.rs`                  |
+| SteamVR 与 OSC / VMC | 服务端 `steamvr/`、`osc/`；`bindings-provider/`                                            |
+| 录制与导出           | 服务端 `recording.rs`、`pose_recording.rs`、`bvh.rs`                                       |
+| 桌面、组件与仪表盘   | `gui-gpui/src/`、`gui-gpui/ui/`、`gui-gpui/overlay-runtime/`、`gui/src/`、`gui/src-tauri/` |
+
+表中服务端路径以 `server-rust/crates/slimevr-server/src/` 为根。
 
 ## 验收记录
 

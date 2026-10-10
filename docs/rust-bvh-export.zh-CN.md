@@ -1,6 +1,6 @@
 # Rust BVH 导出
 
-日期：2026-10-03。参考上游提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
+参考上游提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
 
 Rust 后端为 GPUI / Web / Tauri 提供 BVH 录制入口。启动和连接方式见 [前后端联调](rust-frontend-integration.zh-CN.md)。点击骨架预览下方的录制图标开始，再次点击停止；停止后显示实际保存路径和帧数。
 
@@ -76,7 +76,7 @@ python3 tools/generate-core-golden.py
 python3 tools/generate-bvh-golden.py
 ```
 
-GUI 的 `pnpm --dir gui test:backend` 验证真实服务、前端 TypeScript 绑定、状态同步、暂停、默认／显式路径、不覆盖、骨长变化、Ctrl-C 与父管道 EOF 收尾；父管道关闭后的 journal 仍可正常回放。后端与前端检查覆盖上述生命周期。浏览器实际点击开始／停止并保存 50 帧、展示保存提示，页面无运行错误。前端类型检查、构建、改动文件 ESLint、Rust Clippy 和 Windows GNU 后端交叉编译通过。
+GUI 的 `pnpm --dir gui test:backend` 验证真实服务、前端 TypeScript 绑定、状态同步、暂停、默认／显式路径、不覆盖、骨长变化、Ctrl-C 与父管道 EOF 收尾；父管道关闭后的 journal 仍可正常回放。后端与前端检查覆盖上述生命周期；具体构建和检查结果以对应提交的 Actions 记录为准。
 
 Blender 实际导入、真实动作与保存对话框按桌面实机步骤验收。
 

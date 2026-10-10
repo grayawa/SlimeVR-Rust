@@ -5,8 +5,9 @@ use slimevr_gpui::{
     rpc_generated,
     settings::{self, Field},
     settings_layout,
-    ui::components::{ChoiceCard, NumberSelector, SettingsPane, SwitchRow},
 };
+
+use slimevr_ui::components::{ChoiceCard, NumberSelector, SettingsPane, SwitchRow};
 
 impl SlimeView {
     // Wrap descriptions at the pane width using shaped glyph advances.

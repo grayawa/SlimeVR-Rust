@@ -36,4 +36,4 @@ pub mod mounting;
 pub mod onboarding;
 
 #[cfg(feature = "desktop")]
-pub mod ui;
+pub mod theme;

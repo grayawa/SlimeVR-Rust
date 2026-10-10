@@ -148,7 +148,7 @@ fn run() -> Result<(), String> {
                 slimevr_gpui::logging::write(LogLevel::Warn, "fonts", &error.to_string());
             }
             gpui_kit::component::set_locale(if locale == "zh-Hans" { "zh-CN" } else { "en" });
-            slimevr_gpui::ui::theme::apply_theme(
+            slimevr_gpui::theme::apply_theme(
                 preferences.value["theme"].as_str().unwrap_or("slime"),
                 cx,
             );

@@ -1,9 +1,9 @@
 use super::card;
-use crate::ui::theme::{self, Surface};
+use crate::theme::{self, Surface};
 use gpui_kit::component::{Sizable, StyledExt, button::Button};
 use gpui_kit::*;
 
-/// Numeric presentation only. Formatting, bounds, stepping and persistence are supplied by the owner.
+/// Numeric control layout with caller-supplied display text and increment/decrement buttons.
 pub struct NumberSelector {
     label: SharedString,
     display: SharedString,

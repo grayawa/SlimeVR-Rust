@@ -130,7 +130,7 @@ jobs:
       - name: Rust format checks
         run: |
           cargo fmt --manifest-path server-rust/Cargo.toml -p slimevr-core -p slimevr-server --check
-          cargo fmt --manifest-path gui-gpui/Cargo.toml --check
+          cargo fmt --manifest-path gui-gpui/Cargo.toml -p slimevr-gpui -p slimevr-ui --check
           cargo fmt --manifest-path gui/src-tauri/Cargo.toml --check
       - name: Backend checks
         run: |

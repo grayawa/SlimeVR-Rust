@@ -1,7 +1,7 @@
 use super::*;
 use gpui_kit::component::{ActiveTheme, Theme};
 use serde_json::{Value, json};
-use slimevr_gpui::{locales, rpc_generated, ui::theme::apply_theme};
+use slimevr_gpui::{locales, rpc_generated, theme::apply_theme};
 impl SlimeView {
     pub(super) fn request_close(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         // Keep the displayed confirmation active during repeated close requests.

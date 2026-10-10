@@ -1,6 +1,6 @@
 # GPUI 前端结构与开发指南
 
-原生桌面界面位于 `gui-gpui/`，采用 [GPUI Kit](https://gpui-kit.com/) 0.7.1 和匹配的 GPUI 依赖，版本由独立 Cargo.lock 锁定。GPUI 与 React / Tauri 共用 Rust 后端和 SolarXR 协议。构建及功能入口见 [README](../gui-gpui/README.zh-CN.md)。
+原生桌面界面位于 `gui-gpui/`，采用 [GPUI Kit](https://gpui-kit.com/) 0.7.1 和匹配的 GPUI 依赖，应用与组件由 `gui-gpui/Cargo.lock` 共同锁定。GPUI 与 React / Tauri 共用 Rust 后端和 SolarXR 协议。构建及功能入口见 [README](../gui-gpui/README.zh-CN.md)。
 
 ## 分层
 
@@ -10,7 +10,8 @@
 | 设置状态   | `src/settings.rs`、设置目录与布局数据                  | 草稿、字段映射、范围校验、保存确认和返回恢复           |
 | 通信       | `src/client.rs`、`protocol.rs`、`rpc_generated.rs`     | WebSocket、FlatBuffers、事务号、订阅、最新帧与操作事件 |
 | 桌面宿主   | `src/desktop.rs`、`tray.rs`、`logging.rs`、`sounds.rs` | 后端生命周期、单实例、托盘、日志和音频工作线程         |
-| 组件与主题 | `src/ui/`                                              | 受控组件、表面颜色、尺寸和交互组合                     |
+| 组件库     | `ui/`（`slimevr-ui` crate）                            | 受控组件、当前主题颜色、尺寸和交互组合                 |
+| 应用主题   | `src/theme.rs`                                         | SlimeVR 主题预设                                       |
 | 翻译与资源 | `src/i18n.rs`、`locales.rs`、`assets/`                 | Fluent、回退、字体、图片、模型和声音                   |
 
 网络和阻塞操作在后台执行，UI 线程应用状态并绘制。通信、UI、后端解算和输出分别控制频率。详细后端边界见 [API 架构](rust-backend-api-architecture.zh-CN.md)。
@@ -27,7 +28,7 @@ VRChat 设置警告在设置区域展示。打开时记录来源页、所选小�
 
 ## 组件和生成数据
 
-`ui/components/` 提供设置面板、单选卡片、数值加减条与开关行。组件负责布局和当前主题样式；页面负责翻译、状态、参数语义、校验和 RPC。组件接口与独立预览见 [组件库](rust-gpui-components.zh-CN.md)。
+`slimevr-ui` 的 `ui/src/components/` 提供设置面板、单选卡片、数值加减条与开关行。组件负责布局和当前主题样式；页面负责翻译、状态、参数语义、校验和 RPC。应用、Overlay 与组件预览直接依赖该 crate。SlimeVR 主题预设由应用层提供。组件接口与独立预览见 [组件库](rust-gpui-components.zh-CN.md)。
 
 Fluent 翻译、原素材、RPC 适配和设置字段布局通过仓库生成脚本整理。修改生成内容时先更新源数据或生成器，再生成目标文件。后端设置保存到 YAML，GUI 偏好沿用既有设置文件。
 

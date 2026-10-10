@@ -13,7 +13,7 @@
 
 独立应用构建完成后上传自己的 artifact。AIO 只为发布使用：检查与构建并行，后端编译一次，GPUI 与 Tauri 下载同一份后端 EXE 后并行构建；Overlay 独立构建。合集 job 等待检查和三个应用构建成功，再下载同一次运行的包，核对 SHA-256 与 ZIP CRC 并合并。
 
-`windows-app.yml` 是独立构建和 AIO 共用的内部工作流，手动入口为对应的 Build 工作流。驱动、OpenVR helper 和微软运行库由构建脚本准备及校验。工作流产物上传到 artifacts，GitHub Release 由维护者发布。
+`windows-app.yml` 提供独立构建和 AIO 共用的 Windows 任务；`linux-gpui.yml` 提供 Linux GPUI 任务。手动入口为对应的 Build 工作流。驱动、OpenVR helper 和微软运行库由构建脚本准备及校验。工作流产物上传到 artifacts，GitHub Release 由维护者发布。
 
 ## 下载
 
@@ -29,9 +29,9 @@
 | `slimevr-tauri-windows-installers` | Tauri 安装包、项目许可与构建源码记录                                        |
 | `gui-dist`                         | 用于网页部署 / 调试的生产资源                                               |
 
-解压下载的 artifact ZIP，再解压里面需要使用的应用 ZIP。GPUI 或 Tauri 二选一启动桌面服务；Overlay 单独解压，在桌面程序和 SteamVR 启动后运行。下载保留 30 天。
+先解压下载的 artifact ZIP，再解开里面的应用包：Windows 使用 `.zip`，Linux 使用 `.tar.gz`。GPUI 或 Tauri 二选一启动桌面服务；Overlay 单独解压，在桌面程序和 SteamVR 启动后运行。下载保留 30 天。
 
-**Build Tauri** 手动运行时勾选 `other_tauri_platforms`，会另外构建 Linux x64、Linux ARM64 和 macOS Tauri 包。AIO 发布合集面向 Windows。GPUI 使用原生渲染器，Tauri 使用系统 WebView2 Runtime。
+**Build Tauri** 手动运行时勾选 `other_tauri_platforms`，会另外构建 Linux x64、Linux ARM64 和 macOS Tauri 包。AIO 发布合集面向 Windows。GPUI 使用原生渲染器，Tauri 在 Windows 使用 WebView2，在 Linux 使用 WebKitGTK。
 
 ## 检查范围
 

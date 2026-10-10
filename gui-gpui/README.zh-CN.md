@@ -80,4 +80,4 @@ cargo fmt --manifest-path gui-gpui/Cargo.toml -p slimevr-gpui -p slimevr-ui
 
 打开 **Actions → Build GPUI → Run workflow**，选择分支，下载成功运行的 `SlimeVR-GPUI-Windows-x64` 或 `SlimeVR-GPUI-Linux-x64`。两平台并行构建，分别上传 artifact。发布合集使用 **SlimeVR AIO Release**。触发方式、下载与验证范围见 [CI](../docs/rust-ci.zh-CN.md)。
 
-解压包提供原生前端、后端、驱动、OpenVR helper、运行依赖和许可 / 源码版本说明。用户配置与日志保存在应用数据目录。GPUI 界面由原生渲染器绘制，Tauri 使用系统 WebView2。
+解压包提供原生前端、后端、驱动、OpenVR helper、运行依赖和许可 / 源码版本说明。用户配置与日志保存在应用数据目录。GPUI 界面由原生渲染器绘制，Tauri 在 Windows 使用 WebView2，在 Linux 使用 WebKitGTK。

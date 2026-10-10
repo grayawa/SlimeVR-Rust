@@ -21,7 +21,7 @@
 | `gui/`         | React 界面、Tauri 宿主及打包工具                                                      | [Tauri 构建](gui/README.tauri.md)                                                                                                        |
 | `docs/`        | 架构说明、功能契约、验证数据及实机测试清单                                            | [功能概览](docs/rust-completion-worklog.zh-CN.md) · [统一测试清单](docs/rust-unified-hardware-test.zh-CN.md)                             |
 
-后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 使用原生渲染器；Tauri 使用系统 WebView2。
+后端直接复用 `vrconfig.yml` / `.yaml`；GUI 偏好沿用原有配置。已有 SlimeVR SteamVR 驱动可继续使用。GPUI 使用原生渲染器；Tauri 在 Windows 使用 WebView2，在 Linux 使用 WebKitGTK。
 
 ## 克隆与构建
 

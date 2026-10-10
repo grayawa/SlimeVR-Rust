@@ -1,6 +1,6 @@
 # Contributing to SlimeVR Rust
 
-This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with a Tauri host. Production code and reference tools are organized by their current responsibilities. See [README.md](README.md) for project entry points and [CI checks](docs/rust-ci.zh-CN.md) for pull request validation.
+This fork uses a Rust backend, a GPUI native frontend, and a shared React interface with a Tauri host. Production code and reference tools are organized by their current responsibilities. See [README.md](README.md) for project entry points and [CI checks](docs/rust-distribution.zh-CN.md) for pull request validation.
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ texts, copyright notices and third-party attribution.
 
 ## Upstream behavior references
 
-Ordinary Rust tests use committed golden fixtures with the Rust toolchain. To regenerate upstream references, see [reference source handling](docs/rust-only-backend.zh-CN.md). Test-only Kotlin adapters are kept separately from production code.
+Ordinary Rust tests use committed golden fixtures with the Rust toolchain. To regenerate upstream references, see [reference source handling](docs/rust-core-validation.zh-CN.md#参考源码与-fixtures). Test-only Kotlin adapters are kept separately from production code.
 
 ## SolarXR Protocol
 
@@ -65,3 +65,28 @@ By submitting contributions to project-owned code, you agree to license them und
 Preserve the original MIT / Apache-2.0 license files, copyright notices and all applicable third-party licenses. See [LICENSING.md](LICENSING.md), [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [TRADEMARK.md](TRADEMARK.md). GPL-only changes need an additional compatible grant from the relevant rights holders before incorporation into permissively licensed SlimeVR upstream.
 
 When submitting changes to SlimeVR upstream, follow [its contribution policies](https://github.com/SlimeVR/.github/blob/main/profile/CONTRIBUTING.md) and repository instructions.
+
+## Maintainer release checklist
+
+Use `SlimeVR-Rust` as the product name and identify the desktop, tray and dashboard as an independent development preview. Tauri uses application identifier `io.github.grayawa.slimevr-rust`; preferences and backend configuration use the existing `dev.slimevr.SlimeVR` directories. Follow [TRADEMARK.md](TRADEMARK.md) for inherited marks.
+
+Before publishing source or attachments:
+
+- [ ] Verify the README's AI disclosure, preview status, backup advice and feedback / validation links.
+- [ ] Scan the Git history, discussion text and workflow logs being published; review secret-rule candidates.
+- [ ] Review artifacts, screenshots, attachments and reports for credentials, device identifiers and personal paths.
+- [ ] Verify recursive submodules, lockfiles and build / test instructions.
+
+For each binary release:
+
+- [ ] Fix the build commit, submodules, lockfiles and tool versions; provide local changes with the corresponding source.
+- [ ] Check bundled license files and source against [LICENSING.md](LICENSING.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- [ ] Verify `SOURCE-CODE.txt`, `BUILD-MANIFEST.json` or `BUILD-SOURCE.json` against the actual build.
+- [ ] Check installer notice resources and the notices shipped with installer artifacts.
+- [ ] Check hashes, archive integrity, architectures, runtime libraries and platform dependencies.
+- [ ] Record passed / failed / untested hardware checks with the system, devices, configuration and log times; use the [hardware checklist](docs/rust-unified-hardware-test.zh-CN.md).
+- [ ] Publish with a development-preview or GitHub prerelease label; retain binaries, checksums and complete corresponding-source / build instructions in Releases.
+
+Packaging scripts carry notices and source references. Tauri development / build hooks stage these resources for installers. GitHub source archives are used with recursive-submodule instructions. Actions artifacts have a 30-day retention period; Releases provide long-term downloads. Build entry points are in the [distribution guide](docs/rust-distribution.zh-CN.md).
+
+Review repository settings for secret scanning, push protection and private vulnerability reporting; `main` rulesets and required checks; Actions token permissions and external-contributor approvals; and the repository description, topics and Issue templates. Workflows use explicit `contents: read` and PR checks use `pull_request`. Security reports follow [SECURITY.md](SECURITY.md). Historical publication audits are in [CHANGELOG.md](CHANGELOG.md).

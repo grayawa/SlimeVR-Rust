@@ -1,4 +1,4 @@
-# Rust 后端 API 模块结构
+# 后端 API、通信与 runtime
 
 API 按配置、传输连接、应用状态和领域请求组织模块。`api/mod.rs` 声明模块并导出公共类型，调用方使用 `api::Service`、`api::FrontendConfig`、`api::Request`、`api::Wire`、`api::LiveState` 和 `api::serve`。
 
@@ -98,6 +98,7 @@ API 按配置、传输连接、应用状态和领域请求组织模块。`api/mo
 error；`files_written` 是成功写完并替换的文件数，`sync_all_calls` 是同步
 尝试数，包含 `.bak` 与正式文件。后台保存还带 `background: true`、`revision`
 和 `queue_delay_ms`（进入待写队列到开始执行）；`total_ms` 从后台实际开始保存时计量。
+阶段字段为 `total_ms`、`validation_ms`、`serialization_ms`、`file_io_ms`、`sync_all_ms` 和 `serialized_bytes`；`sync_all_ms` 是 `file_io_ms` 的子阶段。正常保存为 info，超过 4 ms 或失败为 warn。
 相同内容执行验证、序列化与读取比较后返回 unchanged。持久路径上的实际保存生成此记录，字段包含阶段耗时、字节数、结果与错误类别。
 启动加载及初始保存仍在追踪开始前同步完成，初次保存记录在 listening 后
 补发。离线工具的 `FrontendConfig::save()` 仍是同步接口。
@@ -136,6 +137,10 @@ bundle 都保留为完整有序消息。控制消息、重复 / 乱序序号及�
 合并后仍超过姿态容量时，淘汰最旧纯姿态包以接纳新包；控制容量独立计数，
 控制队列满时丢弃新控制包并报告警告。`udp_ingress_backpressure` 区分正常合并
 与实际容量丢包。队列以固定容量接纳输入，满载时的实际丢包还取决于系统 UDP 缓冲区与线程调度。
+
+`udp_ingress_backpressure` 按 `--summary-ms` 汇总 `coalesced`、`dropped_poses` 和 `dropped_controls`，分别表示完整覆盖合并、姿态容量淘汰和控制容量丢弃。只有合并时为 debug，容量丢包时为 warn。计数范围是应用接收队列；系统 UDP 缓冲区丢包由系统指标测量。
+
+设备快照的 `sequence_gaps` 记录接收器观察到的序号间隔，包含主动合并的旧包，需要结合队列计数判断来源。
 
 单个传感器停更沿用上游的缓存姿态可用性规则。上游
 [UDPProtocolParser](https://github.com/SlimeVR/SlimeVR-Server/blob/83941fd38e91cc91ca6b360deab5c2ae986dd1b6/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPProtocolParser.kt)
@@ -207,10 +212,42 @@ flowchart LR
 - pub/sub 的订阅按连接隔离，排除向发送者回送；串口和配网通知按连接订阅过滤。
 - 原配置文件、校准计时、AutoBone / BVH 保存和UDP 重连校准按会话策略执行。
 
+## 前端连接与通知
+
+React / Tauri、GPUI 和仪表盘共用 SolarXR FlatBuffers 及生成绑定。`backend_info` 提供能力和连接信息，`backend_error` 提供操作错误，`backend_file_saved` 提供 BVH 保存结果；数据和 RPC 使用二进制 SolarXR，直接响应保留事务号，实时状态变化向连接广播。
+
+WebSocket 最多 16 个客户端，每个客户端最多 8 个订阅，输入消息上限 8 MiB，订阅最短间隔 10 ms。React 默认约 10 Hz 设备数据和 40 Hz 骨架；GPUI 刷新规则见 [GPUI 指南](rust-gpui-guide.zh-CN.md#组件和生成数据)。核心默认每 4 ms 解算，发布与日志频率分别控制。慢客户端通过最新快照、发送超时和有界事件队列处理。
+
+分配为新绑定恢复最近样本并保留原始接收时间；普通设置修改保留其他绑定的运行校准。骨架预览发送约束后的 FK，11 个计算追踪器使用最终后处理位置与方向。设置转换入口为 `settings.rs`，编码与订阅掩码入口为 `protocol.rs`。
+
+### 连接与分配页面生命周期
+
+每个 WebSocket 连接持有并清理自己的监听器。回调根据连接身份和组件生命周期判断有效性，当前连接事件更新当前状态。界面依据断开码、原因与超时提示连接状态。后端连接任务失败产生 `api_connection_error`，包含客户端编号、地址与原因；对应连接结束后其他客户端和接收器继续运行。
+
+分配页面按挂载、卸载与连接恢复切换敲击分配模式，写入请求只包含 `setupMode`。其他敲击参数以服务端当前值为准；SettingsResponse 更新读取状态。断开连接后的卸载按连接状态清理，恢复连接后按当前页面重建分配模式。稳定页面维持当前模式。
+
+重置进度遵循 `ResetTimer.kt` 的整秒规则，每个整秒通知一次，完成进度等于设定倒计时时长。前端按操作、阶段和秒数去重。GPUI 播放由独立音频线程执行，React / Tauri 使用原声音素材与进度处理。
+
+自动检查覆盖连接事件竞态、卸载、错误序列化、非法帧，以及真实网页在分配页停留、离页、重新进入、断线恢复和参数保留。实机按 [统一清单](rust-unified-hardware-test.zh-CN.md) 验收。
+
+### 外部姿态注入
+
+SteamVR 驱动协议 2 的头显/控制器输入和计算追踪器输出已接入，Linux/Windows API 模式默认启用，详见 [SteamVR 桥接说明](rust-steamvr-bridge.zh-CN.md)。也保留独立的 WebSocket 文本输入，时间由服务端单调时钟分配；单位为米，使用核心坐标 `+X` 右、`+Y` 上、`+Z` 后：
+
+```json
+{"type":"pose_input","body":"head","rotation":{"w":1,"x":0,"y":0,"z":0},"position":{"x":0,"y":1.7,"z":0}}
+{"type":"pose_input","body":"left_hand","rotation":{"w":1,"x":0,"y":0,"z":0},"position":{"x":-0.3,"y":1.1,"z":-0.4}}
+{"type":"pose_clear","body":"left_hand"}
+```
+
+支持 `head`、`left_hand`、`right_hand`。外部源使用虚拟设备 ID 0，真实 UDP 设备使用 1..254；传感器编号 0 在 GUI 中也可正常查找。停止外部源时桥应发送 `pose_clear`。普通 UDP 提供相对骨架，世界位置锚定和 AutoBone 训练使用外部 HMD 位置；测眼高还需要控制器位置。测眼高的有效 HMD 高度范围保持核心的 1.2..1.936 m。
+
+前端消息分发和订阅入口为 `gui/src/hooks/websocket-api.ts`、`gui/src/platform/solarxr.ts`。宿主启动与退出由 `gui/src-tauri/src/server.rs` 管理，参数见 [Tauri README](../gui/README.tauri.md)。
+
 ## 修改入口与验证
 
 新增 RPC 时，在 `service/rpc/mod.rs` 注册所属领域，并在对应领域文件中实现；请求校验和错误包装保留在统一入口。修改设置转换优先看 `settings.rs`；修改具体协议编码优先看 `protocol.rs`；修改 UDP 或算法行为仍分别进入接收层和 `slimevr-core`。
 
-自动检查覆盖批次响应顺序与事务号、广播、YAML 保存、失败执行边界和超量批次校验。真实 WebSocket 用例覆盖初始化、心跳、轮询、定时 feed、多连接 pub/sub 隔离与发送者排除。共享快照与慢磁盘测试检查已发布帧稳定性、配置合并、持久化回复和退出排空。
+自动检查覆盖批次响应顺序与事务号、广播、YAML 保存、失败执行边界和超量批次校验。`pnpm --dir gui test:backend` 使用真实 Rust CLI、六个 UDP socket、WebSocket 和 TypeScript 绑定，检查准入、sensor 0、分配、命名、重置、设置、临时腿部参数、删除、重启保存及在线 / 回放一致性。先构建 debug 后端，或用 `SLIMEVR_RUST_BINARY` 指定可执行文件。真实 WebSocket 用例覆盖初始化、心跳、轮询、定时 feed、多连接 pub/sub 隔离与发送者排除。共享快照与慢磁盘测试检查已发布帧稳定性、配置合并、持久化回复和退出排空。
 
 六设备 UDP / WebSocket / SteamVR Unix IPC 模拟联调覆盖正常、HMD 中断 / 恢复和后端停顿重连。CI 在 Linux / Windows 执行检查；真实 SteamVR、管道、追踪品质和 CPU 竞争按 [实机清单](rust-unified-hardware-test.zh-CN.md) 记录。

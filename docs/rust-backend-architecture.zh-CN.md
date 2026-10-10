@@ -1,4 +1,4 @@
-# Rust 后端结构与开发指南
+# Rust 后端架构与开发指南
 
 后端由接收层、算法核心和前端通信层组成。源码参考 SlimeVR Server `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`，兼容现有 Tracker 四元数协议、SolarXR schema 和 OpenVR Driver。运行与构建见 [后端 README](../server-rust/README.zh-CN.md)。
 
@@ -54,6 +54,18 @@ UDP 在 socket 读取后记录接收时刻，在主循环处理时记录处理�
 
 设备心跳表示传输活跃，单个传感器的 `pose_age_ms` 表示旋转年龄。缓存姿态的解算可用性遵循上游状态规则。电量、RSSI、温度和延迟使用实际报告值，缺失值保持未知。
 
+## UDP 会话与校准
+
+已知 UDP 设备重新握手时保留完整、安装方向与 yaw 校准。接收会话递增，动态样本、滤波、速度和接触历史重新建立；首条旋转直接初始化滤波器。该规则适用于同一稳定身份的 UDP 来源。
+
+首次设备从初始校准状态开始。重连后接收器按新会话和当前地址接受样本。HID、SteamVR、OSC 等来源按自身会话规则重建。旧 journal 缺少 `preserve_calibration` 时使用默认 false。
+
+UDP 握手描述网络会话，设备实际重启、佩戴变化或旋转参考变化后，需要使用者重新校准。原版参考为 `TrackersUDPServer.setUpNewConnection` 的设备与 Tracker 复用路径。
+
+自动回归覆盖稳定 MAC、端口变化、校准保留、旧会话拒绝、新姿态恢复、平滑 / 预测首样本和旧录制字段。真实 UDP、SolarXR 与 SteamVR Unix IPC 联调在后端停顿 3.3 秒、设备重新握手和 HMD 单独中断的条件下检查恢复状态。
+
+CPU 密集场景的排查结合 `runtime_timing` 的 jitter / stall、`device_connected` 的 session / `preserve_calibration`、SteamVR 输入输出及系统调度。持续追踪需要主机为接收、解算和输出提供足够执行时间。日志收集见 [日志说明](rust-logging.zh-CN.md)。
+
 ## 算法契约
 
 核心使用 f32 和 `{w,x,y,z}` 四元数，输入位置以米为单位，坐标为 `+X` 右、`+Y` 上、`+Z` 后。Tracker 的方向为全局方向；子骨位置继承父骨尾端，方向由当前骨的输入与回退规则确定。
@@ -62,7 +74,7 @@ UDP 在 socket 读取后记录接收时刻，在主循环处理时记录处理�
 
 普通 FK 使用其固定调用链。`usePosition` / `correctConstraints` 作为兼容配置保存，通用 IK 和 tracker 约束反馈的执行范围以 [算法 README](../server-rust/README.core.zh-CN.md) 为准。
 
-Full / Yaw / Mounting reset 的左右乘、过渡、延迟和滤波初始化按参考行为执行。已知 UDP 设备重新握手时保留校准，接收会话和动态历史重新建立。设备实际重启或佩戴变化后由使用者重新校准。
+Full / Yaw / Mounting reset 的左右乘、过渡、延迟和滤波初始化按参考行为执行。设备会话与校准恢复见上文的 UDP 会话契约。
 
 AutoBone 使用校准后的未滤波输入和跨帧训练骨架，按录制配置保留约束并绕过 LegTweaks。结果包含累计训练误差、最终骨长的重新评估误差和接受状态。应用和导出要求结果通过接受阈值。见 [校准与训练契约](rust-calibration-autobone.zh-CN.md)。
 
@@ -92,4 +104,4 @@ cargo fmt --manifest-path server-rust/Cargo.toml -p slimevr-core -p slimevr-serv
 
 当前服务处理已有固件的融合四元数与姿态协议。设备侧负责 IMU 采样、融合及设备校准；服务端负责安装 / 航向校准、人体解算、接触修正和相对对齐。六轴重力观测约束倾斜，绝对 yaw 需要相应参考。
 
-raw IMU 协议、Server-side VQF、设备时钟同步、长期温漂学习、Deep Static、ML、Android 宿主和常驻 daemon 属于独立设计项目。现有桌面宿主按自己的后端所有权管理退出。设备资料与证据范围见 [设备基线说明](rewrite-reference-review.zh-CN.md)。
+raw IMU 协议、Server-side VQF、设备时钟同步、长期温漂学习、Deep Static、ML、Android 宿主和常驻 daemon 属于独立设计项目。现有桌面宿主按自己的后端所有权管理退出。设备资料与动作采集按 [实机测试清单](rust-unified-hardware-test.zh-CN.md) 记录。

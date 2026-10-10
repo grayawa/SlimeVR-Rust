@@ -12,7 +12,7 @@
 - 连接与固件：原版首次引导、Wi-Fi / 接收器分支、串口配网、官方 / 自定义 OTA、固件构建服务与串口刷写。
 - 桌面：29 种语言、英文回退、`override.ftl`、主题、字体、字号、声音、托盘、单实例、文件对话框、日志和 Discord Presence。
 
-VRChat 设置警告在设置区域打开，返回时恢复来源页、滚动位置与草稿。设置卡片之间采用 8px 间距，控件从当前主题读取背景和选中颜色。详细布局与交互见 [界面对齐](../docs/rust-gpui-ui-alignment.zh-CN.md)，功能覆盖与验收见 [功能与测试](../docs/rust-gpui-functional-parity.zh-CN.md)。
+VRChat 设置警告在设置区域打开，返回时恢复来源页、滚动位置与草稿。设置卡片之间采用 8px 间距，控件从当前主题读取背景和选中颜色。架构、布局与功能覆盖见 [GPUI 指南](../docs/rust-gpui-guide.zh-CN.md)，验收见 [统一实机清单](../docs/rust-unified-hardware-test.zh-CN.md)。
 
 ## 使用与数据
 
@@ -42,7 +42,7 @@ sudo udevadm control --reload-rules
 
 Linux 自动验证覆盖 X11 软件 Vulkan 渲染、托盘 D-Bus 注册与菜单、语言更新、图标像素格式、真实后端回环和分发文件校验。Wayland 桌面、物理音频设备、SteamVR / VRChat 与无线追踪器按 [实机清单](../docs/rust-unified-hardware-test.zh-CN.md) 验收。SteamVR 仪表盘的纹理提交使用 Windows D3D11；Linux 的 Overlay 可用于桌面预览。
 
-`SlimeVR-Components.exe` 使用内存示例值展示组件。正常使用运行 `SlimeVR.exe`。独立的 `slimevr-ui` crate 位于 `ui/`，由桌面、Overlay 和预览共用；组件接口见 [组件库](../docs/rust-gpui-components.zh-CN.md)。
+`SlimeVR-Components.exe` 使用内存示例值展示组件。正常使用运行 `SlimeVR.exe`。独立的 `slimevr-ui` crate 位于 `ui/`，由桌面、Overlay 和预览共用；组件接口见 [组件库](ui/README.md)。
 
 ## 构建与生成
 
@@ -74,10 +74,10 @@ node gui-gpui/scripts/generate-settings-layout.cjs
 cargo fmt --manifest-path gui-gpui/Cargo.toml -p slimevr-gpui -p slimevr-ui
 ```
 
-设置布局生成需要已安装仓库 Node 依赖。字体来源与转换记录见 [SOURCES.md](assets/fonts/SOURCES.md)，结构与开发边界见 [前端架构](../docs/rust-gpui-frontend-plan.zh-CN.md)。
+设置布局生成需要已安装仓库 Node 依赖。字体来源与转换记录见 [SOURCES.md](assets/fonts/SOURCES.md)，结构与开发边界见 [前端架构](../docs/rust-gpui-guide.zh-CN.md)。
 
 ## Actions 分发
 
-打开 **Actions → Build GPUI → Run workflow**，选择分支，下载成功运行的 `SlimeVR-GPUI-Windows-x64` 或 `SlimeVR-GPUI-Linux-x64`。两平台并行构建，分别上传 artifact。发布合集使用 **SlimeVR AIO Release**。触发方式、下载与验证范围见 [CI](../docs/rust-ci.zh-CN.md)。
+打开 **Actions → Build GPUI → Run workflow**，选择分支，下载成功运行的 `SlimeVR-GPUI-Windows-x64` 或 `SlimeVR-GPUI-Linux-x64`。两平台并行构建，分别上传 artifact。发布合集使用 **SlimeVR AIO Release**。触发方式、下载与验证范围见 [CI](../docs/rust-distribution.zh-CN.md)。
 
 解压包提供原生前端、后端、驱动、OpenVR helper、运行依赖和许可 / 源码版本说明。用户配置与日志保存在应用数据目录。GPUI 界面由原生渲染器绘制，Tauri 在 Windows 使用 WebView2，在 Linux 使用 WebKitGTK。

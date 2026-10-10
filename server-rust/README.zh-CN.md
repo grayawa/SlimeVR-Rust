@@ -6,7 +6,7 @@
 
 源码基线是 SlimeVR-Server `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。接收层使用已有 fused quaternion 协议，适配资料中的 `protocol=22 / firmware=good / IMU=13` 字段。固件版本（包括 `good`）按握手字符串保存。
 
-CLI 提供接收、实时解算和回放命令。原 YAML 迁移、SteamVR / HID / OSC 输入输出、串口 / 固件、SolarXR API 与 Tauri 后端集成已接入，见 [当前交接说明](../docs/rust-completion-worklog.zh-CN.md)。
+CLI 提供接收、实时解算和回放命令。原 YAML 迁移、SteamVR / HID / OSC 输入输出、串口 / 固件、SolarXR API 与 Tauri 后端集成已接入，见 [功能状态](../docs/rust-feature-status.zh-CN.md)。
 
 ## 启动
 
@@ -57,6 +57,8 @@ cargo run --locked -p slimevr-server -- replay recordings/run.jsonl
 ```
 
 回放在本地按记录的接收次序和单调时钟重新执行同一个接收器，逐条核对其生成的回复地址和字节，最后输出状态及 `replay_complete`。
+
+journal 按输入范围声明格式版本：版本 1 保存纯接收事件，版本 2 增加算法配置和前端控制，版本 3 保存设备命令，版本 4 保存 HID 输入。当前回放器读取版本 1–4，录制消费者按文件声明选择解码规则。带算法录制包含初始姿态配置、实际解算 tick、前端控制及准入 / 删除变化。
 
 JSONL 版本 1 包含 `header`（接收配置）、`receive`（来源、时间、原始字节 hex）、`tick`、`send`（发送意图）和正常结束的 `end`。journal 记录接收器状态相关事件；发现广播由运行时管理。`send` 表示回复意图，实际交付需结合设备接收确认判断。异常退出造成的缺少 `end`、截断记录、时钟倒退或回复差异都会导致回放失败。在 `debug` / `trace` 下输出的最终 `snapshot`，移除诊断字段 `level` 后应与回放相同。完整快照在 `debug` / `trace` 下输出，journal 按记录格式保存回放所需的数据。
 

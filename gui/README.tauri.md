@@ -24,6 +24,16 @@ pnpm tauri:rust:dev
 
 ## 网页开发与已有后端
 
+从仓库根目录启动独立 Rust 后端：
+
+```sh
+pnpm rust:build
+./server-rust/target/release/slimevr-server listen \
+  --api-bind 127.0.0.1:21110 --config ./vrconfig.yml
+```
+
+Windows 使用 `server-rust/target/release/slimevr-server.exe`。UDP 默认监听 `0.0.0.0:6969`。启用 API 时创建姿态核心并读取原版 YAML；设备握手后在界面批准、分配，再执行完整和安装方向重置。准入参数见 [后端 README](../server-rust/README.zh-CN.md#启动)。
+
 ```sh
 # 浏览器开发，需要另外启动 Rust 后端
 pnpm web
@@ -36,18 +46,21 @@ pnpm --dir gui exec tauri dev -- -- --no-server
 
 Tauri CLI 第二个 `--` 后的参数传给应用；打包后的程序直接接收参数：
 
-| 参数                         | 用途                                |
-| ---------------------------- | ----------------------------------- |
-| `--no-server`                | 只连接已有后端                      |
-| `--backend auto` / `rust`    | 自动发现后端 / 要求找到 Rust 后端   |
-| `--rust-server <file>`       | 指定后端可执行文件                  |
-| `--path <directory>`         | 指定后端所在目录                    |
-| `--config <file>`            | 指定原版 `vrconfig.yml` / `.yaml`   |
-| `--log-level <level>`        | error / warn / info / debug / trace |
-| `--no-steamvr`               | 关闭 SteamVR 桥接                   |
-| `--steamvr-endpoint <path>`  | 覆盖 SteamVR IPC 端点               |
-| `--bindings-provider <file>` | 指定 OpenVR helper                  |
-| `--no-bindings-provider`     | 禁用 OpenVR helper                  |
+| 参数                         | 用途                                                         |
+| ---------------------------- | ------------------------------------------------------------ |
+| `--no-server`                | 只连接已有后端                                               |
+| `--backend auto` / `rust`    | 自动发现后端 / 要求找到 Rust 后端                            |
+| `--rust-server <file>`       | 指定后端可执行文件                                           |
+| `--path <directory>`         | 指定后端所在目录                                             |
+| `--config <file>`            | 指定原版 `vrconfig.yml` / `.yaml`；`--rust-state` 为参数别名 |
+| `--pose-config <file>`       | 为全新配置提供初始姿态配置                                   |
+| `--log-level <level>`        | error / warn / info / debug / trace                          |
+| `--no-steamvr`               | 关闭 SteamVR 桥接                                            |
+| `--steamvr-endpoint <path>`  | 覆盖 SteamVR IPC 端点                                        |
+| `--bindings-provider <file>` | 指定 OpenVR helper                                           |
+| `--no-bindings-provider`     | 禁用 OpenVR helper                                           |
+
+后端查找范围为应用资源目录、GUI 可执行文件同目录与 `--path` 目录；开发构建还查找仓库 `server-rust/target/release` 和 `debug`。已有 YAML 优先，`--pose-config` 用作全新配置的种子。配置路径、迁移和保存见 [YAML 指南](../docs/rust-config-compatibility.zh-CN.md)。
 
 退出时宿主关闭自己启动的后端的 stdin，让 BVH 和 journal 正常完成；超时后终止。单独启动的后端由原启动方式管理。
 
@@ -65,7 +78,7 @@ pnpm tauri:build
 
 Tauri 的开发与构建钩子先执行 `tauri:notices`，把项目许可、版权通知、字体与图像声明、源码引用准备到 `gui/src-tauri/resources/notices/`。安装包将其放入资源根目录，`BUILD-SOURCE.json` 记录实际 checkout 的 commit、本地修改标记、递归子模块状态和锁文件 SHA-256。Windows 和其他平台的 workflow 共用这套钩子；安装包 artifact 也提供这份声明目录。源码获取和分发要求见 [许可说明](../LICENSING.md)。
 
-Windows 解压包由 [GitHub Actions](../docs/rust-ci.zh-CN.md) 构建，WebView2 使用系统安装。已有 SlimeVR 驱动可直接复用，程序保留现有注册；固件升级功能仍然保留。软件包从本仓库 artifacts 获取。
+Windows 解压包由 [GitHub Actions](../docs/rust-distribution.zh-CN.md) 构建，WebView2 使用系统安装。已有 SlimeVR 驱动可直接复用，程序保留现有注册；固件升级功能仍然保留。软件包从本仓库 artifacts 获取。
 
 ## 配置、桌面功能与日志
 
@@ -80,6 +93,8 @@ Windows 解压包由 [GitHub Actions](../docs/rust-ci.zh-CN.md) 构建，WebView
 Linux 未设置 XDG 变量时使用 `~/.local/share/` 与 `~/.config/`。窗口位置由 window-state 插件按安装应用标识管理，托盘提供显示、隐藏和退出。原生文件对话框、外链、配置/日志目录、Discord Rich Presence 均通过 Tauri 适配层提供；浏览器使用相应回退行为。`override.ftl` 从后端配置目录加载。
 
 界面日志为数据目录下的 `logs/gui-tauri.log`，默认级别 `info`，可用 `--log-level debug` 或 `SLIMEVR_LOG_LEVEL` 调整。约 10 MiB 轮转，保留四份历史文件。便携包带 `Start-SlimeVR-Debug.cmd`；详细收集方法见 [日志说明](../docs/rust-logging.zh-CN.md)。问题排查使用本地日志。
+
+通信能力、订阅和姿态注入见 [API 契约](../docs/rust-backend-api-architecture.zh-CN.md#前端连接与通知)。
 
 ## 验证
 

@@ -57,6 +57,37 @@ GitHub Actions：打开仓库 **Actions → Build Overlay → Run workflow**，�
 
 隐藏宿主在初始化时应用客户区尺寸，首次提交的纹理尺寸记录在 `overlay-texture` 日志中。检查白屏时核对尺寸、GPU 与提交错误。
 
+## 架构与模块
+
+```mermaid
+flowchart LR
+    Desktop[GPUI / Tauri 桌面界面] <--> Backend[Rust 后端]
+    Overlay[VR 页面与状态] <--> Backend
+    Overlay --> Render[GPUI Windows 渲染器]
+    Render --> Texture[D3D11 共享纹理]
+    Texture --> OpenVR[OpenVR Overlay 宿主]
+    OpenVR --> SteamVR[SteamVR 仪表盘]
+    SteamVR --> Input[指针 / 点击 / 滚动]
+    Input --> Overlay
+```
+
+| 位置                                    | 职责                                             |
+| --------------------------------------- | ------------------------------------------------ |
+| `gui-gpui/src/bin/overlay.rs`           | 启动、界面状态、订阅、预览、大小与偏好同步       |
+| `gui-gpui/src/dashboard.rs`             | 节点列表规则、宽度偏好和刷新节流                 |
+| `gui-gpui/src/client.rs`、`protocol.rs` | 共用 SolarXR 连接、快照和操作结果                |
+| `gui-gpui/overlay-runtime/`             | OpenVR 会话、FFI、纹理提交与指针输入转换         |
+| `gui-gpui/vendor/gpui-pre-windows/`     | 隐藏宿主尺寸、D3D11 GPU copy、显卡选择和设备恢复 |
+| `gui-gpui/src/overlay.rs`               | 原版显示 / 镜像设置的 pub/sub 客户端             |
+
+### 纹理与输入
+
+OpenVR 使用 `VRApplication_Overlay` 和 `CreateDashboardOverlay` 创建主面板与缩略图。Windows 渲染器将 GPUI 输出以 GPU copy 写入稳定共享 D3D11 纹理，由 UI 线程提交给 OpenVR。程序构建前选择 SteamVR compositor 的 DXGI adapter。
+
+隐藏宿主在创建时应用客户区尺寸，异步帧请求推进布局与绘制。尺寸变化重新分配纹理，GPU 恢复释放旧资源。普通桌面窗口使用交换链显示。
+
+OpenVR 的移动、按下、抬起和滚动转换为 GPUI 输入，坐标适配包含 Y 翻转与 DPI 缩放。中断的按压通过移出 UI 后释放来取消。UI 页面通过适配层使用这些事件。
+
 ## 验证范围
 
 验证项目：
@@ -79,4 +110,4 @@ GitHub Actions：打开仓库 **Actions → Build Overlay → Run workflow**，�
 
 重置音效由 GPUI 桌面程序播放：通信线程收到 ResetResponse 后直接排入音频线程，素材在线程启动时预解码为 PCM，按去重后的阶段与秒数播放。Overlay 显示时状态重绘合并到约 30Hz，节流与隐藏恢复时应用最后的状态变化；有新数据时更新共享快照。
 
-UI 定时器若延迟超过 100 ms，日志会记录 `overlay-frame-delay`，每秒最多一条；音效队列满时记录 `audio` 警告。自动测试覆盖 UI 不读取状态时两种重置的完整音效序列、重复回包、重绘节流及隐藏恢复。实际音频输出、SteamVR 卡顿改善需要新包复测。
+UI 定时器若延迟超过 100 ms，日志会记录 `overlay-frame-delay`，每秒最多一条；音效队列满时记录 `audio` 警告。自动测试覆盖 UI 不读取状态时两种重置的完整音效序列、重复回包、重绘节流及隐藏恢复。实际音频输出与 SteamVR 满载表现按对应构建的实机记录验收。

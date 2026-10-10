@@ -70,7 +70,8 @@ def build_package(args):
             shutil.copy2(driver_dir.parent / name, base / "drivers" / name)
         shutil.copy2(bindings_dir.parent / "OPENVR-LICENSE", base / "licenses/OpenVR-LICENSE")
         shutil.copy2(ROOT / "gui-gpui/assets/GPUI-Kit-LICENSE-APACHE", base / "licenses/GPUI-Kit-LICENSE-APACHE")
-        shutil.copy2(ROOT / "gui-gpui/README.zh-CN.md", base / "原生前端说明.md")
+        notices.copy_documentation(ROOT, base, args.build_revision,
+                                   [("gui-gpui/README.zh-CN.md", "原生前端说明.md")])
         shutil.copy2(ROOT / "gui/src-tauri/resources/69-slimevr-devices.rules", base / "69-slimevr-devices.rules")
         (base / "Start-SlimeVR.sh").write_text(
             '#!/bin/sh\nset -eu\ncd -- "$(dirname -- "$0")"\nexec ./slimevr-gpui "$@"\n', encoding="utf-8"

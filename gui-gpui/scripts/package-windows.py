@@ -51,7 +51,7 @@ def main():
   if kit_license.is_file():shutil.copy2(kit_license,licenses/kit_license.name)
   shutil.copy2(ROOT/'gui-gpui/vendor/gpui-pre-windows/LICENSE-APACHE',licenses/'GPUI-Windows-LICENSE-APACHE')
   shutil.copy2(ROOT/'gui-gpui/vendor/gpui-pre-windows/SLIMEVR-PATCH.md',licenses/'GPUI-Windows-PATCH.md')
-  for source,name in [('docs/rust-gpui-functional-parity.zh-CN.md','功能与测试说明.md'),('docs/rust-unified-hardware-test.zh-CN.md','后端实机测试清单.md'),('gui-gpui/README.zh-CN.md','原生前端说明.md'),('docs/rust-gpui-ui-alignment.zh-CN.md','界面对齐与测试说明.md'),('docs/rust-steamvr-hand-handover.zh-CN.md','手部切换修复说明.md'),('docs/rust-gpui-components.zh-CN.md','组件库说明.md'),('docs/rust-load-reconnect.zh-CN.md','重连校准修复说明.md')]:shutil.copy2(ROOT/source,base/name)
+  portable.notices.copy_documentation(ROOT,base,args.build_revision,[('gui-gpui/README.zh-CN.md','原生前端说明.md')])
   for name,level in [('Start-SlimeVR.cmd','info'),('Start-SlimeVR-Debug.cmd','debug')]:
    (base/name).write_bytes(('@echo off\r\nsetlocal\r\ncd /d "%~dp0"\r\nstart "" "%~dp0SlimeVR.exe" --log-level '+level+' %*\r\n').encode())
   (base/'打开日志文件夹.cmd').write_bytes('@echo off\r\nstart "" "%APPDATA%\\dev.slimevr.SlimeVR\\logs"\r\n'.encode())
@@ -74,7 +74,7 @@ GUI 偏好沿用既有应用数据目录。自定义配置可用 --config "D:\\S
 防火墙提示出现时允许私有网络，以便接收 UDP。注册驱动后保持解压目录位置。
 固件构建使用配置的构建服务；Discord Presence 使用本机 Discord 客户端。
 构建提交、文件校验与资源来源见 BUILD-MANIFEST.json、SOURCE-CODE.txt 和 licenses/。
-自动检查范围见 功能与测试说明.md；真实设备与平台行为按 后端实机测试清单.md 验收。
+自动检查范围见 docs/rust-feature-status.zh-CN.md；真实设备与平台行为按 docs/rust-unified-hardware-test.zh-CN.md 验收。
 CPU 与内存结论通过等价场景的实机测量记录。
 ''',encoding='utf-8-sig')
   files=[]

@@ -4,7 +4,7 @@
 
 前端 API 已按配置、传输连接、应用状态和六类 RPC 拆分，当前入口与调用边界见 [后端 API 架构说明](../docs/rust-backend-api-architecture.zh-CN.md)。
 
-参考版本为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。算法接口通过受控输入与参考数据验证，实际追踪和 VR 输出按硬件场景验收。GPUI / Web / Tauri 前端共用服务端通信层，启动与功能边界见 [前后端联调说明](../docs/rust-frontend-integration.zh-CN.md)。
+参考版本为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。算法接口通过受控输入与参考数据验证，实际追踪和 VR 输出按硬件场景验收。GPUI / Web / Tauri 前端共用服务端通信层，启动与功能边界见 [API 通信契约](../docs/rust-backend-api-architecture.zh-CN.md)。
 
 ## 运行
 
@@ -127,6 +127,6 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 
 CI 在 Linux / Windows 检查后端。前端通信、SteamVR 协议 2 和配置共用当前服务；真实动作、设备和 SteamVR 输出按实机清单记录。
 
-可选派生速度已接入最终计算位置、SteamVR、原版 YAML 与现有设置页面；边界与阶段差异见 [说明](../docs/rust-derived-velocity.zh-CN.md)。
+可选派生速度已接入最终计算位置、SteamVR、原版 YAML 与现有设置页面；边界与阶段差异见 [派生速度](../docs/rust-steamvr-bridge.zh-CN.md#派生速度)。
 
-剩余日常流程、外围功能与集中测试场景见 [功能差异清单](../docs/rust-remaining-feature-gaps.zh-CN.md)。AutoBone 已逐轮推送统计及当轮骨长。
+剩余日常流程、外围功能与集中测试场景见 [功能状态](../docs/rust-feature-status.zh-CN.md)。AutoBone 已逐轮推送统计及当轮骨长。

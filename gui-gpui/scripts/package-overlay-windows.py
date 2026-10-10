@@ -67,7 +67,9 @@ def main():
         shutil.copy2(vendor / 'LICENSE-APACHE', licenses / 'GPUI-Windows-LICENSE-APACHE')
         shutil.copy2(vendor / 'SLIMEVR-PATCH.md', licenses / 'GPUI-Windows-PATCH.md')
         shutil.copytree(ROOT / 'gui-gpui/assets/fonts', licenses / 'fonts', ignore=shutil.ignore_patterns('*.ttf'), dirs_exist_ok=True)
-        shutil.copy2(ROOT / 'docs/rust-steamvr-dashboard.zh-CN.md', base / '面板说明与测试.md')
+        gui.portable.notices.copy_documentation(
+            ROOT, base, args.build_revision,
+            [('docs/rust-steamvr-dashboard.zh-CN.md', '面板说明与测试.md')])
         for name, flags in [('Start-Overlay.cmd', ''), ('Preview-Overlay.cmd', '--preview'), ('Demo-Overlay.cmd', '--demo')]:
             (base / name).write_bytes((
                 '@echo off\r\nsetlocal\r\ncd /d "%~dp0"\r\n'

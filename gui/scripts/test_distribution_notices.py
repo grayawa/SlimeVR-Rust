@@ -2,11 +2,13 @@ import importlib.util
 import os
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
+from urllib.parse import unquote, urlsplit
 
 spec = importlib.util.spec_from_file_location('notices', Path(__file__).with_name('distribution-notices.py'))
 notices = importlib.util.module_from_spec(spec)
@@ -77,6 +79,49 @@ class DistributionNotices(unittest.TestCase):
                 notices.copy_notices(root, destination, 'b' * 40)
             self.assertIn('https://github.com/example/fork/tree/' + 'b' * 40,
                           (destination / 'SOURCE-CODE.txt').read_text())
+
+
+class DistributionDocumentation(unittest.TestCase):
+    def test_bundle_navigation_and_source_links_match_the_build(self):
+        root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as work:
+            destination = Path(work)
+            revision = 'c' * 40
+            with patch.dict(os.environ, {'GITHUB_REPOSITORY': 'example/fork'}):
+                notices.copy_notices(root, destination, revision)
+                notices.copy_documentation(root, destination, revision, [
+                    ('gui-gpui/README.zh-CN.md', '原生前端说明.md'),
+                    ('docs/rust-steamvr-dashboard.zh-CN.md', '面板说明与测试.md')])
+            for name in ['README.md', 'CHANGELOG.md', 'docs/README.md',
+                         'docs/rust-feature-status.zh-CN.md', '原生前端说明.md']:
+                self.assertTrue((destination / name).is_file())
+            for path in destination.rglob('*.md'):
+                if path.relative_to(destination).as_posix() in notices.PROJECT_FILES or 'licenses' in path.parts:
+                    continue
+                for href in re.findall(r'!?\[[^\]\n]*\]\(([^\s)]+)\)', path.read_text()):
+                    url = urlsplit(href)
+                    if not url.scheme and not url.netloc and url.path:
+                        target = path.parent.joinpath(unquote(url.path)).resolve()
+                        self.assertTrue(target.is_relative_to(destination), (path, href))
+                        self.assertTrue(target.exists(), (path, href))
+            source_link = f'https://github.com/example/fork/blob/{revision}/'
+            guide = (destination / 'docs/rust-steamvr-bridge.zh-CN.md').read_text()
+            self.assertIn(source_link + 'server-rust/crates/slimevr-core/src/velocity.rs', guide)
+            self.assertIn('(rust-unified-hardware-test.zh-CN.md#steamvr)', guide)
+            native = (destination / '原生前端说明.md').read_text()
+            self.assertIn('(docs/rust-gpui-guide.zh-CN.md)', native)
+            self.assertIn('cargo build --manifest-path gui-gpui/Cargo.toml', native)
+            for name in notices.PROJECT_FILES:
+                self.assertEqual((destination / name).read_bytes(), (root / name).read_bytes())
+
+    def test_missing_guide_is_reported_before_copying(self):
+        with tempfile.TemporaryDirectory() as work:
+            root, destination = Path(work) / 'root', Path(work) / 'bundle'
+            root.mkdir()
+            (root / 'README.md').write_text('Project guide')
+            with self.assertRaisesRegex(ValueError, 'CHANGELOG.md'):
+                notices.copy_documentation(root, destination, 'local-preview')
+            self.assertFalse(destination.exists())
 
 
 class TauriInstallerNotices(unittest.TestCase):

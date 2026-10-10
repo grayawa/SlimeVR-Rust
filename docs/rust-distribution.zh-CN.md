@@ -1,4 +1,4 @@
-# SlimeVR 检查、独立构建与发布
+# 构建、下载与分发
 
 日常检查与应用构建分开。PR 和 main 的代码修改自动运行 **SlimeVR Checks**。需要测试包时，在 Actions 选择对应的独立构建，点击 **Run workflow** 并选择分支。
 
@@ -42,3 +42,33 @@
 后端、GPUI / Overlay、Tauri 和日常检查使用各自的 Rust 缓存，Tauri 与 React 复用 pnpm 缓存。首次构建仍需要下载和编译依赖，拆分主要缩短等待目标应用的时间。同一个 PR 或 main 分支的新提交会取消旧检查；手动及发布构建保留独立的运行生命周期。
 
 真实设备、VRChat、重置音效、头显显示及 CPU 满载表现按 [实机清单](rust-unified-hardware-test.zh-CN.md) 验证。
+
+## Windows 解压运行
+
+解压整个应用目录到固定位置，完全退出已有前端与占用同一端口的后端，再双击 `SlimeVR.exe` 或 `Start-SlimeVR.cmd`。桌面程序启动随包 Rust 后端，也可按参数连接已有服务。SteamVR 注册使用解压目录中的驱动路径，注册后保持目录位置。
+
+Tauri 包使用系统 WebView2。Windows 10 用户可从 [微软 WebView2 Runtime 下载页](https://developer.microsoft.com/microsoft-edge/webview2/) 安装 Evergreen Runtime。若包中带 `WebView2Loader.dll`，保留该加载库；MSVC 构建采用静态加载库。
+
+完整包包含界面、后端、固定版本 SlimeVR 驱动、Bindings Provider、OpenVR DLL、所需 VC++ DLL、使用说明、许可、源码版本与文件校验信息。运行依赖由包或系统提供，开发工具用于源码构建。
+
+### 配置与日志
+
+配置沿用 `%APPDATA%/dev.slimevr.SlimeVR/vrconfig.yml` / `.yaml`。GUI 偏好和日志使用同一应用数据目录下的各自文件。切换构建包时复用已有配置；指定路径的方法见各前端 README。
+
+诊断入口为 `Start-SlimeVR-Debug.cmd`。先完全退出已有实例，再调试启动并复现，压缩整个 `logs` 目录，附上时间与步骤。详见 [日志说明](rust-logging.zh-CN.md)。
+
+## Linux GPUI 解压运行
+
+完整包以 Ubuntu 24.04 为构建基线。解开外层 artifact ZIP 和应用 tar.gz 后，在固定目录执行 `./Start-SlimeVR.sh`。程序会启动随包 Rust 后端，`--attach` 可连接已有服务。
+
+系统提供 Vulkan 驱动、ALSA、Fontconfig、X11 / Wayland 和桌面 D-Bus 会话；托盘使用 StatusNotifier，GNOME 可启用 AppIndicator 扩展。USB / HID 权限规则、平台构建依赖及托盘关闭行为见 [GPUI README](../gui-gpui/README.zh-CN.md)。真实 SteamVR / VRChat 与 Wayland 按实机清单验收。
+
+## 本地打包
+
+Tauri 使用 `gui/scripts/package-windows-portable.py`，GPUI 使用 `gui-gpui/scripts/package-windows.py`，仪表盘使用 `gui-gpui/scripts/package-overlay-windows.py`。参数见各脚本 `--help`。输入为当前构建的 EXE、平台 helper、驱动与固定来源的运行库，输出 ZIP 和 SHA-256。
+
+直接用 Cargo 构建 Tauri 生产宿主时启用 `--features tauri/custom-protocol`。打包检查网页资源、PE / DLL、shader、许可、ZIP CRC 和文件哈希；Windows 窗口、设备、SteamVR 与声音按 [实机清单](rust-unified-hardware-test.zh-CN.md) 验收。
+
+Linux GPUI 使用 `gui-gpui/scripts/package-linux.py`，打包检查 ELF 架构、动态库、执行权限、许可证和文件哈希。
+
+完整桌面和 Overlay 解压包携带 `README.md`、`CHANGELOG.md` 与 `docs/`。包内指南互相使用相对链接；工作流包中的源码与其余开发说明链接到构建 commit，便于对照实际版本。本地标签构建的文档链接使用仓库 main，实际构建输入由分发者按 `SOURCE-CODE.txt` 提供。

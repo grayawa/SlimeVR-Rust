@@ -76,6 +76,6 @@ Rust 所需的稳定设备 ID、非 MAC 场景绑定及部分算法元数据放�
 
 CI 的配置和通信检查覆盖加载、校验、修改与保存。迁移预期依据参考源码规则建立；真实配置、设备和平台路径按实机测试验收。
 
-实现入口：`server-rust/crates/slimevr-server/src/config.rs`；配置 fixture：`server-rust/crates/slimevr-server/tests/fixtures/vrconfig-v15.yml`。前后端启动和功能范围见 [联调说明](rust-frontend-integration.zh-CN.md)。
+实现入口：`server-rust/crates/slimevr-server/src/config.rs`；配置 fixture：`server-rust/crates/slimevr-server/tests/fixtures/vrconfig-v15.yml`。前端启动参数见 [Tauri / Web 指南](../gui/README.tauri.md)，通信见 [API 契约](rust-backend-api-architecture.zh-CN.md#前端连接与通知)。
 
 AutoBone 的 `saveRecordings` 与 PFS / PFR 文件见 [校准与录制](rust-calibration-autobone.zh-CN.md#pfs--pfr-录制与保存)；磁力计配置 / ACK 见 [设备操作](rust-device-operations.zh-CN.md#磁力计控制)。

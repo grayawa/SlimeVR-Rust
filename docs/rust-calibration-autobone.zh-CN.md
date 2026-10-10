@@ -27,6 +27,8 @@
 
 结果中的 `final_error` 表示用于接受判断的累计训练均值；`evaluation_error` 表示使用最终骨长按时间顺序重新评估的误差，便于和 `initial_error` 比较拟合改善。每个 epoch 保留对应骨长快照。GUI 实时接收每轮统计及对应骨长；应用与导出要求结果通过接受阈值。
 
+AutoBone 的取消操作作用于录制阶段，处理阶段按训练生命周期完成并返回结果。
+
 ## PFS / PFR 录制与保存
 
 - 录制完成或提前停止且至少有三帧时，写入 `AutoBone Recordings/LastABRecording.pfs`，完成消息在文件落盘后发送。原子替换最后一次录制。

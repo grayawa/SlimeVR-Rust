@@ -4,7 +4,7 @@
 
 前端 API 已按配置、传输连接、应用状态和六类 RPC 拆分，当前入口与调用边界见 [后端 API 架构说明](../docs/rust-backend-api-architecture.zh-CN.md)。
 
-参考版本为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。算法接口通过受控输入与参考数据验证，实际追踪和 VR 输出按硬件场景验收。GPUI / Web / Tauri 前端共用服务端通信层，启动与功能边界见 [前后端联调说明](../docs/rust-frontend-integration.zh-CN.md)。
+参考版本为 `83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。算法接口通过受控输入与参考数据验证，实际追踪和 VR 输出按硬件场景验收。GPUI / Web / Tauri 前端共用服务端通信层，启动与功能边界见 [API 通信契约](../docs/rust-backend-api-architecture.zh-CN.md)。
 
 ## 运行
 

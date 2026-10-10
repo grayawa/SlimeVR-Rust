@@ -163,4 +163,4 @@ python3 server-rust/tools/generate-steamvr-golden.py
 
 CI 按平台执行后端、前端通信和宿主检查，具体结果以该提交的 Actions 记录为准。旧协议 1 SlimeVRInput feeder、Vive / Tundra 身体来源、VRChat 配置和原版 Bindings Provider 打包均已接通。真实 SteamVR、Windows 命名管道、OpenVR 按钮绑定和六点追踪仍需 [集中实测](rust-unified-hardware-test.zh-CN.md)。
 
-代码入口：`server-rust/crates/slimevr-server/src/steamvr/`，原版 schema 和出处：`server-rust/crates/slimevr-server/proto/`；前后端范围见 [联调说明](rust-frontend-integration.zh-CN.md)。
+代码入口：`server-rust/crates/slimevr-server/src/steamvr/`，原版 schema 和出处：`server-rust/crates/slimevr-server/proto/`；前后端范围见 [API 通信契约](rust-backend-api-architecture.zh-CN.md)。

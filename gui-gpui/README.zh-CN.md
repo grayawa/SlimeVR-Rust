@@ -42,7 +42,7 @@ sudo udevadm control --reload-rules
 
 Linux 自动验证覆盖 X11 软件 Vulkan 渲染、托盘 D-Bus 注册与菜单、语言更新、图标像素格式、真实后端回环和分发文件校验。Wayland 桌面、物理音频设备、SteamVR / VRChat 与无线追踪器按 [实机清单](../docs/rust-unified-hardware-test.zh-CN.md) 验收。SteamVR 仪表盘的纹理提交使用 Windows D3D11；Linux 的 Overlay 可用于桌面预览。
 
-`SlimeVR-Components.exe` 使用内存示例值展示组件。正常使用运行 `SlimeVR.exe`。独立的 `slimevr-ui` crate 位于 `ui/`，由桌面、Overlay 和预览共用；组件接口见 [组件库](../docs/rust-gpui-components.zh-CN.md)。
+`SlimeVR-Components.exe` 使用内存示例值展示组件。正常使用运行 `SlimeVR.exe`。独立的 `slimevr-ui` crate 位于 `ui/`，由桌面、Overlay 和预览共用；组件接口见 [组件库](ui/README.md)。
 
 ## 构建与生成
 

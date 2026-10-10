@@ -58,38 +58,18 @@ Windows 应用数据目录为 `%APPDATA%\dev.slimevr.SlimeVR`；Linux GPUI 为 `
 
 API 调试日志记录请求类型和事务号。常规重置日志记录完成结果，倒计时通过进度消息更新界面。
 
-`runtime_timing` 默认每 10 秒汇总 tick jitter 与 tick 实际耗时的 p50 / p95 / p99 / p999 / max。`runtime_stall` 字段统计实际 tick 间隔超出目标周期后严格超过 2 / 5 / 10 / 50 / 100 ms 的次数；超过 50 ms，或 SteamVR 输出队列满／关闭／写入失败的窗口为 warn，其余为 info。可通过 `--timing-window-ms` 调整窗口，退出时补发剩余样本。分析原因时需要结合 CPU 与线程调度，口径和量化精度见 [后端架构说明](rust-backend-api-architecture.zh-CN.md#tick-延迟统计)。同一 UDP 设备重新握手时，`device_connected` 的 `session` 递增，`preserve_calibration: true` 表示保留旋转校准。排查步骤见 [UDP 会话与校准](rust-backend-architecture.zh-CN.md#udp-会话与校准)。
+## 性能与连接排查入口
 
-`udp_ingress_backpressure` 按 `--summary-ms` 窗口汇总接收队列：`coalesced` 是被更新数据完整覆盖而合并掉的旧纯姿态包；`dropped_poses` 是合并后仍超过姿态容量而淘汰的最旧姿态包；`dropped_controls` 是控制队列满后丢弃的新控制包。只有合并时为 debug，发生容量丢包时为 warn；这三个计数的范围为应用接收队列，系统 UDP 缓冲区丢包由系统指标另行记录。接收策略见 [后端架构说明](rust-backend-api-architecture.zh-CN.md#执行和状态边界)。
+默认 info 日志包含性能窗口，记录问题发生时间后对照以下入口：
 
-设备快照里的 `sequence_gaps` 只表示接收器观察到的序号间隔，也会包含队列主动合并的旧包，需要结合队列指标判断缺口来源。
+| 现象                         | 记录与说明                                                                                                                                                                                                       |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 姿态冻结、CPU 满载或点位异常 | `runtime_timing` 的 jitter / work / stall，定义见 [tick 延迟统计](rust-backend-api-architecture.zh-CN.md#tick-延迟统计)                                                                                          |
+| UDP 积压、序号缺口或旧姿态   | `udp_ingress_backpressure`、队列等待与姿态年龄，见 [接收边界](rust-backend-api-architecture.zh-CN.md#执行和状态边界) 和 [时间语义](rust-backend-api-architecture.zh-CN.md#时间与配置更新)                        |
+| SteamVR 跳帧或设置保存卡顿   | 输出队列 / IPC 计数与 `config_save_timing`，见 [快照、保存与输出](rust-backend-api-architecture.zh-CN.md#快照保存与-steamvr-输出诊断)                                                                            |
+| 设备重新握手或前端断联       | `device_connected` 的 session / 校准保留标记，以及 `api_connection_error`；见 [UDP 会话](rust-backend-architecture.zh-CN.md#udp-会话与校准) 和 [前端连接](rust-backend-api-architecture.zh-CN.md#前端连接与通知) |
 
-`runtime_timing` 还提供 `udp_queue_delay_ms`、`udp_batch_work_ms` 的 p50 / p95 / p99 / p999 / max，以及 `udp_datagrams`、`udp_batches`、`udp_budget_yields` 和队列合并／容量丢包计数。它们在 info 下可用，默认级别即可收集性能窗口。队列计数按 summary 窗口采集，可能归入相邻 timing 窗口。
-
-`runtime_timing` 的 `api_live_snapshot_ms` 和 `api_live_snapshots` 测量 `Service::live()` 从构造开始到返回的墙钟分位数与次数。watch 发布和旧快照析构由后续路径执行。无 API 时为 null / 0。
-
-同一记录中的 SteamVR 输出计数包括：
-
-- `steamvr_output_batches_enqueued`：成功入队的批次。
-- `steamvr_output_queue_full` / `steamvr_output_queue_closed`：非阻塞入队失败原因。
-- `steamvr_output_batches_written`：IPC 已写完全部消息的批次，客户端消费由后续 SteamVR 链路执行。
-- `steamvr_output_write_failed` / `steamvr_output_write_cancelled`：编码／写入／超时失败，以及连接结束取消正在发送的批次；可能已有部分消息写出。
-- `steamvr_output_stale_batches`：重连后丢弃的旧会话批次。
-
-异步入队与写完可能跨窗口，丢帧分析需要结合窗口边界、队列和 IPC 日志。UDP 与 SteamVR 分别统计。驱动输出使用 `try_send`，队列满时立即返回并累计计数。
-
-`config_save_timing` 按每次有持久路径的保存记录 `total_ms`、`validation_ms`、
-`serialization_ms`、`file_io_ms`、`sync_all_ms`、`serialized_bytes`、
-`files_written` 和 `sync_all_calls`。`sync_all_ms` 为 `file_io_ms` 的子阶段。`outcome` 为 saved / unchanged / error；error 带错误类别，
-字段记录错误类别与阶段数据。正常为 info，保存超过 4ms 或失败为 warn。相同内容
-仍会构造 YAML 并读取比较，后返回 unchanged；记录只覆盖具有持久路径的实际保存。
-运行期保存由独立的配置写入线程执行，带 `background: true`、保存 `revision`
-和 `queue_delay_ms`；`total_ms` 从保存线程实际开始执行计量，队列等待单独统计。连续修改可能合并待写版本，
-每个实际执行的保存才产生一条记录。磁盘失败还通过 `backend_error` 通知前端；
-内存配置保留，保存成功确认仍等待落盘。正常退出会排空待写配置。
-初始保存仍在追踪启动前同步完成，报告在 listening 后补发，耗时是启动保存的耗时。
-
-Receiver freshness 和 TrackerPose 的 `pose_age_ms` 对 UDP 使用 socket 接收时刻，`pose_processing_age_ms` 保留主循环处理年龄，`pose_queue_delay_ms` 显示排队延迟。状态机与 replay 的时钟仍采用处理时刻，旧录制按原时刻回退。基准命令与测量结果见 [UDP 与 runtime 性能说明](rust-udp-runtime-performance.zh-CN.md)。
+性能排查结合系统 CPU、线程调度与同一时段的输入 / 输出记录；复现命令和测量条件见 [runtime 基准](rust-udp-runtime-performance.zh-CN.md)。
 
 ## 文件格式与轮转
 

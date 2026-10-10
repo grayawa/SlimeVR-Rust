@@ -6,7 +6,7 @@
 
 | 文档                                                  | 内容                                                          |
 | ----------------------------------------------------- | ------------------------------------------------------------- |
-| [功能状态](rust-feature-status.zh-CN.md)              | 功能范围、源码入口、平台与测试边界                            |
+| [功能状态](rust-feature-status.zh-CN.md)              | 平台支持、已知限制与测试边界                                  |
 | [构建、下载与分发](rust-distribution.zh-CN.md)        | Actions、独立构建、AIO 发布、Windows / Linux 解压包及本地打包 |
 | [原版 YAML 配置](rust-config-compatibility.zh-CN.md)  | 路径、字段映射、迁移、保存和兼容范围                          |
 | [设备操作](rust-device-operations.zh-CN.md)           | 发现、敲击分配、磁力计命令与 ACK                              |
@@ -23,14 +23,11 @@
 | -------------------------------------------------------- | ------------------------------------------------- |
 | [后端架构](rust-backend-architecture.zh-CN.md)           | 数据链路、模块、接收、会话和算法边界              |
 | [API 与 runtime](rust-backend-api-architecture.zh-CN.md) | 状态所有权、线程、RPC、队列、快照、保存和指标口径 |
-| [前后端联调](rust-frontend-integration.zh-CN.md)         | React / Tauri 启动、能力、订阅、操作与 journal    |
-| [GPUI 指南](rust-gpui-guide.zh-CN.md)                    | 前端分层、页面、草稿、引导、功能覆盖与平台集成    |
-| [GPUI 组件库](rust-gpui-components.zh-CN.md)             | 独立 crate、组件接口、主题和组件预览              |
+| [GPUI 指南](rust-gpui-guide.zh-CN.md)                    | 前端分层、页面、草稿、引导与平台集成              |
 | [算法验证](rust-core-validation.zh-CN.md)                | 固定上游参考、生成工具、fixtures、容差和复现      |
 | [runtime 性能](rust-udp-runtime-performance.zh-CN.md)    | 微基准、负载测试、测量环境与原始结果              |
-| [发布核对](release-checklist.zh-CN.md)                   | 发行身份、构建产物、公开资料与发布验收            |
 
-源码构建参数见 [后端 README](../server-rust/README.zh-CN.md)、[算法 README](../server-rust/README.core.zh-CN.md)、[GPUI README](../gui-gpui/README.zh-CN.md) 和 [Tauri README](../gui/README.tauri.md)。参与开发见 [CONTRIBUTING.md](../CONTRIBUTING.md)。
+源码构建参数见 [后端 README](../server-rust/README.zh-CN.md)、[算法 README](../server-rust/README.core.zh-CN.md)、[GPUI README](../gui-gpui/README.zh-CN.md) 和 [Tauri README](../gui/README.tauri.md)。组件接口见 [slimevr-ui README](../gui-gpui/ui/README.md)，参与开发和发布流程见 [CONTRIBUTING.md](../CONTRIBUTING.md)。
 
 ## 文档维护
 

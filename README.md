@@ -19,7 +19,7 @@
 | 目录           | 内容                                                                                  | 说明                                                                                                                                     |
 | -------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `server-rust/` | UDP/HID 接收、姿态算法、校准、AutoBone、SteamVR、OSC/VMC、SolarXR API、YAML 配置、BVH | [后端](server-rust/README.zh-CN.md) · [算法](server-rust/README.core.zh-CN.md) · [API 架构](docs/rust-backend-api-architecture.zh-CN.md) |
-| `gui-gpui/`    | GPUI Kit 原生界面、组件库、引导、原版 Fluent 翻译                                     | [构建与使用](gui-gpui/README.zh-CN.md) · [组件库](docs/rust-gpui-components.zh-CN.md)                                                    |
+| `gui-gpui/`    | GPUI Kit 原生界面、组件库、引导、原版 Fluent 翻译                                     | [构建与使用](gui-gpui/README.zh-CN.md) · [组件库](gui-gpui/ui/README.md)                                                                 |
 | `gui/`         | React 界面、Tauri 宿主及打包工具                                                      | [Tauri 构建](gui/README.tauri.md)                                                                                                        |
 | `docs/`        | 架构说明、功能契约、验证数据及实机测试清单                                            | [文档目录](docs/README.md) · [功能状态](docs/rust-feature-status.zh-CN.md)                                                               |
 
@@ -66,9 +66,9 @@ GitHub Actions 中的 **SlimeVR Checks** 自动检查 PR 和 main；**Build GPUI
 
 - [SteamVR 驱动桥接](docs/rust-steamvr-bridge.zh-CN.md) · [SteamVR 仪表盘 Overlay](docs/rust-steamvr-dashboard.zh-CN.md)
 - [原版 YAML 配置兼容](docs/rust-config-compatibility.zh-CN.md) · [BVH 导出](docs/rust-bvh-export.zh-CN.md)
-- [前后端联调](docs/rust-frontend-integration.zh-CN.md) · [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)
+- [API 通信契约](docs/rust-backend-api-architecture.zh-CN.md#前端连接与通知) · [实机测试清单](docs/rust-unified-hardware-test.zh-CN.md)
 - [文档目录](docs/README.md) · [变更记录](CHANGELOG.md) · [参与开发](CONTRIBUTING.md)
-- [发布核对与维护](docs/release-checklist.zh-CN.md)
+- [维护者发布清单](CONTRIBUTING.md#maintainer-release-checklist)
 - [安全问题反馈](SECURITY.md)
 
 硬件使用和佩戴说明可参考 [SlimeVR 官方文档](https://docs.slimevr.dev/)。本项目构建包从本仓库 GitHub Actions 的 artifacts 下载。

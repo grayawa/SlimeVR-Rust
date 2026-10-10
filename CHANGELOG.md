@@ -4,7 +4,8 @@
 
 ## Unreleased
 
-- 整理文档目录，将 34 份说明合并为 18 份专题指南并增加索引；桌面包使用统一指南与变更记录。
+- 将组件接口集中到 crate README，前端启动与通信分别归入宿主 / API 指南，发布流程归入贡献指南；精简重复的功能清单和日志指标说明。
+- 整理文档目录，将 34 份说明合并为 15 份专题指南并增加索引；桌面包使用统一指南与变更记录。
 
 ## 2026-10-10
 
@@ -40,7 +41,7 @@
 
 以下条目原先分散在 `windows-fix1–fix5`、手部切换和重连说明中；这组修复随初始代码提交收录。当前行为分别归入专题指南。
 
-- WebSocket 监听器按连接和组件生命周期管理，异常记录包含断开码、原因和状态；分配页按页面 / 连接变化切换 `setupMode`。[联调指南](docs/rust-frontend-integration.zh-CN.md#连接与分配页面生命周期)
+- WebSocket 监听器按连接和组件生命周期管理，异常记录包含断开码、原因和状态；分配页按页面 / 连接变化切换 `setupMode`。[联调指南](docs/rust-backend-api-architecture.zh-CN.md#连接与分配页面生命周期)
 - 发现广播使用 10 秒安静窗口，主动握手进入正常准入流程。[设备操作](docs/rust-device-operations.zh-CN.md#发现与连接)
 - 重置进度按整秒通知，前端处理重复进度并播放对应素材；左右腿佩戴与分配在实机清单中核对。[实机清单](docs/rust-unified-hardware-test.zh-CN.md)
 - 已有 SteamVR 驱动安装和注册保留，状态提示使用 Fluent；手部追踪 / 手柄切换按有效姿态来源所有者处理节点清理。[SteamVR 指南](docs/rust-steamvr-bridge.zh-CN.md)
@@ -49,7 +50,7 @@
 
 ## 公开准备核对记录（2026-10-10）
 
-核对记录的源码基线为 `9aee2878`；安装许可与发行身份补充检查使用 `b22ba48a`。这些记录描述当次扫描和抽查范围，后续发布按 [发布清单](docs/release-checklist.zh-CN.md) 重新核对。
+核对记录的源码基线为 `9aee2878`；安装许可与发行身份补充检查使用 `b22ba48a`。这些记录描述当次扫描和抽查范围，后续发布按 [发布清单](CONTRIBUTING.md#maintainer-release-checklist) 重新核对。
 
 - Cargo metadata 覆盖后端 317、GPUI 950、Tauri 514 个多平台及开发依赖包；检查声明中的 GPLv3 兼容授权路径，并保留 MPL、字体、图像和第三方通知义务。实际链接集合取决于平台与 feature。
 - Gitleaks 8.30.1 扫描本地可达历史的 2,496 个提交、约 62.90 MB 文本；两处候选项对应上游 Java 的 `Advapi32.INSTANCE`，人工核对为误报。

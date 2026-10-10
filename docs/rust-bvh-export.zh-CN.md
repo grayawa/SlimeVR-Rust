@@ -2,7 +2,7 @@
 
 参考上游提交：`83941fd38e91cc91ca6b360deab5c2ae986dd1b6`。
 
-Rust 后端为 GPUI / Web / Tauri 提供 BVH 录制入口。启动和连接方式见 [前后端联调](rust-frontend-integration.zh-CN.md)。点击骨架预览下方的录制图标开始，再次点击停止；停止后显示实际保存路径和帧数。
+Rust 后端为 GPUI / Web / Tauri 提供 BVH 录制入口。启动和连接方式见 [Tauri / Web 指南](../gui/README.tauri.md)。点击骨架预览下方的录制图标开始，再次点击停止；停止后显示实际保存路径和帧数。
 
 ## 保存位置
 

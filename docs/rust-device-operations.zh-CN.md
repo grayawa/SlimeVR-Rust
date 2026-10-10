@@ -1,6 +1,6 @@
 # 设备发现、敲击分配与磁力计
 
-设备设置使用原版 `vrconfig.yml` / `.yaml`。Tracker 身份、sensor 和会话契约见 [后端架构](rust-backend-architecture.zh-CN.md)，界面通信见 [前后端联调](rust-frontend-integration.zh-CN.md)。
+设备设置使用原版 `vrconfig.yml` / `.yaml`。Tracker 身份、sensor 和会话契约见 [后端架构](rust-backend-architecture.zh-CN.md)，界面通信见 [API 通信契约](rust-backend-api-architecture.zh-CN.md)。
 
 ## 发现与连接
 

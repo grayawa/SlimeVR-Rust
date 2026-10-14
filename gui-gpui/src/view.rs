@@ -1,5 +1,6 @@
 mod alignment_ui;
 mod assignment_ui;
+mod autobone_ui;
 mod checklist_ui;
 mod firmware_ui;
 mod mounting_ui;
@@ -50,7 +51,8 @@ pub struct SlimeView {
     instance: slimevr_gpui::desktop::SingleInstance,
     return_page: Page,
     confirmation: Option<(String, serde_json::Value, String)>,
-    autobone_auto: bool,
+    autobone: slimevr_gpui::autobone::Wizard,
+    next_autobone_frame: std::time::Instant,
     unknown_devices: Vec<String>,
     highlight: Option<(u8, u8, std::time::Instant)>,
     assignment_role: Option<u8>,
@@ -86,8 +88,6 @@ pub struct SlimeView {
     focus: FocusHandle,
     key_capture: Option<u64>,
     temporary_tweaks: HashMap<String, bool>,
-    autobone_valid: bool,
-    autobone_result: Option<serde_json::Value>,
     next_build_poll: std::time::Instant,
     settings_sequence: u64,
     overlay: slimevr_gpui::overlay::Overlay,
@@ -134,7 +134,17 @@ impl SlimeView {
                         if this.feed_profile!=Some(profile){let _=this.client.configure_feed(profile.0,profile.1,profile.2);this.feed_profile=Some(profile);}
                         this.audio.configure_feedback(&this.preferences.value);
                         let snapshot = this.client.snapshot();
+                        if this.autobone.demo_started.is_some() && !crate::ui_assets::image_ready("slime/autobone-motion.webp") { this.autobone.demo_started = Some(std::time::Instant::now()); }
+                        if visible && this.autobone.demo_started.is_some() && std::time::Instant::now() >= this.next_autobone_frame {
+                            this.next_autobone_frame = std::time::Instant::now() + Duration::from_millis(125);
+                            cx.notify();
+                        }
+                        let autobone_failed = this.autobone.failed;
+                        this.autobone.check_confirmation(std::time::Instant::now(), snapshot.last_error.is_some());
+                        if this.autobone.failed && !autobone_failed && visible { cx.notify(); }
                         if snapshot.session != this.snapshot.session || snapshot.connection != Connection::Connected {
+                            this.autobone = Default::default();
+                            if this.form_value("proportions-view", "preview") == "automatic" {this.autobone_scroll_to_top();}
                             this.tracker_motion = Default::default();
                             this.highlight = None;
                         }
@@ -163,7 +173,7 @@ impl SlimeView {
                             }
                             if snapshot.session!=this.snapshot.session || snapshot.connection!=Connection::Connected {this.draft.saving=None;}
                             if snapshot.last_error.is_some() {this.draft.saving=None;}
-                            if snapshot.connection!=Connection::Connected { this.onboarding.wifi_request=None;this.onboarding.dialog=None;this.autobone_auto=false;this.autobone_valid=false;this.temporary_tweaks.clear();this.sounds.disconnected();this.overlay=Default::default();this.assignment_role=None;this.mounting_target=None;this.mounting_wait=None;this.tracker_role_target=None;this.pending_height=None; }
+                            if snapshot.connection!=Connection::Connected { this.onboarding.wifi_request=None;this.onboarding.dialog=None;this.temporary_tweaks.clear();this.sounds.disconnected();this.overlay=Default::default();this.assignment_role=None;this.mounting_target=None;this.mounting_wait=None;this.tracker_role_target=None;this.pending_height=None; }
                             if let Some(feed) = &snapshot.feed { this.tracker_motion.update(&feed.trackers, std::time::Instant::now()); }
                             this.snapshot = snapshot;
                             this.events(this.client.drain_events(),cx);
@@ -228,7 +238,8 @@ impl SlimeView {
             instance,
             return_page: Page::Home,
             confirmation: None,
-            autobone_auto: false,
+            autobone: Default::default(),
+            next_autobone_frame: std::time::Instant::now(),
             unknown_devices: Vec::new(),
             highlight: None,
             assignment_role: None,
@@ -264,8 +275,6 @@ impl SlimeView {
             focus: cx.focus_handle(),
             key_capture: None,
             temporary_tweaks: HashMap::new(),
-            autobone_valid: false,
-            autobone_result: None,
             next_build_poll: std::time::Instant::now(),
             settings_sequence: 0,
             overlay: Default::default(),
@@ -357,6 +366,9 @@ impl SlimeView {
                 zoom: 0.8,
                 pan: [0., 25.],
             };
+        }
+        if self.navigation.page == Page::Proportions && page != Page::Proportions {
+            self.leave_autobone();
         }
         self.navigation.go(page);
         self.ui_error = None;
@@ -738,6 +750,7 @@ impl Render for SlimeView {
             // viewport must leave the page background visible between them.
             .when(current.in_settings(), |d| d.rounded_none().bg(cx.theme().background))
             .when(onboarding,|d|d.p_0().gap_0())
+            .when(current == Page::Proportions && self.form_value("proportions-view", "preview") == "automatic", |d| d.p_0())
             .when(matches!(current,Page::Home|Page::Tracker(_)) || matches!(current,Page::Settings(section) if slimevr_gpui::settings_layout::pane(section).is_some() || section==Section::Home || section==Section::Checklist), |d| d.p_0().bg(cx.theme().background))
             .overflow_y_scroll()
             .track_scroll(&scroll)
@@ -914,6 +927,11 @@ impl Render for SlimeView {
                     cx.notify();
                     return;
                 }
+                if event.keystroke.key == "escape" && this.autobone.failed {
+                    this.dismiss_autobone_error(cx);
+                    cx.stop_propagation();
+                    return;
+                }
                 if event.keystroke.key == "escape" && this.pending_height.is_some() {
                     this.pending_height = None;
                     cx.stop_propagation();
@@ -1009,6 +1027,11 @@ impl Render for SlimeView {
             .when(self.onboarding.dialog.is_some(), |root| {
                 root.child(self.onboarding_dialog(window, cx))
             })
+            .when(
+                self.autobone.failed
+                    && self.form_value("proportions-view", "preview") == "automatic",
+                |root| root.child(self.autobone_error(window, cx)),
+            )
             .when(self.confirmation.is_some(), |root| {
                 root.child(self.confirmation_dialog(window, cx))
             })

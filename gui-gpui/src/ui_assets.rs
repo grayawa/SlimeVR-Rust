@@ -5,6 +5,10 @@ pub struct Assets;
 impl AssetSource for Assets {
     fn load(&self, path: &str) -> Result<Option<Cow<'static, [u8]>>> {
         let bytes: Option<&'static [u8]> = match path {
+            "slime/autobone-motion.webp" => Some(include_bytes!("../assets/autobone-motion.webp")),
+            "slime/autobone-poster.webp" => Some(include_bytes!(
+                "../../gui/public/images/autobone-poster.webp"
+            )),
             "slime/slimes.webp" => Some(include_bytes!("../../gui/public/images/slimes.webp")),
             "slime/trackers/v1_2_slime.webp" => Some(include_bytes!(
                 "../../gui/public/images/trackers/v1_2_slime.webp"
@@ -113,7 +117,7 @@ use std::{
 };
 enum Illustration {
     Loading,
-    Ready(Arc<gpui_kit::RenderImage>),
+    Ready(Vec<Arc<gpui_kit::RenderImage>>),
     Failed(SharedString),
 }
 static IMAGES: OnceLock<Mutex<HashMap<String, Illustration>>> = OnceLock::new();
@@ -121,10 +125,41 @@ fn images() -> &'static Mutex<HashMap<String, Illustration>> {
     IMAGES.get_or_init(Default::default)
 }
 
-/// Decode off the UI thread and bound textures to their actual display needs.
-/// The original assets remain embedded; decoding/uploading their full-resolution
-/// versions (the mounting pose is 13 MP) wastes memory and delays navigation.
+pub fn image_ready(path: &str) -> bool {
+    matches!(images().lock().unwrap_or_else(|e| e.into_inner()).get(path), Some(Illustration::Ready(frames)) if !frames.is_empty())
+}
+
+/// Display the cached poster while the animation is decoded.
+pub fn image_frame_with_fallback(
+    path: &str,
+    frame: usize,
+    fallback: &str,
+    cx: &mut gpui_kit::App,
+) -> gpui_kit::Img {
+    let _ = image_frame(path, frame, cx);
+    let _ = image(fallback, cx);
+    let path = path.to_owned();
+    let fallback = fallback.to_owned();
+    gpui_kit::img(gpui_kit::ImageSource::Custom(Arc::new(move |_, _| {
+        let cache = images().lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(Illustration::Ready(frames)) = cache.get(&path) {
+            frames.get(frame % frames.len().max(1)).cloned().map(Ok)
+        } else if let Some(Illustration::Ready(frames)) = cache.get(&fallback) {
+            frames.first().cloned().map(Ok)
+        } else {
+            None
+        }
+    })))
+}
+
+/// Decode embedded illustrations on the background executor and cache display-sized textures.
+/// Animated demonstrations preserve their frame timing.
 pub fn image(path: &str, cx: &mut gpui_kit::App) -> gpui_kit::Img {
+    image_frame(path, 0, cx)
+}
+
+/// Select a cached frame by index, wrapping at the frame count.
+pub fn image_frame(path: &str, frame: usize, cx: &mut gpui_kit::App) -> gpui_kit::Img {
     let path = path.to_owned();
     let start = {
         let mut cache = images().lock().unwrap_or_else(|e| e.into_inner());
@@ -152,13 +187,34 @@ pub fn image(path: &str, cx: &mut gpui_kit::App) -> gpui_kit::Img {
             } else {
                 (720, 1000)
             };
-            let decoded = image::load_from_memory(&bytes)?;
-            let mut rgba = decoded.thumbnail(width, height).into_rgba8();
-            for pixel in rgba.pixels_mut() {
-                pixel.0.swap(0, 2);
+            let frames = if key == "slime/autobone-motion.webp" {
+                use image::AnimationDecoder as _;
+                image::codecs::webp::WebPDecoder::new(std::io::Cursor::new(bytes))?
+                    .into_frames()
+                    .collect_frames()?
+            } else {
+                let decoded = image::load_from_memory(&bytes)?;
+                vec![image::Frame::new(
+                    decoded.thumbnail(width, height).into_rgba8(),
+                )]
+            };
+            if key == "slime/autobone-motion.webp" {
+                slimevr_gpui::logging::write(
+                    slimevr_gpui::log_level::LogLevel::Debug,
+                    "illustrations",
+                    &format!("Decoded motion demonstration: {} frames", frames.len()),
+                );
             }
-            let image = Arc::new(gpui_kit::RenderImage::new([image::Frame::new(rgba)]));
-            let result: Result<Arc<gpui_kit::RenderImage>> = Ok(image);
+            let frames = frames
+                .into_iter()
+                .map(|mut frame| {
+                    for pixel in frame.buffer_mut().pixels_mut() {
+                        pixel.0.swap(0, 2);
+                    }
+                    Arc::new(gpui_kit::RenderImage::new([frame]))
+                })
+                .collect::<Vec<_>>();
+            let result: Result<Vec<Arc<gpui_kit::RenderImage>>> = Ok(frames);
             result
         });
         let key = path.clone();
@@ -186,7 +242,9 @@ pub fn image(path: &str, cx: &mut gpui_kit::App) -> gpui_kit::Img {
     gpui_kit::img(gpui_kit::ImageSource::Custom(Arc::new(move |_, _| {
         let cache = images().lock().unwrap_or_else(|e| e.into_inner());
         match cache.get(&path) {
-            Some(Illustration::Ready(image)) => Some(Ok(image.clone())),
+            Some(Illustration::Ready(images)) => {
+                images.get(frame % images.len().max(1)).cloned().map(Ok)
+            }
             Some(Illustration::Failed(error)) => {
                 Some(Err(gpui_kit::ImageCacheError::Asset(error.clone())))
             }

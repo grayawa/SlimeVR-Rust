@@ -71,8 +71,15 @@ impl SlimeView {
             } else {
                 0.0
             };
+            let autobone_step = self.autobone.step;
             match event.name.as_str() {
                 "ResetResponse" => {
+                    if event.value["status"] == 1
+                        && event.value["reset_type"].as_u64()
+                            == Some(ResetKind::Full.wire().0.into())
+                    {
+                        self.autobone.reset_completed(event.session, event.tx);
+                    }
                     if let Some((session, tx, next)) = self.mounting_wait
                         && session == event.session
                         && tx == event.tx
@@ -146,6 +153,11 @@ impl SlimeView {
                     }
                 }
                 "SkeletonConfigResponse" => {
+                    if self.snapshot.last_error.is_none()
+                        && self.autobone.applied(event.session, event.tx)
+                    {
+                        self.preference("lastUsedProportions", json!("autobone"), cx);
+                    }
                     if self.snapshot.last_error.is_none() {
                         for (key, value) in self.proportion_pending.drain() {
                             if self.form_values.get(&key) == Some(&value) {
@@ -154,23 +166,15 @@ impl SlimeView {
                         }
                     }
                 }
-                "AutoBoneEpochResponse" => {
-                    self.autobone_result = Some((*event.value).clone());
-                }
+                "AutoBoneEpochResponse" => self.autobone.epoch(&event.value),
                 "AutoBoneProcessStatusResponse" => {
-                    if event.value["process_type"] == 3 && event.value["completed"] == true {
-                        self.autobone_valid = event.value["success"] == true;
-                    }
-                    if self.autobone_auto
-                        && event.value["process_type"] == 1
-                        && event.value["completed"] == true
+                    if self.autobone.status(&event.value)
+                        && let Err(error) = self
+                            .client
+                            .rpc("AutoBoneProcessRequest", json!({"process_type":3}))
                     {
-                        self.autobone_auto = false;
-                        if event.value["success"] == true {
-                            let _ = self
-                                .client
-                                .rpc("AutoBoneProcessRequest", json!({"process_type":3}));
-                        }
+                        self.autobone.fail();
+                        self.ui_error = Some(error);
                     }
                 }
                 "MagToggleResponse" => {
@@ -226,6 +230,9 @@ impl SlimeView {
                     }
                 }
                 _ => (),
+            }
+            if self.autobone.step != autobone_step {
+                self.autobone_scroll_to_top();
             }
         }
     }
@@ -674,158 +681,6 @@ impl SlimeView {
                             })),
                     ),
             );
-        }
-        page.into_any_element()
-    }
-    pub(super) fn calibration(&self, cx: &mut Context<Self>) -> AnyElement {
-        let status = self.read("AutoBoneProcessStatusResponse");
-        let epoch = self.autobone_result.clone().unwrap_or(Value::Null);
-        let height = self.read("UserHeightRecordingStatusResponse");
-        let busy = self.autobone_auto || (status["completed"] == false && !status.is_null());
-        let can_apply = self.autobone_valid && !busy;
-        let mut page = div()
-            .v_flex()
-            .gap_3()
-            .mt_4()
-            .child(div().font_bold().text_lg().child("AutoBone"))
-            .child(self.text("onboarding-automatic_proportions-recording-steps"))
-            .child(
-                div()
-                    .h_flex()
-                    .gap_3()
-                    .flex_wrap()
-                    .child(
-                        Button::new("autobone-record")
-                            .label(self.text("native-record"))
-                            .disabled(busy || self.snapshot.connection != Connection::Connected)
-                            .on_click(cx.listener(|this, _, _, cx| {
-                                this.autobone_auto = true;
-                                this.autobone_valid = false;
-                                this.autobone_result = None;
-                                this.rpc("AutoBoneProcessRequest", json!({"process_type":1}), cx);
-                            })),
-                    )
-                    .child(self.rpc_button(
-                        "autobone-stop",
-                        "native-stop",
-                        "AutoBoneStopRecordingRequest",
-                        json!({}),
-                        cx,
-                    ))
-                    .child(
-                        Button::new("autobone-cancel")
-                            .label(self.text("native-cancel"))
-                            .on_click(cx.listener(|this, _, _, cx| {
-                                this.autobone_auto = false;
-                                this.rpc("AutoBoneCancelRecordingRequest", json!({}), cx);
-                            })),
-                    )
-                    .child(self.rpc_button(
-                        "autobone-process",
-                        "native-process",
-                        "AutoBoneProcessRequest",
-                        json!({"process_type":3}),
-                        cx,
-                    ))
-                    .child(self.rpc_button(
-                        "autobone-save",
-                        "native-autobone-save",
-                        "AutoBoneProcessRequest",
-                        json!({"process_type":2}),
-                        cx,
-                    ))
-                    .child(
-                        Button::new("autobone-apply")
-                            .label(self.text("native-autobone-apply"))
-                            .primary()
-                            .disabled(!can_apply)
-                            .on_click(cx.listener(|this, _, _, cx| {
-                                this.batch(
-                                    vec![
-                                        ("AutoBoneApplyRequest".into(), json!({})),
-                                        ("SkeletonConfigRequest".into(), json!({})),
-                                    ],
-                                    cx,
-                                );
-                            })),
-                    ),
-            );
-        if !status.is_null() {
-            page = page.child(format!(
-                "{} / {} · ETA {}s · {}",
-                status["current"],
-                status["total"],
-                status["eta"],
-                self.text(if status["completed"] == true {
-                    if status["success"] == true {
-                        "native-ok"
-                    } else {
-                        "native-warning"
-                    }
-                } else {
-                    "native-processing"
-                })
-            ));
-        }
-        if !epoch.is_null() {
-            page = page.child(format!(
-                "{} / {} · {:.6}",
-                epoch["current_epoch"],
-                epoch["total_epochs"],
-                epoch["epoch_error"].as_f64().unwrap_or(0.0)
-            ));
-            if let Some(parts) = epoch["adjusted_skeleton_parts"].as_array() {
-                for p in parts {
-                    let name = rpc_generated::enum_choices("SkeletonBone")
-                        .iter()
-                        .find(|(_, v)| Some(*v) == p["bone"].as_u64())
-                        .map(|(n, _)| *n)
-                        .unwrap_or("NONE");
-                    page = page.child(format!(
-                        "{}: {:.1} cm",
-                        self.text(&format!("skeleton_bone-{name}")),
-                        p["value"].as_f64().unwrap_or(0.0) * 100.0
-                    ));
-                }
-            }
-        }
-        page = page
-            .child(
-                div()
-                    .mt_3()
-                    .font_bold()
-                    .child(self.text("native-height-calibration")),
-            )
-            .child(
-                div()
-                    .h_flex()
-                    .gap_3()
-                    .child(self.rpc_button(
-                        "height-start",
-                        "native-height-calibration",
-                        "StartUserHeightCalibration",
-                        json!({}),
-                        cx,
-                    ))
-                    .child(self.rpc_button(
-                        "height-cancel",
-                        "native-height-cancel",
-                        "CancelUserHeightCalibration",
-                        json!({}),
-                        cx,
-                    )),
-            );
-        if !height.is_null() {
-            let name = rpc_generated::enum_choices("UserHeightCalibrationStatus")
-                .iter()
-                .find(|(_, v)| Some(*v) == height["status"].as_u64())
-                .map(|(n, _)| *n)
-                .unwrap_or("NONE");
-            page = page.child(format!(
-                "{} · {:.1} cm",
-                self.text(&format!("onboarding-user_height-calibration-{name}")),
-                height["hmdHeight"].as_f64().unwrap_or(0.0) * 100.0
-            ));
         }
         page.into_any_element()
     }

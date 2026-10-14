@@ -7,6 +7,7 @@ pub mod protocol;
 #[path = "../../shared/log_level.rs"]
 pub mod log_level;
 
+pub mod autobone;
 pub mod avatar;
 pub mod desktop;
 pub mod exit_warning;

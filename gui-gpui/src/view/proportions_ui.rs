@@ -306,15 +306,20 @@ impl SlimeView {
                                 })),
                         )
                         .child(
-                            Button::new("proportions-full-reset")
-                                .label(self.text("reset-full"))
-                                .disabled(
-                                    self.snapshot.connection != Connection::Connected
-                                        || self.snapshot.reset.as_ref().is_some_and(|r| !r.done),
-                                )
-                                .on_click(cx.listener(|this, _, _, cx| {
-                                    this.send(Command::Reset(ResetKind::Full), cx)
-                                })),
+                            self.reset_button(
+                                "proportions-full-reset",
+                                ResetKind::Full,
+                                &[],
+                                false,
+                                cx,
+                            )
+                            .disabled(
+                                self.snapshot.connection != Connection::Connected
+                                    || self.snapshot.reset.as_ref().is_some_and(|r| !r.done),
+                            )
+                            .on_click(cx.listener(|this, _, _, cx| {
+                                this.send(Command::Reset(ResetKind::Full), cx)
+                            })),
                         ),
                 )
             })

@@ -106,13 +106,14 @@ pub enum Command {
     FeedConfig(u16, u16, bool),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ResetProgress {
     pub tx: u32,
     pub kind: u8,
     pub done: bool,
     pub progress_ms: i32,
     pub duration_ms: i32,
+    pub body_parts: Vec<u8>,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
@@ -547,6 +548,10 @@ pub fn decode_verified(bundle: sx::MessageBundle) -> Result<Vec<Update>, String>
                     done: reset.status() == rpc::ResetStatus::FINISHED,
                     progress_ms: reset.progress(),
                     duration_ms: reset.duration(),
+                    body_parts: reset
+                        .body_parts()
+                        .map(|parts| parts.iter().map(|p| p.0).collect())
+                        .unwrap_or_default(),
                 }));
             } else if let Some(pause) = header.message_as_tracking_pause_state_response() {
                 updates.push(Update::Paused(pause.trackingPaused()));

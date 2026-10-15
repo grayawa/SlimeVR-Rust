@@ -9,6 +9,17 @@ pub(super) enum HeightAction {
 
 impl SlimeView {
     pub(super) fn open_proportions(&mut self, view: &str, cx: &mut Context<Self>) {
+        if self.form_value("proportions-view", "preview") == "automatic" && view != "automatic" {
+            self.leave_autobone();
+        }
+        if view == "manual" {
+            let _ = crate::ui_assets::image("slime/assignment-pose.webp", cx);
+            let _ = crate::ui_assets::image("slime/autobone-motion.webp", cx);
+        }
+        if view == "automatic" {
+            self.autobone = Default::default();
+        }
+        self.autobone_scroll_to_top();
         self.form_values
             .insert("proportions-view".into(), view.into());
         cx.notify();
@@ -111,23 +122,7 @@ impl SlimeView {
                 .label(self.text("onboarding-manual_proportions-back-scaled"))
                 .on_click(cx.listener(|this, _, _, cx| this.open_proportions("preview", cx)));
             if view == "automatic" {
-                return div()
-                    .v_flex()
-                    .gap_4()
-                    .child(div().h_flex().child(back))
-                    .child(
-                        div()
-                            .text_2xl()
-                            .font_bold()
-                            .child(self.text("onboarding-automatic_proportions-title")),
-                    )
-                    .child(self.paragraph(
-                        "onboarding-automatic_proportions-description",
-                        width.min(768.),
-                        window,
-                    ))
-                    .child(self.calibration(cx))
-                    .into_any_element();
+                return self.automatic_proportions(width, height, window, cx);
             }
             let manual = self.proportions(window, cx);
             return div()

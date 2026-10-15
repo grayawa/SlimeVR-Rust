@@ -3,6 +3,7 @@ pub mod host;
 pub mod i18n;
 pub mod navigation;
 pub mod protocol;
+pub mod reset_feedback;
 
 #[path = "../../shared/log_level.rs"]
 pub mod log_level;

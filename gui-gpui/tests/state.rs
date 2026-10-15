@@ -85,6 +85,32 @@ fn reset_keeps_backend_delay_and_carries_transaction_id() {
 }
 
 #[test]
+fn mounting_feedback_preserves_body_groups_from_solarxr_response() {
+    use solarxr_protocol::datatypes::BodyPart;
+    let parts = vec![BodyPart::LEFT_FOOT.0, BodyPart::RIGHT_FOOT.0];
+    let bytes = slimevr_gpui::rpc_generated::encode_rpc(
+        "ResetResponse",
+        &serde_json::json!({
+            "reset_type": 2, "status": 0, "body_parts": parts, "progress": 1000, "duration": 3000,
+        }),
+        234,
+    )
+    .unwrap();
+    let updates = protocol::decode(&bytes).unwrap();
+    let Update::Reset(reset) = &updates[0] else {
+        panic!("Expected reset feedback");
+    };
+    assert_eq!(reset.body_parts, parts);
+    assert_eq!(reset.tx, 234);
+    assert_eq!(reset.kind, 2);
+    let now = std::time::Instant::now();
+    let mut feedback = slimevr_gpui::reset_feedback::Feedback::default();
+    feedback.observe(1, Some(reset), now);
+    assert!(feedback.frame(2, &parts, now).counting);
+    assert!(!feedback.frame(2, &[], now).counting);
+}
+
+#[test]
 fn malformed_binary_is_rejected_without_unsafe_access() {
     for bytes in [vec![], vec![4, 0, 0, 0], vec![255; 32]] {
         assert!(protocol::decode(&bytes).is_err());

@@ -221,17 +221,21 @@ impl SlimeView {
             self.mounting_wait.is_some() || self.snapshot.reset.as_ref().is_some_and(|r| !r.done);
         let permitted =
             kind != ResetKind::Mounting || self.snapshot.feed.as_ref().is_some_and(|f| f.can_mount);
-        Button::new(format!("mounting-wizard-reset-{kind:?}"))
-            .primary()
-            .label(self.text(kind.label()))
-            .disabled(busy || !permitted || self.snapshot.connection != Connection::Connected)
-            .on_click(cx.listener(move |this, _, _, cx| {
-                match this.client.send(Command::Reset(kind)) {
-                    Ok(tx) => this.mounting_wait = Some((this.snapshot.session, tx, next)),
-                    Err(e) => this.ui_error = Some(e),
-                };
-                cx.notify();
-            }))
+        self.reset_button(
+            format!("mounting-wizard-reset-{kind:?}"),
+            kind,
+            &[],
+            false,
+            cx,
+        )
+        .disabled(busy || !permitted || self.snapshot.connection != Connection::Connected)
+        .on_click(cx.listener(move |this, _, _, cx| {
+            match this.client.send(Command::Reset(kind)) {
+                Ok(tx) => this.mounting_wait = Some((this.snapshot.session, tx, next)),
+                Err(e) => this.ui_error = Some(e),
+            };
+            cx.notify();
+        }))
     }
     fn automatic_mounting(
         &self,

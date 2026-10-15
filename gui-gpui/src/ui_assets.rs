@@ -56,6 +56,8 @@ impl AssetSource for Assets {
             "slime/Ruler.svg" => Some(include_bytes!("../assets/icons/Ruler.svg")),
             "slime/Shoulder.svg" => Some(include_bytes!("../assets/icons/Shoulder.svg")),
             "slime/Ski.svg" => Some(include_bytes!("../assets/icons/Ski.svg")),
+            "slime/FullReset.svg" => Some(include_bytes!("../assets/icons/FullReset.svg")),
+            "slime/YawReset.svg" => Some(include_bytes!("../assets/icons/YawReset.svg")),
             "slime/SlimeVR.svg" => Some(include_bytes!("../assets/icons/SlimeVR.svg")),
             "slime/UpperArm.svg" => Some(include_bytes!("../assets/icons/UpperArm.svg")),
             "slime/UpperChest.svg" => Some(include_bytes!("../assets/icons/UpperChest.svg")),

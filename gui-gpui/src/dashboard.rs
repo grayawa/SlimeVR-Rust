@@ -105,6 +105,7 @@ mod tests {
             done: false,
             progress_ms: 0,
             duration_ms: 3000,
+            body_parts: vec![],
         });
         assert!(!reset_allowed(&s, ResetKind::Full));
         s.reset.as_mut().unwrap().done = true;

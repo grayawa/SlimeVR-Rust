@@ -19,6 +19,72 @@ fn service() -> (Service, PoseEngine, Receiver) {
 }
 
 #[tokio::test]
+async fn assignment_rpc_preserves_other_devices_assigned_to_the_same_body() {
+    use solarxr_protocol::{datatypes as dt, rpc};
+    let (mut service, mut engine, _) = service();
+    let mut receiver = Receiver::new(crate::receiver::ReceiverConfig {
+        accept_new_devices: true,
+        ..Default::default()
+    })
+    .unwrap();
+    let mut handshake: Vec<u8> = [9u32, 13, 1, 0, 0, 0, 22]
+        .into_iter()
+        .flat_map(u32::to_be_bytes)
+        .collect();
+    handshake.extend(b"\x05test\0");
+    handshake.extend([2, 0, 0, 0, 0, 1]);
+    let from = "127.0.0.1:6969".parse().unwrap();
+    receiver.receive(from, &crate::protocol::header(3, &handshake), 0);
+    receiver.receive(from, &crate::protocol::header(15, &[0, 1, 13]), 0);
+    service
+        .config
+        .device_ids
+        .insert("02:00:00:00:00:01".into(), 1);
+    for (at, body, count) in [
+        (1, dt::BodyPart::CHEST, 2),
+        (2, dt::BodyPart::CHEST, 2),
+        (3, dt::BodyPart::NONE, 1),
+    ] {
+        let bytes = protocol::rpc_frame(rpc::RpcMessage::AssignTrackerRequest, at, |f| {
+            let device = dt::DeviceId::new(1);
+            let tracker = dt::TrackerId::create(
+                f,
+                &dt::TrackerIdArgs {
+                    device_id: Some(&device),
+                    tracker_num: 0,
+                },
+            );
+            rpc::AssignTrackerRequest::create(
+                f,
+                &rpc::AssignTrackerRequestArgs {
+                    tracker_id: Some(tracker),
+                    body_position: body,
+                    ..Default::default()
+                },
+            )
+            .as_union_value()
+        });
+        service.handle(
+            tokio_tungstenite::tungstenite::Message::Binary(bytes.into()),
+            &mut receiver,
+            &mut engine,
+            at as u64,
+        );
+        assert_eq!(service.config.pose.bindings.len(), count);
+        assert!(service
+            .config
+            .pose
+            .bindings
+            .iter()
+            .any(|b| b.device_key == "test" && b.body == B::Chest));
+        assert_eq!(
+            engine.export_config().bindings,
+            service.config.pose.bindings
+        );
+    }
+}
+
+#[tokio::test]
 async fn configuration_changes_notify_once_and_disk_failure_keeps_live_settings() {
     let (mut service, mut engine, receiver) = service();
     assert!(service.take_hotkeys_update().unwrap().is_none());

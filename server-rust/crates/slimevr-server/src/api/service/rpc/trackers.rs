@@ -132,7 +132,6 @@ impl Service {
                     .retain(|b| b.device_key != key || b.sensor_id != sensor);
                 if r.body_position() != solarxr_protocol::datatypes::BodyPart::NONE {
                     let body = protocol::from_body(r.body_position())?;
-                    c.pose.bindings.retain(|binding| binding.body != body);
                     let mounting = r
                         .mounting_orientation()
                         .map(protocol::from_quat)
@@ -160,6 +159,9 @@ impl Service {
                     if let Some(binding) = &previous {
                         c.pose.saved_mounting_resets.remove(&binding.body);
                     }
+                    c.pose
+                        .tracker_mounting_resets
+                        .insert(format!("{key}/{sensor}"), Q::IDENTITY);
                     crate::config::put(
                         &mut c.yaml,
                         &["resetsConfig", "lastMountingMethod"],

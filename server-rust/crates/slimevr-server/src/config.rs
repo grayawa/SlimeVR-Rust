@@ -114,6 +114,7 @@ const EXTRAS: Fields = &[
     ("flexResistance", "flex_resistance"),
     ("flexAngles", "flex_angles"),
     ("savedMountingResets", "saved_mounting_resets"),
+    ("trackerMountingResets", "tracker_mounting_resets"),
 ];
 
 fn error(message: impl Into<String>) -> io::Error {
@@ -469,11 +470,10 @@ pub fn from_yaml(root: Value) -> io::Result<FrontendConfig> {
                 body,
                 mounting,
             });
+            let reset = read(tracker, &["mountingResetOrientation"], Q::IDENTITY)?;
+            c.pose.tracker_mounting_resets.insert(id, reset);
             if !tracker["mountingResetOrientation"].is_null() {
-                c.pose.saved_mounting_resets.insert(
-                    body,
-                    read(tracker, &["mountingResetOrientation"], Q::IDENTITY)?,
-                );
+                c.pose.saved_mounting_resets.entry(body).or_insert(reset);
             }
         }
     }
@@ -714,7 +714,11 @@ pub fn to_yaml(c: &FrontendConfig) -> io::Result<Value> {
                 binding.mounting,
             )?;
             // Keep saved orientation when saveMountingReset is off, just like Java.
-            if let Some(q) = p.saved_mounting_resets.get(&binding.body) {
+            if let Some(q) = p
+                .tracker_mounting_resets
+                .get(&id)
+                .or_else(|| p.saved_mounting_resets.get(&binding.body))
+            {
                 put(
                     &mut root,
                     &["trackers", &name, "mountingResetOrientation"],
@@ -759,6 +763,9 @@ pub fn to_yaml(c: &FrontendConfig) -> io::Result<Value> {
 }
 
 pub fn forget_device(c: &mut FrontendConfig, mac: &str) {
+    c.pose
+        .tracker_mounting_resets
+        .retain(|key, _| key.rsplit_once('/').is_none_or(|(device, _)| device != mac));
     if let Some(trackers) = c.yaml["trackers"].as_mapping_mut() {
         trackers.retain(|key, _| {
             key.as_str()

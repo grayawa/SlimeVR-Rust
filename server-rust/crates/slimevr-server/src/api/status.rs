@@ -119,7 +119,7 @@ impl Store {
             if let Some(id) = c.device_ids.get(&t.device_key) {
                 if t.status == SensorStatus::Error {
                     errors.push((*id, t.sensor_id));
-                } else if !t.calibration.full_reset_done {
+                } else if t.selected && !t.calibration.full_reset_done {
                     reset.push((*id, t.sensor_id));
                 }
             }

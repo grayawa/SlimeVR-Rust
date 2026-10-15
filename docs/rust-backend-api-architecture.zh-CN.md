@@ -146,6 +146,8 @@ bundle 都保留为完整有序消息。控制消息、重复 / 乱序序号及�
 [UDPProtocolParser](https://github.com/SlimeVR/SlimeVR-Server/blob/83941fd38e91cc91ca6b360deab5c2ae986dd1b6/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPProtocolParser.kt)
 在收到同一设备的数据包时更新其所有传感器的 heartbeat；heartbeat 表示传输活跃。`pose_age_ms` / `pose_stale` 按单个传感器的旋转时间计算诊断，解算可用性、设备连接和校准由各自状态规则决定。
 
+同部位存在多个绑定时，`TrackerPose.selected` 表示该传感器为当前解算帧提供该部位的输入。骨架、自动对齐、加速度与 AutoBone 录制共用所选来源，完整重置与安装复位作用于选中的传感器。重置提示和校准检查跟随选中的设备；诊断快照同时保留所有绑定传感器的读数与状态。选择规则见 [配置兼容说明](rust-config-compatibility.zh-CN.md)。
+
 ## 时间与配置更新
 
 UDP 使用同一起始 Instant 的两个时刻：socket 收到包后立即捕获接收时刻，

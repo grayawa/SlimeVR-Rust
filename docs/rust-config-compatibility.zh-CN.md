@@ -50,6 +50,8 @@ Tauri 使用其原有 `AppPaths.server` 服务目录中的 `vrconfig.yml`。两�
 
 UDP 配置键使用原版形式 `udp://AA:BB:CC:DD:EE:FF/0`，末尾数字为 sensor ID；身体部位使用 `designation: body:chest` 等原版值。MAC 统一为大写，已有小写配置键按同一 MAC 复用。缺少安装方向时采用原版各身体部位的默认安装方向。
 
+同一身体部位可保留多台 tracker 的分配。解算优先选用状态为 `Ok` / `Busy` 的设备；同优先级按配置绑定顺序选择。可用设备均超时时，使用第一台超时 IMU 的缓存姿态。每台设备的 sensor ID、名称、安装方向和保存的安装复位分别保留，姿态解算、自动对齐和 AutoBone 录制使用同一套设备选择规则。
+
 SteamVR 头显/控制器来源由驱动桥自动注册，共享设置取自 `bridges.steamvr`，详见 [桥接说明](rust-steamvr-bridge.zh-CN.md)。HID、OSC / VRChat / VMC 与通用 SteamVR tracker 已接入；绑定和自定义名称使用原 trackers 条目，来源映射补充在 rust 节点。OSC、VRM、HID、快捷键、overlay 与 VRChat 配置均可通过原 RPC 修改并保存。drift compensation 字段按参考版本的关闭状态保存。
 
 Rust 所需的稳定设备 ID、非 MAC 场景绑定及部分算法元数据放在同一文件的 `rust` 扩展节点。原版标准字段仍为标准设置的来源。Java 可忽略未知扩展节点，但 Java 再次保存文件时可能移除该节点；往返保存后以文件实际保留的 `rust` 节点恢复独有状态。
@@ -64,7 +66,7 @@ Rust 所需的稳定设备 ID、非 MAC 场景绑定及部分算法元数据放�
 
 `PoseConfig` JSON 用于场景与库接口，诊断 JSON 用于机器输出，JSONL 用于事件 journal。日常后端配置使用 YAML。`solve`、`solve-recording` 与 `autobone --config` 也可使用原版 YAML；AutoBone 的 YAML 输入默认从 `autoBone` 读取训练参数，输出保留其他节点，显式 `--settings` 可覆盖训练参数。
 
-配置范围仍受当前 Rust 核心校验约束，例如身体部位绑定要求唯一、有效眼高范围为 1.2–1.936 m。同一文件由一个后端管理，当前保存基于启动时加载并由该进程更新的树。切换后端时先退出当前服务，再加载配置。
+核心校验要求每个设备与 sensor ID 组合具有唯一绑定，有效眼高范围为 1.2–1.936 m。同一文件由一个后端管理，保存基于启动时加载并由该进程更新的树。切换后端时先退出当前服务，再加载配置。
 
 ## 验证
 

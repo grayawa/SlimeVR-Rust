@@ -14,6 +14,47 @@ fn load(text: &str) -> FrontendConfig {
 }
 
 #[test]
+fn duplicate_body_assignments_preserve_all_devices_and_individual_mounting_on_save() {
+    let original = "version: '15'\ntrackers:\n  udp://02:00:00:00:00:01/0:\n    designation: body:hip\n    mountingResetOrientation: {w: 0.70710677, x: 0.70710677, y: 0, z: 0}\n  udp://02:00:00:00:00:02/1:\n    designation: body:hip\n    mountingResetOrientation: {w: 0.70710677, x: 0, y: 0, z: 0.70710677}\n  udp://02:00:00:00:00:03/0:\n    designation: body:hip\n";
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("vrconfig.yml");
+    fs::write(&path, original).unwrap();
+    let c = FrontendConfig::load(&path).unwrap();
+    assert_eq!(c.pose.bindings.len(), 3);
+    let mut engine = slimevr_core::pose::PoseEngine::new(c.pose.clone()).unwrap();
+    let pose = engine.tick(0).unwrap();
+    for tracker in &pose.trackers {
+        let expected = match tracker.device_key.as_str() {
+            "02:00:00:00:00:01" => Q::rotation_x(std::f32::consts::FRAC_PI_2),
+            "02:00:00:00:00:02" => Q::rotation_z(std::f32::consts::FRAC_PI_2),
+            _ => Q::IDENTITY,
+        };
+        assert!(tracker.calibration.mount_rot_fix.angle_to_r(expected) < 1e-5);
+    }
+    c.save(Some(&path)).unwrap();
+    let reloaded = FrontendConfig::load(&path).unwrap();
+    assert_eq!(reloaded.pose.bindings, c.pose.bindings);
+    assert_eq!(
+        reloaded.pose.tracker_mounting_resets,
+        c.pose.tracker_mounting_resets
+    );
+    assert_eq!(
+        fs::read_to_string(path.with_extension("yml.bak")).unwrap(),
+        original
+    );
+    engine.clear_mounting(1).unwrap();
+    let mut cleared = c;
+    cleared.pose = engine.export_config();
+    cleared.save(Some(&path)).unwrap();
+    assert!(FrontendConfig::load(&path)
+        .unwrap()
+        .pose
+        .tracker_mounting_resets
+        .values()
+        .all(|q| *q == Q::IDENTITY));
+}
+
+#[test]
 fn native_velocity_setting_defaults_validates_and_roundtrips_without_losing_extensions() {
     assert!(!load("version: '15'\n").pose.send_derived_velocity);
     let dir = tempfile::tempdir().unwrap();

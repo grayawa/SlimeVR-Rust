@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- 兼容同一身体部位分配多台 tracker 的配置，按设备状态与绑定顺序选择解算来源，并分别保存各传感器的安装复位。[Issue #23](https://github.com/grayawa/SlimeVR-Rust/issues/23)
 - GPUI AutoBone 自动测量使用原版七步引导、姿势与动作示范、录制进度、结果表和失败重试；重置与应用完成按后端响应确认。
 
 - 将组件接口集中到 crate README，前端启动与通信分别归入宿主 / API 指南，发布流程归入贡献指南；精简重复的功能清单和日志指标说明。

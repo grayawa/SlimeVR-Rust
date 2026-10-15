@@ -42,6 +42,124 @@ fn sample(at: u64, q: Q, session: u64) -> TrackerSample {
 }
 
 #[test]
+fn duplicate_body_assignments_select_live_sources_then_cached_imu_in_configuration_order() {
+    let mut c = config();
+    c.bindings[0].device_key = "z-first".into();
+    let mut second = c.bindings[0].clone();
+    second.device_key = "a-second".into();
+    c.bindings.push(second);
+    let mut engine = PoseEngine::new(c).unwrap();
+    engine
+        .set_head(
+            0,
+            HeadPose {
+                rotation: Q::IDENTITY,
+                position: Some(V::new(0.0, 1.7, 0.0)),
+            },
+        )
+        .unwrap();
+    let first_q = Q::rotation_x(0.3);
+    let second_q = Q::rotation_z(0.7);
+    for (at, key, q) in [(1, "z-first", first_q), (2, "a-second", second_q)] {
+        let mut s = sample(at, q, 1);
+        s.device_key = key.into();
+        engine.sample(&s).unwrap();
+    }
+    for (at, key, status, expected) in [
+        (3, "z-first", SensorStatus::Ok, first_q),
+        (4, "z-first", SensorStatus::TimedOut, second_q),
+        (5, "a-second", SensorStatus::TimedOut, first_q),
+        (6, "z-first", SensorStatus::Disconnected, second_q),
+        (7, "a-second", SensorStatus::Busy, second_q),
+        (8, "z-first", SensorStatus::Ok, first_q),
+        (9, "z-first", SensorStatus::Error, second_q),
+    ] {
+        engine
+            .ingest(&InputEvent {
+                at_ms: at,
+                kind: EventKind::SensorState {
+                    device_key: key.into(),
+                    sensor_id: 0,
+                    status,
+                },
+            })
+            .unwrap();
+        let pose = engine.tick(at).unwrap();
+        assert_eq!(pose.trackers.len(), 2);
+        assert_eq!(pose.trackers.iter().filter(|p| p.selected).count(), 1);
+        assert!(
+            pose.skeleton.bones["chest"].rotation.angle_to_r(expected) < 1e-5,
+            "at {at}"
+        );
+        assert!(
+            engine.motion_frame().unwrap().rotations[&BodyPosition::Chest].angle_to_r(expected)
+                < 1e-5,
+            "recording at {at}"
+        );
+    }
+    engine.reset(10, ResetKind::Full).unwrap();
+    let pose = engine.tick(10).unwrap();
+    assert!(
+        pose.trackers
+            .iter()
+            .find(|p| p.device_key == "a-second")
+            .unwrap()
+            .calibration
+            .full_reset_done
+    );
+    assert!(
+        !pose
+            .trackers
+            .iter()
+            .find(|p| p.device_key == "z-first")
+            .unwrap()
+            .calibration
+            .full_reset_done
+    );
+}
+
+#[test]
+fn duplicate_positioned_heads_keep_each_sources_position_and_clear_unavailable_anchor() {
+    let mut c = config();
+    c.bindings[0].body = BodyPosition::Head;
+    let mut second = c.bindings[0].clone();
+    second.device_key = "second".into();
+    c.bindings.push(second);
+    let mut engine = PoseEngine::new(c).unwrap();
+    for (at, key, x) in [(1, "device", 1.0), (2, "second", 2.0)] {
+        let mut s = sample(at, Q::IDENTITY, 1);
+        s.device_key = key.into();
+        s.position = Some(V::new(x, 1.7, 0.0));
+        engine.sample(&s).unwrap();
+    }
+    engine.tick(2).unwrap();
+    assert_eq!(engine.calibrated_head().unwrap().position.unwrap().x, 1.0);
+    for (at, key) in [(3, "device"), (4, "second")] {
+        engine
+            .ingest(&InputEvent {
+                at_ms: at,
+                kind: EventKind::SensorState {
+                    device_key: key.into(),
+                    sensor_id: 0,
+                    status: SensorStatus::Disconnected,
+                },
+            })
+            .unwrap();
+        engine.tick(at).unwrap();
+        if at == 3 {
+            assert_eq!(engine.calibrated_head().unwrap().position.unwrap().x, 2.0);
+            assert_eq!(
+                engine.motion_frame().unwrap().positions[&BodyPosition::Head].x,
+                2.0
+            );
+        } else {
+            assert!(engine.calibrated_head().is_none());
+            assert!(!engine.snapshot().skeleton.world_anchor_present);
+        }
+    }
+}
+
+#[test]
 fn delayed_udp_arrival_changes_diagnostics_without_rewinding_filter_or_state_clock() {
     let mut engine = PoseEngine::new(config()).unwrap();
     engine.tick(190).unwrap();
@@ -461,6 +579,33 @@ fn mounting_reset_is_exported_and_restored_after_device_restart() {
         fix
     );
     assert!(!engine.snapshot().trackers[0].calibration.full_reset_done);
+}
+
+#[test]
+fn unrelated_configuration_keeps_session_mounting_when_saved_correction_is_unchanged() {
+    let mut c = config();
+    c.tracker_mounting_resets
+        .insert("device/0".into(), Q::IDENTITY);
+    let mut engine = PoseEngine::new(c).unwrap();
+    engine.sample(&sample(0, Q::IDENTITY, 1)).unwrap();
+    engine.reset(0, ResetKind::Full).unwrap();
+    engine
+        .sample(&sample(1, Q::rotation_x(0.6) * Q::rotation_z(0.3), 1))
+        .unwrap();
+    engine.reset(1, ResetKind::Mounting).unwrap();
+    let fix = engine.tick(1).unwrap().trackers[0]
+        .calibration
+        .mount_rot_fix;
+    assert!(fix.angle_to_r(Q::IDENTITY) > 0.1);
+    let mut changed = engine.export_config();
+    changed.filter.amount = 0.25;
+    engine.configure(2, changed).unwrap();
+    assert_eq!(
+        engine.tick(2).unwrap().trackers[0]
+            .calibration
+            .mount_rot_fix,
+        fix
+    );
 }
 
 #[test]

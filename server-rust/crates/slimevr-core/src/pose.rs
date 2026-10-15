@@ -43,6 +43,8 @@ pub struct PoseConfig {
     pub flex_angles: BTreeSet<BodyPosition>,
     pub save_mounting_reset: bool,
     pub saved_mounting_resets: BTreeMap<BodyPosition, Q>,
+    /// Saved mounting corrections keyed by device key and sensor ID (`device/sensor`).
+    pub tracker_mounting_resets: BTreeMap<String, Q>,
     pub hmd_height: Option<f32>,
     pub send_derived_velocity: bool,
     pub reset_hmd_pitch: bool,
@@ -68,6 +70,7 @@ impl Default for PoseConfig {
             flex_angles: BTreeSet::new(),
             save_mounting_reset: false,
             saved_mounting_resets: BTreeMap::new(),
+            tracker_mounting_resets: BTreeMap::new(),
             hmd_height: None,
             send_derived_velocity: false,
             reset_hmd_pitch: false,
@@ -76,6 +79,12 @@ impl Default for PoseConfig {
     }
 }
 impl PoseConfig {
+    fn mounting_reset(&self, binding: &TrackerBinding) -> Option<&Q> {
+        self.tracker_mounting_resets
+            .get(&format!("{}/{}", binding.device_key, binding.sensor_id))
+            .or_else(|| self.saved_mounting_resets.get(&binding.body))
+    }
+
     pub fn validate(&self) -> Result<(), String> {
         if self
             .hmd_height
@@ -86,6 +95,7 @@ impl PoseConfig {
         if self
             .saved_mounting_resets
             .values()
+            .chain(self.tracker_mounting_resets.values())
             .any(|q| !q.is_rotation())
         {
             return Err("invalid saved mounting reset".into());
@@ -118,13 +128,15 @@ impl PoseConfig {
             return Err("reset delays must be <=60000 ms".into());
         }
         let mut identities = BTreeSet::new();
-        let mut bodies = BTreeSet::new();
         for b in &self.bindings {
             if b.device_key.is_empty() || b.device_key.len() > 128 || !b.mounting.is_rotation() {
                 return Err("invalid tracker identity or mounting quaternion".into());
             }
-            if !identities.insert((&b.device_key, b.sensor_id)) || !bodies.insert(b.body) {
-                return Err("duplicate tracker identity or body assignment".into());
+            if !identities.insert((&b.device_key, b.sensor_id)) {
+                return Err(format!(
+                    "duplicate tracker identity {}/{} ({:?})",
+                    b.device_key, b.sensor_id, b.body
+                ));
             }
         }
         Ok(())
@@ -140,6 +152,8 @@ pub struct TrackerPose {
     pub position: Option<V>,
     pub capabilities: crate::TrackerCapabilities,
     pub status: SensorStatus,
+    /// This sensor supplies the body's input for this solved frame.
+    pub selected: bool,
     pub raw: Option<Timed<Q>>,
     pub calibrated: Option<Q>,
     pub filtered: Option<Q>,
@@ -193,6 +207,7 @@ struct TrackerState {
     raw: Option<Timed<Q>>,
     socket_received_at_ms: Option<u64>,
     acceleration: Option<Timed<V>>,
+    position: Option<V>,
     calibration: Calibration,
     filter: QuaternionFilter,
     capabilities: crate::TrackerCapabilities,
@@ -207,6 +222,7 @@ impl TrackerState {
             raw: None,
             socket_received_at_ms: None,
             acceleration: None,
+            position: None,
             calibration,
             filter: QuaternionFilter::new(config, Q::IDENTITY),
             capabilities: Default::default(),
@@ -285,6 +301,39 @@ pub struct PoseEngine {
     last_snapshot: Arc<PoseSnapshot>,
 }
 impl PoseEngine {
+    /// Select each body's first configured usable tracker, preferring live status over timeout.
+    fn selected_trackers(&self) -> BTreeMap<BodyPosition, &(String, u8)> {
+        let mut selected = BTreeMap::new();
+        for binding in &self.config.bindings {
+            let Some((key, state)) = self
+                .trackers
+                .get_key_value(&(binding.device_key.clone(), binding.sensor_id))
+            else {
+                continue;
+            };
+            if !state.usable() {
+                continue;
+            }
+            let current = selected.entry(binding.body).or_insert(key);
+            if self.trackers[*current].status == SensorStatus::TimedOut
+                && state.status != SensorStatus::TimedOut
+            {
+                *current = key;
+            }
+        }
+        selected
+    }
+
+    fn tracker_for_body(&self, body: BodyPosition) -> Option<&TrackerState> {
+        self.config
+            .bindings
+            .iter()
+            .filter(|b| b.body == body)
+            .filter_map(|b| self.trackers.get(&(b.device_key.clone(), b.sensor_id)))
+            .filter(|s| s.usable())
+            .min_by_key(|s| s.status == SensorStatus::TimedOut)
+    }
+
     pub fn new(config: PoseConfig) -> Result<Self, String> {
         config.validate()?;
         let trackers = config
@@ -294,7 +343,7 @@ impl PoseEngine {
             .map(|b| {
                 ((b.device_key.clone(), b.sensor_id), {
                     let mut state = TrackerState::new(b, config.filter);
-                    if let Some(q) = config.saved_mounting_resets.get(&state.binding.body) {
+                    if let Some(q) = config.mounting_reset(&state.binding) {
                         state.calibration.mount_rot_fix = *q;
                     }
                     state
@@ -420,14 +469,15 @@ impl PoseEngine {
                             s.calibration = calibration;
                         } else if let Some(q) = self
                             .config
-                            .saved_mounting_resets
-                            .get(&s.binding.body)
+                            .mounting_reset(&s.binding)
                             .filter(|_| s.capabilities.allow_mounting)
                         {
                             s.calibration.mount_rot_fix = *q;
                         }
                         self.alignment.reset_body(s.binding.body);
-                        self.positions.remove(&s.binding.body);
+                        if !self.controllers.contains_key(&s.binding.body) {
+                            self.positions.remove(&s.binding.body);
+                        }
                         self.flex_sensors.remove(&s.binding.body);
                         self.flex_rotations.remove(&s.binding.body);
                         self.legs.reset_at(event.at_ms, false);
@@ -457,7 +507,9 @@ impl PoseEngine {
                     }
                     s.status = *status;
                     if !s.capabilities.is_imu && !s.usable() {
-                        self.positions.remove(&s.binding.body);
+                        if !self.controllers.contains_key(&s.binding.body) {
+                            self.positions.remove(&s.binding.body);
+                        }
                         self.velocities.clear();
                     }
                 }
@@ -553,10 +605,8 @@ impl PoseEngine {
             return Err("invalid pose sample".into());
         }
         s.session = sample.session;
-        if let Some(position) = sample.position {
-            self.positions.insert(s.binding.body, position);
-        } else if !s.capabilities.is_imu {
-            self.positions.remove(&s.binding.body);
+        if sample.position.is_some() || !s.capabilities.is_imu {
+            s.position = sample.position;
         }
         if let Some(q) = sample.server_rotation {
             let calibrated = s.adjusted(q);
@@ -644,7 +694,7 @@ impl PoseEngine {
                         s.binding.body,
                         BodyPosition::LeftHand | BodyPosition::RightHand
                     ) && s.usable()
-                        && self.positions.contains_key(&s.binding.body)
+                        && s.position.is_some()
                 }))
         {
             return Err("height calibration requires HMD and controller positions".into());
@@ -689,9 +739,7 @@ impl PoseEngine {
         self.calibrated_head()
             .map(|h| h.rotation)
             .or_else(|| {
-                self.trackers
-                    .values()
-                    .find(|s| s.binding.body == BodyPosition::Head)
+                self.tracker_for_body(BodyPosition::Head)
                     .and_then(TrackerState::rotation)
             })
             .unwrap_or(Q::IDENTITY)
@@ -750,7 +798,11 @@ impl PoseEngine {
         if !reference.yaw_projection().is_rotation() {
             return Err("reset reference has degenerate yaw projection".into());
         }
-        for s in self.trackers.values_mut() {
+        let selected: BTreeSet<_> = self.selected_trackers().into_values().cloned().collect();
+        for (key, s) in &mut self.trackers {
+            if !selected.contains(key) {
+                continue;
+            }
             if !bodies.is_empty() && !bodies.contains(&s.binding.body) {
                 continue;
             }
@@ -790,6 +842,10 @@ impl PoseEngine {
                     self.config
                         .saved_mounting_resets
                         .insert(s.binding.body, s.calibration.mount_rot_fix);
+                    self.config.tracker_mounting_resets.insert(
+                        format!("{}/{}", s.binding.device_key, s.binding.sensor_id),
+                        s.calibration.mount_rot_fix,
+                    );
                 }
             }
         }
@@ -891,14 +947,31 @@ impl PoseEngine {
         let mut inputs = BTreeMap::new();
         let mut accelerations = BTreeMap::new();
         let mut poses = Vec::new();
-        for s in self.trackers.values_mut() {
+        let selected: BTreeMap<_, _> = self
+            .selected_trackers()
+            .into_iter()
+            .map(|(body, key)| (body, key.clone()))
+            .collect();
+        for binding in &self.config.bindings {
+            if !self.controllers.contains_key(&binding.body) {
+                self.positions.remove(&binding.body);
+            }
+        }
+        for (body, key) in &selected {
+            if !self.controllers.contains_key(body) {
+                if let Some(position) = self.trackers[key].position {
+                    self.positions.insert(*body, position);
+                }
+            }
+        }
+        for (key, s) in &mut self.trackers {
             s.filter.update(dt);
             s.calibration.tick(dt);
             let rotation = s.rotation();
             if rotation.is_some_and(|q| !q.is_rotation()) {
                 return Err("filter produced invalid rotation".into());
             }
-            if s.usable() {
+            if selected.get(&s.binding.body) == Some(key) {
                 if let Some(q) = rotation {
                     self.alignment.update_rest(
                         at,
@@ -921,7 +994,7 @@ impl PoseEngine {
             } else {
                 None
             };
-            if s.usable() {
+            if selected.get(&s.binding.body) == Some(key) {
                 if let Some(a) = &acceleration_world {
                     accelerations.insert(s.binding.body, a.value);
                 }
@@ -931,9 +1004,10 @@ impl PoseEngine {
                 sensor_id: s.binding.sensor_id,
                 body: s.binding.body,
                 session: s.session,
-                position: self.positions.get(&s.binding.body).copied(),
+                position: s.position,
                 capabilities: s.capabilities,
                 status: s.status,
+                selected: selected.get(&s.binding.body) == Some(key),
                 raw: s.raw.clone(),
                 calibrated: s.raw.as_ref().map(|q| s.adjusted(q.value)),
                 filtered: s.raw.as_ref().map(|_| s.filter.output()),
@@ -1009,7 +1083,9 @@ impl PoseEngine {
             matches!(
                 s.binding.body,
                 BodyPosition::LeftHand | BodyPosition::RightHand
-            ) && s.usable()
+            ) && selected
+                .get(&s.binding.body)
+                .is_some_and(|key| key.0 == s.binding.device_key && key.1 == s.binding.sensor_id)
         }) {
             if let (Some(q), Some(p)) = (s.rotation(), self.positions.get(&s.binding.body)) {
                 hands.entry(s.binding.body).or_insert((q, *p));
@@ -1028,8 +1104,8 @@ impl PoseEngine {
                 !self.controllers.contains_key(b)
                     && self
                         .trackers
-                        .values()
-                        .any(|s| s.binding.body == **b && s.capabilities.is_imu)
+                        .get(&selected[b])
+                        .is_some_and(|s| s.capabilities.is_imu)
             })
             .map(|b| {
                 (
@@ -1044,10 +1120,9 @@ impl PoseEngine {
         let mut alignment_inputs: BTreeMap<_, _> = poses
             .iter()
             .filter(|p| {
-                matches!(
-                    p.status,
-                    SensorStatus::Ok | SensorStatus::Busy | SensorStatus::TimedOut
-                )
+                selected
+                    .get(&p.body)
+                    .is_some_and(|key| key.0 == p.device_key && key.1 == p.sensor_id)
             })
             .filter(|p| {
                 self.trackers
@@ -1082,13 +1157,8 @@ impl PoseEngine {
                 None
             });
         for (body, q) in &self.flex_rotations {
-            if self.trackers.values().any(|s| {
-                s.binding.body == *body
-                    && !matches!(
-                        s.status,
-                        SensorStatus::Ok | SensorStatus::Busy | SensorStatus::TimedOut
-                    )
-            }) {
+            if self.config.bindings.iter().any(|b| b.body == *body) && !selected.contains_key(body)
+            {
                 continue;
             }
             let q = if body.is_left_finger() {
@@ -1173,6 +1243,10 @@ impl PoseEngine {
                 if s.calibration.mounting_reset_done {
                     c.saved_mounting_resets
                         .insert(s.binding.body, s.calibration.mount_rot_fix);
+                    c.tracker_mounting_resets.insert(
+                        format!("{}/{}", s.binding.device_key, s.binding.sensor_id),
+                        s.calibration.mount_rot_fix,
+                    );
                 }
             }
         }
@@ -1181,26 +1255,13 @@ impl PoseEngine {
     pub fn motion_frame(&self) -> Result<crate::autobone::MotionFrame, String> {
         let head = self
             .calibrated_head()
-            .or_else(|| {
-                self.positions.get(&BodyPosition::Head).and_then(|p| {
-                    self.last_snapshot
-                        .trackers
-                        .iter()
-                        .find(|t| t.body == BodyPosition::Head && t.usable())
-                        .and_then(|t| t.calibrated)
-                        .map(|q| HeadPose {
-                            rotation: q,
-                            position: Some(*p),
-                        })
-                })
-            })
             .filter(|h| h.position.is_some())
             .ok_or("motion recording requires HMD position")?;
         let mut rotations: BTreeMap<_, _> = self
             .last_snapshot
             .trackers
             .iter()
-            .filter(|p| p.usable())
+            .filter(|p| p.selected)
             .filter_map(|p| p.calibrated.map(|q| (p.body, q)))
             .collect();
         rotations.extend(self.controllers.iter().map(|(b, q)| (*b, *q)));
@@ -1225,15 +1286,12 @@ impl PoseEngine {
                 position: head.position,
             })
             .or_else(|| {
-                self.trackers
-                    .values()
-                    .find(|s| s.binding.body == BodyPosition::Head && s.usable())
-                    .and_then(|s| {
-                        s.rotation().map(|rotation| HeadPose {
-                            rotation,
-                            position: self.positions.get(&BodyPosition::Head).copied(),
-                        })
+                self.tracker_for_body(BodyPosition::Head).and_then(|s| {
+                    s.rotation().map(|rotation| HeadPose {
+                        rotation,
+                        position: s.position,
                     })
+                })
             })
     }
     /// Apply validated live settings, preserving calibration of unchanged bindings.
@@ -1251,6 +1309,7 @@ impl PoseEngine {
             || old.alignment != config.alignment
             || old.localizer.enabled != config.localizer.enabled
             || old.saved_mounting_resets != config.saved_mounting_resets
+            || old.tracker_mounting_resets != config.tracker_mounting_resets
             || old.send_derived_velocity != config.send_derived_velocity
         {
             self.velocities.clear();
@@ -1263,6 +1322,11 @@ impl PoseEngine {
             })
         });
         for binding in &config.bindings {
+            let existing = self
+                .trackers
+                .contains_key(&(binding.device_key.clone(), binding.sensor_id));
+            let mounting_reset_changed =
+                old.mounting_reset(binding) != config.mounting_reset(binding);
             let state = self
                 .trackers
                 .entry((binding.device_key.clone(), binding.sensor_id))
@@ -1287,11 +1351,9 @@ impl PoseEngine {
                     .unwrap_or(Q::IDENTITY);
                 state.filter = QuaternionFilter::new(state.filter_config(config.filter), q);
             }
-            if let Some(q) = config
-                .saved_mounting_resets
-                .get(&binding.body)
-                .filter(|_| state.capabilities.allow_mounting)
-            {
+            if let Some(q) = config.mounting_reset(binding).filter(|_| {
+                state.capabilities.allow_mounting && (!existing || mounting_reset_changed)
+            }) {
                 state.calibration.mount_rot_fix = *q;
             }
         }
@@ -1369,6 +1431,17 @@ impl PoseEngine {
             }
         }
         self.config.saved_mounting_resets.clear();
+        self.config.tracker_mounting_resets = self
+            .config
+            .bindings
+            .iter()
+            .map(|binding| {
+                (
+                    format!("{}/{}", binding.device_key, binding.sensor_id),
+                    Q::IDENTITY,
+                )
+            })
+            .collect();
         self.config_revision = self.config_revision.wrapping_add(1);
         self.mounting_completed = false;
         self.feet_mounting_completed = false;

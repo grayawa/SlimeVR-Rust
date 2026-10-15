@@ -103,13 +103,14 @@ pub fn frame(
         let need_reset = imu
             .iter()
             .copied()
-            .filter(|t| t.status != SensorStatus::Error && !t.calibration.full_reset_done)
+            .filter(|t| t.selected && !t.calibration.full_reset_done)
             .collect::<Vec<_>>();
         let calibration = imu
             .iter()
             .copied()
             .filter(|t| {
-                context.rest.get(&(t.device_key.clone(), t.sensor_id)) == Some(&Some(false))
+                t.selected
+                    && context.rest.get(&(t.device_key.clone(), t.sensor_id)) == Some(&Some(false))
             })
             .collect::<Vec<_>>();
         let automatic = c.yaml["resetsConfig"]["lastMountingMethod"]
@@ -119,6 +120,7 @@ pub fn frame(
         let saved = c.pose.save_mounting_reset
             && imu
                 .iter()
+                .filter(|t| t.selected)
                 .all(|t| t.calibration.mount_rot_fix != slimevr_core::Quaternion::IDENTITY);
         let needs_mounting = automatic
             && !saved
@@ -128,7 +130,7 @@ pub fn frame(
                 .is_some_and(|at| p.at_ms.saturating_sub(at) < 120000);
         let feet = imu
             .iter()
-            .filter(|t| matches!(t.body, B::LeftFoot | B::RightFoot))
+            .filter(|t| t.selected && matches!(t.body, B::LeftFoot | B::RightFoot))
             .collect::<Vec<_>>();
         let mut steps = Vec::new();
         macro_rules! add {

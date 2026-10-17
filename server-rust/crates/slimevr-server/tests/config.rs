@@ -421,3 +421,34 @@ fn extended_calibration_and_training_flags_use_native_yaml_and_preserve_extensio
     assert_eq!(c.yaml["resetsConfig"]["futureReset"].as_str(), Some("keep"));
     assert_eq!(c.yaml["autoBone"]["futureTraining"].as_str(), Some("keep"));
 }
+
+#[test]
+fn stay_aligned_setup_completion_roundtrips_independently_of_relaxed_poses() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("vrconfig.yml");
+    let mut config =
+        load("version: '15'\nstayAlignedConfig: {setupComplete: true, enabled: true}\n");
+    assert!(config.pose.alignment.setup_complete);
+    assert!(!config.pose.alignment.standing.enabled);
+    config.pose.alignment.enabled = false;
+    config.save(Some(&path)).unwrap();
+    let reloaded = FrontendConfig::load(&path).unwrap();
+    assert!(reloaded.pose.alignment.setup_complete);
+    assert!(!reloaded.pose.alignment.enabled);
+    assert_eq!(
+        reloaded.yaml["stayAlignedConfig"]["setupComplete"].as_bool(),
+        Some(true)
+    );
+    assert!(
+        load("stayAlignedConfig: {standingRelaxedPose: {enabled: true}}\n")
+            .pose
+            .alignment
+            .setup_complete
+    );
+    assert!(
+        !load("stayAlignedConfig: {setupComplete: false, standingRelaxedPose: {enabled: true}}\n")
+            .pose
+            .alignment
+            .setup_complete
+    );
+}

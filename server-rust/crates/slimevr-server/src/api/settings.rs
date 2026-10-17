@@ -101,7 +101,7 @@ pub fn frame(tx: u32, c: &FrontendConfig) -> Vec<u8> {
                 flatUpperLegAngle: a.flat.upper_leg_degrees,
                 flatLowerLegAngle: a.flat.lower_leg_degrees,
                 flatFootAngle: a.flat.foot_degrees,
-                setupComplete: a.standing.enabled || a.sitting.enabled || a.flat.enabled,
+                setupComplete: a.setup_complete,
                 ..Default::default()
             },
         );

@@ -12,6 +12,8 @@
 
 ## StayAligned 字段与参考
 
+`stayAlignedConfig.setupComplete` 保存配置引导的完成状态。启用持续校准会将其设为 true；关闭功能和清空放松姿势保留完成状态。加载包含该字段的 YAML 时使用其值；字段缺省时根据已保存的放松姿势恢复完成状态。采集放松姿势时使用各身体部位当前选中的有效传感器。GPUI 设置与七步配置流程见 [GPUI 指南](rust-gpui-guide.zh-CN.md#分配与校准)。
+
 `extraYawCorrection` 是原版 RPC 的兼容保留字段，修改请求接受后忽略，读取返回 false。Rust 沿用这一协议语义。
 
 站立、坐姿、躺姿的腿部参考 yaw 偏移已有实现。参考集合包含三组各 360 帧的非零大腿、小腿和脚部偏移对照，验证左右侧符号及逐帧状态。另有三组实际 Kotlin HMD 复位序列，覆盖 pitch/roll、连续样本、重复复位及开关变化。

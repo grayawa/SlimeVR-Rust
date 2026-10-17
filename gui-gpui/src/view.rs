@@ -12,6 +12,7 @@ mod reset_ui;
 mod serial_ui;
 mod settings_layout_ui;
 mod settings_ui;
+mod stay_aligned_ui;
 mod tracker_telemetry_ui;
 mod tracker_ui;
 mod visualization_ui;
@@ -54,6 +55,7 @@ pub struct SlimeView {
     return_page: Page,
     confirmation: Option<(String, serde_json::Value, String)>,
     autobone: slimevr_gpui::autobone::Wizard,
+    stay_aligned: stay_aligned_ui::State,
     next_autobone_frame: std::time::Instant,
     unknown_devices: Vec<String>,
     highlight: Option<(u8, u8, std::time::Instant)>,
@@ -132,7 +134,7 @@ impl SlimeView {
                         let visible=cx.windows().into_iter().any(|h|h.update(cx,|_,window,_|slimevr_gpui::tray::is_visible(window)).unwrap_or(false));
                         if this.draft.save_expired(){this.ui_error=Some(this.text("native-save-timeout"));cx.notify();}
                         let fast=this.preferences.value["debug"]==true&&this.preferences.value["devSettings"]["fastDataFeed"]==true;
-                        let profile=(if !visible{500}else if fast{11}else{100},if fast{11}else{25},visible&&(this.navigation.page==Page::Proportions || this.in_onboarding() && matches!(this.onboarding.step,slimevr_gpui::onboarding::Step::Mounting|slimevr_gpui::onboarding::Step::Height) || this.preferences.value["skeletonPreview"]!=false&&matches!(this.navigation.page,Page::Home|Page::VrMode)));
+                        let profile=(if !visible{500}else if fast{11}else{100},if fast{11}else{25},visible&&(matches!(this.navigation.page,Page::Proportions|Page::StayAlignedSetup) || this.in_onboarding() && matches!(this.onboarding.step,slimevr_gpui::onboarding::Step::Mounting|slimevr_gpui::onboarding::Step::Height) || this.preferences.value["skeletonPreview"]!=false&&matches!(this.navigation.page,Page::Home|Page::VrMode)));
                         if this.feed_profile!=Some(profile){let _=this.client.configure_feed(profile.0,profile.1,profile.2);this.feed_profile=Some(profile);}
                         this.audio.configure_feedback(&this.preferences.value);
                         let snapshot = this.client.snapshot();
@@ -147,6 +149,7 @@ impl SlimeView {
                             this.next_autobone_frame = std::time::Instant::now() + Duration::from_millis(125);
                             cx.notify();
                         }
+                        this.stay_aligned_tick(&snapshot, now, cx);
                         let autobone_failed = this.autobone.failed;
                         this.autobone.check_confirmation(std::time::Instant::now(), snapshot.last_error.is_some());
                         if this.autobone.failed && !autobone_failed && visible { cx.notify(); }
@@ -247,6 +250,7 @@ impl SlimeView {
             return_page: Page::Home,
             confirmation: None,
             autobone: Default::default(),
+            stay_aligned: Default::default(),
             next_autobone_frame: std::time::Instant::now(),
             reset_feedback: Default::default(),
             unknown_devices: Vec::new(),
@@ -379,8 +383,17 @@ impl SlimeView {
         if self.navigation.page == Page::Proportions && page != Page::Proportions {
             self.leave_autobone();
         }
+        let entering_stay_aligned = page == Page::StayAlignedSetup && self.navigation.page != page;
+        if self.navigation.page == Page::StayAlignedSetup && self.navigation.page != page {
+            self.stay_aligned = Default::default();
+        }
+        self.stay_aligned.modal = None;
+        self.stay_aligned.modal_pending = None;
         self.navigation.go(page);
         self.ui_error = None;
+        if entering_stay_aligned {
+            self.stay_aligned_start(cx);
+        }
         // Opening VRChat warnings requests the current settings for display.
         if page == Page::VrchatWarnings && self.snapshot.connection == Connection::Connected {
             let _ = self.client.send(Command::ReadVrchat);
@@ -757,12 +770,12 @@ impl Render for SlimeView {
             // Settings cards own their background and corners. The scroll
             // viewport must leave the page background visible between them.
             .when(current.in_settings(), |d| d.rounded_none().bg(cx.theme().background))
-            .when(onboarding,|d|d.p_0().gap_0())
+            .when(onboarding || current==Page::StayAlignedSetup,|d|d.p_0().gap_0().bg(cx.theme().background))
             .when(current == Page::Proportions && self.form_value("proportions-view", "preview") == "automatic", |d| d.p_0())
             .when(matches!(current,Page::Home|Page::Tracker(_)) || matches!(current,Page::Settings(section) if slimevr_gpui::settings_layout::pane(section).is_some() || section==Section::Home || section==Section::Checklist), |d| d.p_0().bg(cx.theme().background))
             .overflow_y_scroll()
             .track_scroll(&scroll)
-            .when(!onboarding && !matches!(current, Page::Home | Page::Assignment | Page::Mounting | Page::Proportions | Page::Tracker(_)) && !matches!(current,Page::Settings(section) if slimevr_gpui::settings_layout::pane(section).is_some() || section==Section::Checklist || section==Section::Home), |d| {
+            .when(!onboarding && !matches!(current, Page::Home | Page::Assignment | Page::Mounting | Page::Proportions | Page::Tracker(_) | Page::StayAlignedSetup) && !matches!(current,Page::Settings(section) if slimevr_gpui::settings_layout::pane(section).is_some() || section==Section::Checklist || section==Section::Home), |d| {
                 d.child(
                     div()
                         .text_2xl()
@@ -802,18 +815,7 @@ impl Render for SlimeView {
                 }
             }
             Page::Settings(Section::Onboarding) => self.onboarding(window, cx),
-            Page::StayAlignedSetup => div()
-                .v_flex()
-                .gap_4()
-                .child(
-                    Button::new("aligned-back")
-                        .label(self.text("native-back"))
-                        .on_click(cx.listener(|this, _, _, cx| {
-                            this.go(Page::Settings(Section::StayAligned), cx)
-                        })),
-                )
-                .child(self.relaxed_poses(cx))
-                .into_any_element(),
+            Page::StayAlignedSetup => self.stay_aligned_setup(window, cx),
             Page::Settings(Section::Advanced) => self.advanced_page(window, cx),
             Page::Settings(Section::Firmware) => self.firmware_page(window, cx),
             Page::Settings(Section::Serial) => {
@@ -838,17 +840,7 @@ impl Render for SlimeView {
                 .gap_4()
                 .child(self.settings_form(Section::OscVmc, window, cx))
                 .into_any_element(),
-            Page::Settings(Section::StayAligned) => div()
-                .v_flex()
-                .gap_2()
-                .child(self.settings_form(Section::StayAligned, window, cx))
-                .child(self.settings_pane(
-                    "native-advanced-settings",
-                    "Wrench",
-                    self.relaxed_poses(cx),
-                    cx,
-                ))
-                .into_any_element(),
+            Page::Settings(Section::StayAligned) => self.stay_aligned_settings(window, cx),
             Page::Settings(section) => self.settings_form(section, window, cx),
             Page::VrchatWarnings => self.warnings(cx),
         });
@@ -934,6 +926,17 @@ impl Render for SlimeView {
                 }
                 if event.keystroke.key == "escape" && this.mounting_target.is_some() {
                     this.mounting_target = None;
+                    cx.stop_propagation();
+                    cx.notify();
+                    return;
+                }
+                if event.keystroke.key == "escape"
+                    && (this.stay_aligned.modal.is_some() || this.stay_aligned.manual)
+                {
+                    if this.stay_aligned.modal_pending.is_none() {
+                        this.stay_aligned.modal = None;
+                    }
+                    this.stay_aligned.manual = false;
                     cx.stop_propagation();
                     cx.notify();
                     return;
@@ -1034,6 +1037,12 @@ impl Render for SlimeView {
             })
             .when_some(self.pending_height, |root, height| {
                 root.child(self.height_warning(height, window, cx))
+            })
+            .when(self.stay_aligned.manual, |root| {
+                root.child(self.stay_aligned_manual(window, cx))
+            })
+            .when_some(self.stay_aligned.modal, |root, pose| {
+                root.child(self.stay_aligned_pose_modal(pose, window, cx))
             })
             .when_some(self.mounting_target, |root, target| {
                 root.child(self.mounting_selection(target, window, cx))

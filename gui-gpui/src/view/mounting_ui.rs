@@ -3,10 +3,11 @@ use slimevr_gpui::mounting;
 pub(super) use slimevr_gpui::mounting::Target as MountTarget;
 impl SlimeView {
     pub(super) fn mounting_body_active(&self) -> bool {
-        (self.navigation.page == Page::Mounting
-            || self.in_onboarding()
-                && self.onboarding.step == slimevr_gpui::onboarding::Step::Mounting)
-            && self.form_value("mounting-method", "choose") == "manual"
+        self.stay_aligned.manual
+            || (self.navigation.page == Page::Mounting
+                || self.in_onboarding()
+                    && self.onboarding.step == slimevr_gpui::onboarding::Step::Mounting)
+                && self.form_value("mounting-method", "choose") == "manual"
     }
     fn mounting_step(&self) -> u8 {
         self.form_value("mounting-step", "0").parse().unwrap_or(0)
@@ -20,8 +21,21 @@ impl SlimeView {
     fn mounting_back(&self, cx: &mut Context<Self>) -> Button {
         Button::new("mounting-back")
             .ghost()
-            .label(self.text("onboarding-automatic_mounting-prev_step"))
+            .when(self.stay_aligned.manual, |b| b.primary())
+            .label(self.text(if self.stay_aligned.manual {
+                "onboarding-stay_aligned-manual_mounting-done"
+            } else {
+                "onboarding-automatic_mounting-prev_step"
+            }))
             .on_click(cx.listener(|this, _, _, cx| {
+                if this.stay_aligned.manual {
+                    let step = this.stay_aligned.wizard.step;
+                    this.stay_aligned.manual = false;
+                    this.stay_aligned.wizard.manual_completed();
+                    this.stay_aligned_step_changed(step, cx);
+                    cx.notify();
+                    return;
+                }
                 this.mounting_wait = None;
                 this.mounting_target = None;
                 this.form_values
@@ -46,7 +60,11 @@ impl SlimeView {
             - if self.in_onboarding() { 32. } else { 150. })
         .max(300.);
         let height = (f32::from(window.viewport_size().height) - 90.).max(450.);
-        let method = self.form_value("mounting-method", "choose");
+        let method = if self.stay_aligned.manual {
+            "manual".to_owned()
+        } else {
+            self.form_value("mounting-method", "choose")
+        };
         if method == "manual" {
             let narrow = width < 850.;
             let text_width = if narrow { width.min(650.) } else { 384. };

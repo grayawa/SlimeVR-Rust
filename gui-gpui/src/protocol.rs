@@ -9,6 +9,15 @@ pub struct TrackerKey {
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
+pub struct StayAlignedInfo {
+    pub correction: f32,
+    pub locked: bool,
+    pub locked_error: f32,
+    pub center_error: f32,
+    pub neighbor_error: f32,
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
 pub struct Tracker {
     pub key: TrackerKey,
     pub name: String,
@@ -45,6 +54,7 @@ pub struct Tracker {
     pub computed: bool,
     pub magnetometer: u8,
     pub yaw_correction: Option<f32>,
+    pub stay_aligned: Option<StayAlignedInfo>,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
@@ -503,6 +513,13 @@ pub fn decode_verified(bundle: sx::MessageBundle) -> Result<Vec<Update>, String>
                                     editable: info.is_some_and(|i| i.editable()),
                                     computed: info.is_some_and(|i| i.is_computed()),
                                     magnetometer: info.map(|i| i.magnetometer().0).unwrap_or(0),
+                                    stay_aligned: tracker.stay_aligned().map(|s| StayAlignedInfo {
+                                        correction: s.yaw_correction_in_deg(),
+                                        locked: s.locked(),
+                                        locked_error: s.locked_error_in_deg(),
+                                        center_error: s.center_error_in_deg(),
+                                        neighbor_error: s.neighbor_error_in_deg(),
+                                    }),
                                     yaw_correction: tracker
                                         .stay_aligned()
                                         .map(|s| s.yaw_correction_in_deg()),

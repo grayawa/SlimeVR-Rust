@@ -137,8 +137,14 @@ impl SlimeView {
             }))
             .into_any_element()
     }
-    fn autobone_body(&self, width: f32, height: f32, cx: &mut Context<Self>) -> AnyElement {
-        let image_height = height.min(450.).min(width * 392. / 163.);
+    pub(super) fn assigned_trackers_figure(
+        &self,
+        width: f32,
+        height: f32,
+        max_height: f32,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let image_height = height.min(max_height).min(width * 392. / 163.);
         let image_width = image_height * 163. / 392.;
         let image_x = (width - image_width) / 2.;
         let image_y = (height - image_height) / 2.;
@@ -246,9 +252,10 @@ impl SlimeView {
                         ),
                     self.autobone_next("onboarding-automatic_proportions-put_trackers_on-next", cx),
                 );
-                let body = self.autobone_body(
+                let body = self.assigned_trackers_figure(
                     body_width,
                     if compact { 380. } else { card_height - 64. },
+                    450.,
                     cx,
                 );
                 if compact {

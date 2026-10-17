@@ -16,6 +16,9 @@ enum Command {
     Width(f32),
     Pause(bool),
     Unsupported,
+    Aligned(bool),
+    ClearPose(rpc::StayAlignedRelaxedPose),
+    DetectPose(rpc::StayAlignedRelaxedPose),
 }
 
 fn batch(commands: &[Command]) -> Message {
@@ -23,6 +26,36 @@ fn batch(commands: &[Command]) -> Message {
     let mut headers = Vec::new();
     for (index, command) in commands.iter().enumerate() {
         let (kind, payload) = match *command {
+            Command::Aligned(enable) => (
+                rpc::RpcMessage::EnableStayAlignedRequest,
+                Some(
+                    rpc::EnableStayAlignedRequest::create(
+                        &mut f,
+                        &rpc::EnableStayAlignedRequestArgs { enable },
+                    )
+                    .as_union_value(),
+                ),
+            ),
+            Command::DetectPose(pose) => (
+                rpc::RpcMessage::DetectStayAlignedRelaxedPoseRequest,
+                Some(
+                    rpc::DetectStayAlignedRelaxedPoseRequest::create(
+                        &mut f,
+                        &rpc::DetectStayAlignedRelaxedPoseRequestArgs { pose },
+                    )
+                    .as_union_value(),
+                ),
+            ),
+            Command::ClearPose(pose) => (
+                rpc::RpcMessage::ResetStayAlignedRelaxedPoseRequest,
+                Some(
+                    rpc::ResetStayAlignedRelaxedPoseRequest::create(
+                        &mut f,
+                        &rpc::ResetStayAlignedRelaxedPoseRequestArgs { pose },
+                    )
+                    .as_union_value(),
+                ),
+            ),
             Command::Approve => {
                 let mac = f.create_string("02:00:00:00:00:01");
                 (
@@ -242,4 +275,116 @@ fn oversized_batch_is_rejected_before_any_side_effect() {
     };
     let error: serde_json::Value = serde_json::from_str(error).unwrap();
     assert_eq!(error["message"], "too many commands");
+}
+
+#[tokio::test]
+async fn stay_aligned_skip_all_poses_keeps_settings_unlocked_after_disable_and_reload() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("vrconfig.yml");
+    let (mut service, mut receiver, mut engine, _) = setup(Some(path.clone()));
+    for enable in [true, false] {
+        let responses = service.handle(
+            batch(&[
+                Command::ClearPose(rpc::StayAlignedRelaxedPose::STANDING),
+                Command::ClearPose(rpc::StayAlignedRelaxedPose::SITTING),
+                Command::ClearPose(rpc::StayAlignedRelaxedPose::FLAT),
+                Command::Aligned(enable),
+                Command::Query(rpc::RpcMessage::SettingsRequest),
+            ]),
+            &mut receiver,
+            &mut engine,
+            10,
+        );
+        let Wire::Binary(bytes) = responses.last().unwrap() else {
+            panic!("expected settings");
+        };
+        let bundle = fb::root::<sx::MessageBundle>(bytes).unwrap();
+        let aligned = bundle
+            .rpc_msgs()
+            .unwrap()
+            .get(0)
+            .message_as_settings_response()
+            .unwrap()
+            .stay_aligned()
+            .unwrap();
+        assert!(aligned.setupComplete());
+        assert_eq!(aligned.enabled(), enable);
+        assert!(!aligned.standingEnabled() && !aligned.sittingEnabled() && !aligned.flatEnabled());
+    }
+    service.finish_config_save().await.unwrap();
+    let saved = FrontendConfig::load(&path).unwrap();
+    assert!(saved.pose.alignment.setup_complete);
+    assert!(!saved.pose.alignment.enabled);
+}
+
+#[test]
+fn relaxed_pose_capture_uses_selected_tracker_for_each_duplicate_body_assignment() {
+    use slimevr_core::{
+        pose::TrackerBinding, skeleton::BodyPosition as B, Quaternion as Q, TrackerSample,
+    };
+    let mut config = FrontendConfig::default();
+    config.pose.bindings = [
+        ("a-selected", B::LeftUpperLeg),
+        ("z-backup", B::LeftUpperLeg),
+        ("right", B::RightUpperLeg),
+    ]
+    .into_iter()
+    .map(|(key, body)| TrackerBinding {
+        device_key: key.into(),
+        sensor_id: 0,
+        body,
+        mounting: Q::IDENTITY,
+    })
+    .collect();
+    let mut engine = PoseEngine::new(config.pose.clone()).unwrap();
+    for (key, q) in [
+        ("a-selected", Q::rotation_y(0.4)),
+        ("z-backup", Q::rotation_y(-0.8)),
+        ("right", Q::IDENTITY),
+    ] {
+        engine
+            .sample(&TrackerSample {
+                source: "test".into(),
+                device_key: key.into(),
+                sensor_id: 0,
+                session: 1,
+                packet_sequence: 1,
+                received_at_ms: 1,
+                socket_received_at_ms: None,
+                sensor_timestamp_us: None,
+                packet_rotation: None,
+                server_rotation: Some(q),
+                packet_acceleration: None,
+                server_acceleration: None,
+                position: None,
+                compatibility_fallback: false,
+            })
+            .unwrap();
+    }
+    engine.tick(2).unwrap();
+    assert!(
+        engine
+            .snapshot()
+            .trackers
+            .iter()
+            .find(|t| t.device_key == "a-selected")
+            .unwrap()
+            .selected
+    );
+    let (commands, _) = mpsc::channel(32);
+    let (events, _) = broadcast::channel(32);
+    let mut service = Service::new(config, None, commands, events);
+    let mut receiver = Receiver::new(ReceiverConfig::default()).unwrap();
+    service.handle(
+        batch(&[Command::DetectPose(rpc::StayAlignedRelaxedPose::STANDING)]),
+        &mut receiver,
+        &mut engine,
+        3,
+    );
+    let captured = service.config.pose.alignment.standing;
+    assert!(captured.enabled);
+    assert!(
+        (captured.upper_leg_degrees - 0.2f32.to_degrees()).abs() < 0.01,
+        "{captured:?}"
+    );
 }

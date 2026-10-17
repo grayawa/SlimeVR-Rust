@@ -4,6 +4,7 @@ pub mod i18n;
 pub mod navigation;
 pub mod protocol;
 pub mod reset_feedback;
+pub mod stay_aligned;
 
 #[path = "../../shared/log_level.rs"]
 pub mod log_level;

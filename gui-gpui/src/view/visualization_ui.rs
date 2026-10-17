@@ -10,13 +10,22 @@ impl SlimeView {
         controls: bool,
         cx: &mut Context<Self>,
     ) -> AnyElement {
+        self.skeleton_scene_for(height, controls, self.camera, "skeleton-canvas", cx)
+    }
+    pub(super) fn skeleton_scene_for(
+        &self,
+        height: f32,
+        controls: bool,
+        camera: Camera,
+        id: &'static str,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let bones = self
             .snapshot
             .feed
             .as_ref()
             .map(|f| f.bones.clone())
             .unwrap_or_default();
-        let camera = self.camera;
         let mirror = self.preferences.value["mirrorView"] == true;
         let mut panel = div()
             .v_flex()
@@ -99,42 +108,65 @@ impl SlimeView {
         };
         let floor = if bones.is_empty() { 0. } else { min[1].min(0.) };
         let area = div()
-            .id("skeleton-canvas")
+            .id(id)
             .w_full()
             .h(px(height))
             .overflow_hidden()
-            .on_scroll_wheel(cx.listener(|this, event: &ScrollWheelEvent, _, cx| {
-                let delta = event.delta.pixel_delta(px(20.));
-                this.camera.zoom(f32::from(delta.y) * 0.1);
-                cx.stop_propagation();
-                cx.notify();
-            }))
-            .on_mouse_move(cx.listener(|this, event: &MouseMoveEvent, _, cx| {
-                if event.pressed_button == Some(MouseButton::Left) {
-                    if let Some(previous) = this.camera_drag.replace(event.position) {
-                        this.camera.orbit(
-                            f32::from(event.position.x - previous.x),
-                            f32::from(event.position.y - previous.y),
-                        );
-                        cx.notify();
-                    }
-                } else if event.pressed_button == Some(MouseButton::Right) {
-                    if let Some(previous) = this.camera_drag.replace(event.position) {
-                        this.camera.pan[0] += f32::from(event.position.x - previous.x);
-                        this.camera.pan[1] += f32::from(event.position.y - previous.y);
-                        cx.notify();
-                    }
-                } else {
-                    this.camera_drag = None;
-                }
-            }))
+            .when(id == "skeleton-canvas", |area| {
+                area.on_scroll_wheel(cx.listener(|this, event: &ScrollWheelEvent, _, cx| {
+                    let delta = event.delta.pixel_delta(px(20.));
+                    this.camera.zoom(f32::from(delta.y) * 0.1);
+                    cx.stop_propagation();
+                    cx.notify();
+                }))
+                .on_mouse_move(cx.listener(
+                    |this, event: &MouseMoveEvent, _, cx| {
+                        if event.pressed_button == Some(MouseButton::Left) {
+                            if let Some(previous) = this.camera_drag.replace(event.position) {
+                                this.camera.orbit(
+                                    f32::from(event.position.x - previous.x),
+                                    f32::from(event.position.y - previous.y),
+                                );
+                                cx.notify();
+                            }
+                        } else if event.pressed_button == Some(MouseButton::Right) {
+                            if let Some(previous) = this.camera_drag.replace(event.position) {
+                                this.camera.pan[0] += f32::from(event.position.x - previous.x);
+                                this.camera.pan[1] += f32::from(event.position.y - previous.y);
+                                cx.notify();
+                            }
+                        } else {
+                            this.camera_drag = None;
+                        }
+                    },
+                ))
+            })
             .child(
                 canvas(
                     |_, _, _| (),
                     move |bounds, _, window, _| {
                         let width = f32::from(bounds.size.width);
                         let height = f32::from(bounds.size.height);
-                        let scale = ((height - 38.0) / span).min((width - 30.0) / (span * 0.55));
+                        let scale = if id.starts_with("stay-camera-") && !bones.is_empty() {
+                            let mut low = [f32::INFINITY; 2];
+                            let mut high = [f32::NEG_INFINITY; 2];
+                            for bone in &bones {
+                                for mut p in [bone.head, bone.tail] {
+                                    if mirror {
+                                        p[0] = -p[0];
+                                    }
+                                    let p = camera.rotate(p);
+                                    for axis in 0..2 {
+                                        low[axis] = low[axis].min(p[axis]);
+                                        high[axis] = high[axis].max(p[axis]);
+                                    }
+                                }
+                            }
+                            ((height - 38.) / (high[1] - low[1]).max(0.4))
+                                .min((width - 30.) / (high[0] - low[0]).max(0.4))
+                        } else {
+                            ((height - 38.0) / span).min((width - 30.0) / (span * 0.55))
+                        };
                         let project = |mut p: [f32; 3]| {
                             if mirror {
                                 p[0] = -p[0];

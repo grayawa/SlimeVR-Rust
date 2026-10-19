@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract the original React SVG icons for the native frontend, without redrawing."""
+"""Extract the original React SVG icons for the native frontend."""
 from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
@@ -21,4 +21,14 @@ for name in NAMES:
     svg = svg.replace('stroke="currentColor"', 'stroke="black"')
     ET.fromstring(svg)
     (ROOT / f'gui-gpui/assets/icons/{name}.svg').write_text(svg+'\n')
-print(f'Extracted {len(NAMES)} original icons')
+source = (ROOT / 'gui/src/components/commons/icon/ResetIcon.tsx').read_text()
+for name in ['FullReset', 'YawReset']:
+    svg = re.search(r'export function '+name+r'Icon\b[\s\S]*?(<svg\b[\s\S]*?</svg>)', source).group(1)
+    svg = re.sub(r'\s(?:width|height|className)=\{[^}]*\}', '', svg)
+    svg = re.sub(r'\s(?:width|height|className)="[^"]*"', '', svg)
+    svg = svg.replace('<svg', '<svg stroke="black"', 1)
+    for jsx, xml in ATTRIBUTES.items():
+        svg = svg.replace(jsx, xml)
+    ET.fromstring(svg)
+    (ROOT / f'gui-gpui/assets/icons/{name}.svg').write_text(svg+'\n')
+print(f'Extracted {len(NAMES) + 2} original icons')

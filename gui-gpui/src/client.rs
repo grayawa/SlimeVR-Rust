@@ -774,6 +774,7 @@ mod serial_state_tests {
                     done,
                     progress_ms,
                     duration_ms: 3000,
+                    body_parts: vec![],
                 })]);
             }
         }

@@ -356,29 +356,11 @@ impl SlimeView {
                     );
                 }
                 let waiting = self.autobone.phase == Phase::Resetting;
-                let reset_label = if waiting {
-                    self.snapshot
-                        .reset
-                        .as_ref()
-                        .filter(|r| !r.done)
-                        .map(|r| {
-                            format!(
-                                "{} · {}",
-                                self.text("reset-full"),
-                                (r.duration_ms - r.progress_ms + 999).max(0) / 1000
-                            )
-                        })
-                        .unwrap_or_else(|| self.text("reset-full"))
-                } else {
-                    self.text("reset-full")
-                };
                 preparation
                     .child(poses)
                     .child(navigation(
                         self.autobone_previous(cx),
-                        Button::new("autobone-full-reset")
-                            .primary()
-                            .label(reset_label)
+                        self.reset_button("autobone-full-reset", ResetKind::Full, &[], false, cx)
                             .disabled(!connected || waiting || self.snapshot.pending.is_some())
                             .on_click(cx.listener(|this, _, _, cx| {
                                 match this.client.send(Command::Reset(ResetKind::Full)) {

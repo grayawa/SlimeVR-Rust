@@ -215,7 +215,8 @@ impl SlimeView {
         let wide = f32::from(window.viewport_size().width) >= 1050.;
         let height = (f32::from(window.viewport_size().height) - 58.).max(450.);
         let connected = self.snapshot.connection == Connection::Connected;
-        let busy = self.snapshot.pending.is_some();
+        let busy = self.snapshot.pending.is_some()
+            || self.snapshot.reset.as_ref().is_some_and(|r| !r.done);
         let mut reset_row = div().h_flex().gap_3().flex_wrap();
         for kind in [ResetKind::Full, ResetKind::Yaw, ResetKind::Mounting] {
             let permitted = self.snapshot.feed.as_ref().is_some_and(|f| match kind {
@@ -224,9 +225,7 @@ impl SlimeView {
                 ResetKind::Mounting => f.can_mount,
             });
             reset_row = reset_row.child(
-                Button::new(format!("reset-home-{kind:?}"))
-                    .label(self.text(kind.label()))
-                    .bg(cx.theme().popover)
+                self.reset_button(format!("reset-home-{kind:?}"), kind, &[], true, cx)
                     .h(px(72.))
                     .flex_1()
                     .min_w(px(115.))
@@ -243,9 +242,7 @@ impl SlimeView {
                 .any(|t| !t.computed && feet.contains(&t.body))
         });
         reset_row = reset_row.child(
-            Button::new("reset-home-feet")
-                .label(self.text("reset-mounting-feet"))
-                .bg(cx.theme().popover)
+            self.reset_button("reset-home-feet", ResetKind::Mounting, &feet, true, cx)
                 .h(px(72.))
                 .flex_1()
                 .min_w(px(115.))
@@ -272,17 +269,7 @@ impl SlimeView {
                     .font_bold()
                     .child(self.text("native-group-resets_settings")),
             )
-            .child(reset_row)
-            .when_some(self.snapshot.reset.as_ref(), |d, reset| {
-                d.child(div().text_color(cx.theme().link).child(if reset.done {
-                    self.text("native-reset-finished")
-                } else {
-                    format!(
-                        "{:.1}s",
-                        (reset.duration_ms - reset.progress_ms).max(0) as f32 / 1000.
-                    )
-                }))
-            });
+            .child(reset_row);
         if let Some(feed) = &self.snapshot.feed {
             let list =
                 slimevr_gpui::tracker_list::Settings::from_preferences(&self.preferences.value);

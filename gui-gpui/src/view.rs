@@ -8,6 +8,7 @@ mod onboarding_ui;
 mod page_widgets_ui;
 pub(super) mod preferences_ui;
 mod proportions_ui;
+mod reset_ui;
 mod serial_ui;
 mod settings_layout_ui;
 mod settings_ui;
@@ -36,6 +37,7 @@ pub struct SlimeView {
     client: Client,
     backend: Option<Backend>,
     snapshot: Snapshot,
+    reset_feedback: slimevr_gpui::reset_feedback::Feedback,
     l10n: Localizer,
     navigation: Navigation,
     scrolls: HashMap<Page, ScrollHandle>,
@@ -134,6 +136,12 @@ impl SlimeView {
                         if this.feed_profile!=Some(profile){let _=this.client.configure_feed(profile.0,profile.1,profile.2);this.feed_profile=Some(profile);}
                         this.audio.configure_feedback(&this.preferences.value);
                         let snapshot = this.client.snapshot();
+                        let now = std::time::Instant::now();
+                        if snapshot.connection == Connection::Connected {
+                            this.reset_feedback.observe(snapshot.session, snapshot.reset.as_ref(), now);
+                            if snapshot.last_error.is_some() && snapshot.last_error != this.snapshot.last_error { this.reset_feedback.cancel_countdown(); }
+                        } else { this.reset_feedback = Default::default(); }
+                        if visible && this.reset_feedback.advance(now) { cx.notify(); }
                         if this.autobone.demo_started.is_some() && !crate::ui_assets::image_ready("slime/autobone-motion.webp") { this.autobone.demo_started = Some(std::time::Instant::now()); }
                         if visible && this.autobone.demo_started.is_some() && std::time::Instant::now() >= this.next_autobone_frame {
                             this.next_autobone_frame = std::time::Instant::now() + Duration::from_millis(125);
@@ -240,6 +248,7 @@ impl SlimeView {
             confirmation: None,
             autobone: Default::default(),
             next_autobone_frame: std::time::Instant::now(),
+            reset_feedback: Default::default(),
             unknown_devices: Vec::new(),
             highlight: None,
             assignment_role: None,
@@ -497,7 +506,8 @@ impl SlimeView {
     fn resets(&self, cx: &mut Context<Self>) -> AnyElement {
         let connected =
             self.snapshot.connection == Connection::Connected && self.snapshot.feed.is_some();
-        let busy = self.snapshot.pending.is_some();
+        let busy = self.snapshot.pending.is_some()
+            || self.snapshot.reset.as_ref().is_some_and(|r| !r.done);
         let mut row = div().h_flex().gap_3().flex_wrap();
         for kind in [ResetKind::Full, ResetKind::Yaw, ResetKind::Mounting] {
             let permitted = match kind {
@@ -506,9 +516,7 @@ impl SlimeView {
                 ResetKind::Mounting => self.snapshot.feed.as_ref().is_some_and(|f| f.can_mount),
             };
             row = row.child(
-                Button::new(format!("reset-{kind:?}"))
-                    .label(self.text(kind.label()))
-                    .primary()
+                self.reset_button(format!("reset-{kind:?}"), kind, &[], false, cx)
                     .disabled(!connected || busy || !permitted)
                     .on_click(
                         cx.listener(move |this, _, _, cx| this.send(Command::Reset(kind), cx)),
@@ -770,20 +778,6 @@ impl Render for SlimeView {
                     .bg(rgb(0x3d2228))
                     .child(error.clone()),
             );
-        }
-        if current != Page::Home
-            && let Some(reset) = &self.snapshot.reset
-            && !reset.done
-        {
-            let progress = if reset.done {
-                self.text("native-reset-finished")
-            } else {
-                format!(
-                    "{:.1}s",
-                    (reset.duration_ms - reset.progress_ms).max(0) as f32 / 1000.0
-                )
-            };
-            content = content.child(div().text_color(rgb(0xb994d8)).child(progress));
         }
         content = content.child(match current {
             Page::Home => self.home_aligned(window, cx),

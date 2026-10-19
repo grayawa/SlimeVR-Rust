@@ -194,6 +194,7 @@ impl Shared {
                 if !matches!(
                     name.as_str(),
                     "ResetResponse"
+                        | "SettingsResponse"
                         | "TrackingPauseStateResponse"
                         | "UnknownDeviceHandshakeNotification"
                         | "TapDetectionSetupNotification"
@@ -678,6 +679,42 @@ mod serial_state_tests {
             (4, 0, 2)
         );
         assert_eq!(events[1].value["status"], 10);
+    }
+    #[test]
+    fn settings_confirmations_keep_their_transaction_when_a_broadcast_follows() {
+        let shared = Shared {
+            state: Mutex::new(Snapshot {
+                session: 4,
+                ..Default::default()
+            }),
+            level: LogLevel::Error,
+            events: Mutex::new(VecDeque::new()),
+            telemetry_ms: AtomicU16::new(100),
+            bone_ms: AtomicU16::new(25),
+            bones_enabled: AtomicBool::new(false),
+            events_overflow: AtomicBool::new(false),
+            reset_listener: Mutex::new(None),
+        };
+        let value = serde_json::json!({"stay_aligned":{"standingEnabled":true}});
+        shared.rpc(vec![
+            ("SettingsResponse".into(), 42, value.clone()),
+            ("SettingsResponse".into(), 0, value),
+        ]);
+        assert_eq!(shared.state.lock().unwrap().rpc["SettingsResponse"].tx, 0);
+        let events = shared.events.lock().unwrap();
+        assert_eq!(events.len(), 2);
+        let mut wizard = crate::stay_aligned::Wizard::default();
+        wizard.step = crate::stay_aligned::Step::Standing;
+        wizard.begin(
+            4,
+            42,
+            crate::stay_aligned::Action::Detect(crate::stay_aligned::Pose::Standing),
+        );
+        for event in events.iter() {
+            wizard.settings_response(event.session, event.tx, &event.value);
+        }
+        assert_eq!(wizard.step, crate::stay_aligned::Step::Sitting);
+        assert!(!wizard.busy());
     }
     #[test]
     fn serial_logs_retain_open_port_until_close_or_disconnect() {

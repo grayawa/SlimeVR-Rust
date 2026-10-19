@@ -301,3 +301,6 @@ native-processing = Processing…
 native-firmware-build-not-ready = Firmware has not finished building.
 
 rust-development-preview = Independent Development Preview
+
+native-stay-aligned-save-error = Configuration needs confirmation. Check the connection and retry.
+native-stay-aligned-retry = Retry this step

@@ -73,7 +73,22 @@ impl SlimeView {
             };
             let autobone_step = self.autobone.step;
             match event.name.as_str() {
+                "SettingsResponse" => {
+                    self.stay_aligned_confirm(event.session, event.tx, &event.value, cx);
+                    if self.draft.confirm(event.session, &event.value) {
+                        self.ui_error = None;
+                    }
+                    self.draft.merge(&event.value);
+                }
                 "ResetResponse" => {
+                    let step = self.stay_aligned.wizard.step;
+                    self.stay_aligned.wizard.reset_response(
+                        event.session,
+                        event.tx,
+                        event.value["reset_type"].as_u64().unwrap_or(255) as u8,
+                        event.value["status"] == 1,
+                    );
+                    self.stay_aligned_step_changed(step, cx);
                     if event.value["status"] == 1
                         && event.value["reset_type"].as_u64()
                             == Some(ResetKind::Full.wire().0.into())
@@ -683,40 +698,6 @@ impl SlimeView {
             );
         }
         page.into_any_element()
-    }
-    pub(super) fn relaxed_poses(&self, cx: &mut Context<Self>) -> AnyElement {
-        let mut page = div().v_flex().gap_3();
-        for (pose, name) in [(0, "standing"), (1, "sitting"), (2, "flat")] {
-            page = page.child(
-                div()
-                    .h_flex()
-                    .gap_3()
-                    .items_center()
-                    .child(self.text(&format!("native-relaxed-{name}")))
-                    .child(self.rpc_button(
-                        &format!("pose-save-{pose}"),
-                        "native-pose-save",
-                        "DetectStayAlignedRelaxedPoseRequest",
-                        json!({"pose":pose}),
-                        cx,
-                    ))
-                    .child(self.rpc_button(
-                        &format!("pose-reset-{pose}"),
-                        "native-pose-reset",
-                        "ResetStayAlignedRelaxedPoseRequest",
-                        json!({"pose":pose}),
-                        cx,
-                    )),
-            );
-        }
-        page.child(self.rpc_button(
-            "stay-aligned-enable",
-            "native-enabled",
-            "EnableStayAlignedRequest",
-            json!({"enable":true}),
-            cx,
-        ))
-        .into_any_element()
     }
 }
 impl SlimeView {

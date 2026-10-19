@@ -371,6 +371,11 @@ pub fn from_yaml(root: Value) -> io::Result<FrontendConfig> {
         p.alignment.flat,
         RELAXED,
     )?;
+    p.alignment.setup_complete = read(
+        &root,
+        &["stayAlignedConfig", "setupComplete"],
+        p.alignment.standing.enabled || p.alignment.sitting.enabled || p.alignment.flat.enabled,
+    )?;
     let hmd: f32 = read(&root, &["skeleton", "hmdHeight"], 0.0)?;
     let floor: f32 = read(&root, &["skeleton", "floorHeight"], 0.0)?;
     if !hmd.is_finite() || !floor.is_finite() {
@@ -589,6 +594,11 @@ pub fn to_yaml(c: &FrontendConfig) -> io::Result<Value> {
         &mut root,
         &["stayAlignedConfig", "enabled"],
         p.alignment.enabled,
+    )?;
+    put(
+        &mut root,
+        &["stayAlignedConfig", "setupComplete"],
+        p.alignment.setup_complete,
     )?;
     write_fields(
         &mut root,

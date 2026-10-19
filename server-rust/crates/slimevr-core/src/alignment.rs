@@ -51,6 +51,7 @@ impl RelaxedPose {
 #[serde(default, deny_unknown_fields)]
 pub struct AlignmentConfig {
     pub enabled: bool,
+    pub setup_complete: bool,
     pub hide_correction: bool,
     pub standing: RelaxedPose,
     pub sitting: RelaxedPose,

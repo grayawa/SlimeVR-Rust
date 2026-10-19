@@ -98,6 +98,7 @@ impl Service {
                     .ok_or("missing alignment settings")?;
                 let mut c = self.config.clone();
                 c.pose.alignment.enabled = r.enable();
+                c.pose.alignment.setup_complete |= r.enable();
                 self.commit(c, engine, receiver, at)?;
             }
             rpc::RpcMessage::LegTweaksTmpChange => {
@@ -174,7 +175,7 @@ impl Service {
                         .snapshot()
                         .trackers
                         .iter()
-                        .filter(|p| p.status == slimevr_core::SensorStatus::Ok)
+                        .filter(|p| p.selected && p.status == slimevr_core::SensorStatus::Ok)
                         .filter_map(|p| p.calibrated.map(|q| (p.body, q)))
                         .collect();
                     slimevr_core::alignment::RelaxedPose::from_rotations(&qs)

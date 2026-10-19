@@ -301,3 +301,6 @@ native-processing = 处理中…
 native-firmware-build-not-ready = 固件尚未构建完成。
 
 rust-development-preview = 独立开发预览
+
+native-stay-aligned-save-error = 请检查后端连接，并重试此步骤以确认配置。
+native-stay-aligned-retry = 重试此步骤
